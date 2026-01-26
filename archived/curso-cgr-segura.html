@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CGR Segur@ - Curso de Ciberseguridad 2026</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #1e40af;
+            --primary-dark: #1e3a8a;
+            --secondary: #0ea5e9;
+            --accent: #f59e0b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --dark: #0f172a;
+            --dark-light: #1e293b;
+            --gray: #64748b;
+            --light: #f1f5f9;
+            --white: #ffffff;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: var(--white);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, rgba(30, 64, 175, 0.95) 0%, rgba(30, 58, 138, 0.95) 100%);
+            backdrop-filter: blur(10px);
+            padding: 3rem 0;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .shield-icon {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, var(--accent) 0%, #dc2626 100%);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 1.5rem;
+            color: #cbd5e1;
+            font-weight: 300;
+            margin-bottom: 2rem;
+        }
+
+        .header-stats {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent);
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Info Section */
+        .info-section {
+            padding: 4rem 0;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .info-card {
+            background: linear-gradient(135deg, rgba(30, 64, 175, 0.1) 0%, rgba(14, 165, 233, 0.1) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .info-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--secondary);
+            box-shadow: 0 20px 40px rgba(14, 165, 233, 0.2);
+        }
+
+        .info-card-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .info-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--secondary);
+        }
+
+        .info-card p {
+            color: #cbd5e1;
+            line-height: 1.8;
+        }
+
+        /* Timeline */
+        .timeline-section {
+            padding: 4rem 0;
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.8) 100%);
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            position: relative;
+            padding-bottom: 1rem;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(90deg, var(--secondary) 0%, var(--accent) 100%);
+            border-radius: 2px;
+        }
+
+        .timeline {
+            position: relative;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .timeline-item {
+            display: grid;
+            grid-template-columns: 1fr 80px 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+            position: relative;
+        }
+
+        .timeline-item:nth-child(even) .timeline-content:first-child {
+            order: 3;
+        }
+
+        .timeline-content {
+            background: linear-gradient(135deg, rgba(30, 64, 175, 0.15) 0%, rgba(14, 165, 233, 0.15) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .timeline-content:hover {
+            transform: scale(1.02);
+            border-color: var(--secondary);
+            box-shadow: 0 15px 30px rgba(14, 165, 233, 0.2);
+        }
+
+        .timeline-marker {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.2rem;
+            box-shadow: 0 10px 30px rgba(14, 165, 233, 0.4);
+            position: relative;
+            z-index: 2;
+        }
+
+        .timeline-marker::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, rgba(14, 165, 233, 0.3) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: ripple 2s infinite;
+        }
+
+        @keyframes ripple {
+            0% {
+                transform: translate(-50%, -50%) scale(0.8);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translate(-50%, -50%) scale(1.2);
+                opacity: 0;
+            }
+        }
+
+        .month-tag {
+            display: inline-block;
+            background: var(--accent);
+            color: var(--dark);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .timeline-content h4 {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            color: var(--secondary);
+        }
+
+        .timeline-content ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .timeline-content li {
+            padding-left: 1.5rem;
+            margin-bottom: 0.5rem;
+            position: relative;
+            color: #cbd5e1;
+        }
+
+        .timeline-content li::before {
+            content: '▸';
+            position: absolute;
+            left: 0;
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        /* Modules Section */
+        .modules-section {
+            padding: 4rem 0;
+        }
+
+        .modules-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+        }
+
+        .module-card {
+            background: linear-gradient(135deg, rgba(30, 64, 175, 0.2) 0%, rgba(14, 165, 233, 0.2) 100%);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 2.5rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .module-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, var(--secondary) 0%, var(--accent) 100%);
+        }
+
+        .module-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--secondary);
+            box-shadow: 0 25px 50px rgba(14, 165, 233, 0.3);
+        }
+
+        .module-number {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--accent) 0%, #dc2626 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .module-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--white);
+        }
+
+        .module-topics {
+            list-style: none;
+            padding: 0;
+        }
+
+        .module-topics li {
+            padding: 0.8rem;
+            margin-bottom: 0.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            border-left: 3px solid var(--secondary);
+            color: #cbd5e1;
+            transition: all 0.2s ease;
+        }
+
+        .module-topics li:hover {
+            background: rgba(14, 165, 233, 0.1);
+            transform: translateX(5px);
+        }
+
+        /* Footer */
+        footer {
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.95) 100%);
+            padding: 3rem 0;
+            margin-top: 4rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+
+        .footer-content {
+            color: #94a3b8;
+        }
+
+        .footer-logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            .subtitle {
+                font-size: 1.2rem;
+            }
+
+            .timeline-item {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .timeline-item:nth-child(even) .timeline-content:first-child {
+                order: 1;
+            }
+
+            .timeline-marker {
+                margin: 0 auto;
+            }
+
+            .modules-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header-stats {
+                gap: 1.5rem;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeInUp 0.6s ease-out;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content fade-in">
+                <div class="logo">
+                    <div class="shield-icon">🛡️</div>
+                </div>
+                <h1>CGR Segur@</h1>
+                <p class="subtitle">Programa de Capacitación en Ciberseguridad 2026</p>
+                <p class="subtitle" style="font-size: 1.2rem; margin-top: -1rem;">Contraloría General de la República de
+                    Costa Rica</p>
+
+                <div class="header-stats">
+                    <div class="stat">
+                        <span class="stat-number">12</span>
+                        <span class="stat-label">Meses</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number">8</span>
+                        <span class="stat-label">Módulos</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number">3</span>
+                        <span class="stat-label">Talleres</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number">3</span>
+                        <span class="stat-label">Simulacros</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <section class="info-section">
+        <div class="container">
+            <div class="info-grid fade-in">
+                <div class="info-card">
+                    <div class="info-card-icon">🎯</div>
+                    <h3>Objetivo General</h3>
+                    <p>Fortalecer las capacidades de los funcionarios de la CGR en materia de ciberseguridad y seguridad
+                        de la información, promoviendo el conocimiento y la aplicación de las políticas y lineamientos
+                        institucionales basados en ISO/IEC 27001:2022.</p>
+                </div>
+                <div class="info-card">
+                    <div class="info-card-icon">📚</div>
+                    <h3>Metodología</h3>
+                    <p>Enfoque híbrido (Blended Learning) que combina módulos e-learning, talleres interactivos,
+                        simulacros prácticos, micro-cápsulas informativas y gamificación para un aprendizaje efectivo y
+                        memorable.</p>
+                </div>
+                <div class="info-card">
+                    <div class="info-card-icon">🏆</div>
+                    <h3>Gamificación</h3>
+                    <p>Sistema "Guardianes de la CGR" con puntos, niveles de reconocimiento (Novato, Defensor, Guardián,
+                        CISO Honorario) y tableros de liderazgo para motivar la participación activa.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="timeline-section">
+        <div class="container">
+            <h2 class="section-title fade-in">Cronograma 2026</h2>
+            <div class="timeline">
+                <!-- Febrero -->
+                <div class="timeline-item fade-in">
+                    <div class="timeline-content">
+                        <span class="month-tag">Febrero 2026</span>
+                        <h4>Módulo 1: Fundamentos y Marco Normativo</h4>
+                        <ul>
+                            <li>Conceptos básicos de seguridad de la información (CIA)</li>
+                            <li>Lineamientos ISO 27001:2022 de la CGR</li>
+                            <li>Roles: CISO, CSIRT, UTI</li>
+                            <li>Identidad digital y autenticación 2FA</li>
+                            <li>Gestión de contraseñas robustas</li>
+                        </ul>
+                    </div>
+                    <div class="timeline-marker">FEB</div>
+                    <div class="timeline-content">
+                        <h4>Actividades</h4>
+                        <ul>
+                            <li>E-learning obligatorio</li>
+                            <li>Simulacro de Phishing I</li>
+                            <li>Micro-cápsulas semanales</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Marzo -->
+                <div class="timeline-item fade-in">
+                    <div class="timeline-content">
+                        <span class="month-tag">Marzo 2026</span>
+                        <h4>Módulo 2: Datos Personales y Clasificación</h4>
+                        <ul>
+                            <li>Ley N° 8968 de Protección de Datos</li>
+                            <li>Clasificación de información (Pública, Sensible, Restringida)</li>
+                            <li>Despersonalización de datos</li>
+                            <li>Almacenamiento seguro</li>
+                        </ul>
+                    </div>
+                    <div class="timeline-marker">MAR</div>
+                    <div class="timeline-content">
+                        <h4>Actividades</h4>
+                        <ul>
+                            <li>E-learning</li>
+                            <li>Taller Interactivo 1: "La Oficina de los Horrores"</li>
+                            <li>Ejercicios prácticos de clasificación</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Abril -->
+                <div class="timeline-item fade-in">
+                    <div class="timeline-content">
+                        <span class="month-tag">Abril 2026</span>
+                        <h4>Módulo 3: Inteligencia Artificial y Ciberseguridad</h4>
+                        <ul>
+                            <li>IA en la CGR: modelos y sistemas</li>
+                            <li>Riesgos de seguridad en sistemas de IA</li>
+                            <li>Ciberseguridad en la IA</li>
+                            <li>Monitoreo y robustez de modelos</li>
+                            <li>Confidencialidad de datos en IA</li>
+                        </ul>
+                    </div>
+                    <div class="timeline-marker">ABR</div>
+                    <div class="timeline-content">
+                        <h4>Actividades</h4>
+                        <ul>
+                            <li>E-learning</li>
+                            <li>Casos de estudio</li>
+                            <li>Micro-cápsulas sobre IA</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Mayo -->
+                <div class="timeline-item fade-in">
+                    <div class="timeline-content">
+                        <span class="month-tag">Mayo 2026</span>
+                        <h4>Módulo 4: Malware y Amenazas Digitales</h4>
+                        <ul>
+                            <li>Tipos de malware: virus, ransomware, spyware</li>
+                            <li>Phishing y Spear Phishing</li>
+                            <li>Detección de correos sospechosos</li>
+                            <li>Uso del antimalware</li>
+                            <li>Navegación segura</li>
+                        </ul>
+                    </div>
+                    <div class="timeline-marker">MAY</div>
+                    <div class="timeline-content">
+                        <h4>Actividades</h4>
+                        <ul>
+                            <li>E-learning</li>
+                            <li>Análisis de casos reales</li>
+                            <li>Micro-cápsulas</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Junio -->
+                <div class="timeline-item fade-in">
+                    <div class="timeline-content">
+                        <span class="month-tag">Junio 2026</span>
+                        <h4>Vishing, Smishing y Deepfakes</h4>
+                        <ul>
+                            <li>Ataques por voz (Vishing)</li>
+                            <li>Ataques por SMS (Smishing)</li>
+                            <li>Deepfakes con IA</li>
+                            <li>Protocolos de verificación</li>
+                        </ul>
+                    </div>
+                    <div class="timeline-marker">JUN</div>
+                    <div class="timeline-content">
+                        <h4>Actividades</h4>
+                        <ul>
+                            <li>Simulacro de Phishing II</li>
+                            <li>Taller: "Cyber Escape Room"</li>
+                            <li>Ejercicios de detección</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Julio -->
+                <div class="timeline-item fade-in">
+                    <div class="timeline-content">
+                        <span class="month-tag">Julio 2026</span>
+                        <h4>Módulo 5: Redes y Comunicaciones Seguras</h4>
+                        <ul>
+                            <li>Redes institucionales y restricciones</li>
+                            <li>Redes Wi-Fi seguras</li>
+                            <li>Uso correcto de VPN</li>
+                            <li>Chat institucional vs mensajería externa</li>
+                            <li>Correo electrónico institucional</li>
+                        </ul>
+                    </div>
+                    <div class="timeline-marker">JUL</div>
+                    <div class="timeline-content">
+                        <h4>Actividades</h4>
+                        <ul>
+                            <li>E-learning</li>
+                            <li>Taller 2: Contraseñas y Prácticas Seguras</li>
+                            <li>Configuración práctica</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Agosto -->
+                <div class="timeline-item fade-in">
+                    <div class="timeline-content">
+                        <span class="month-tag">Agosto 2026</span>
+                        <h4>Módulo 6: Teletrabajo y Seguridad Física</h4>
+                        <ul>
+                            <li>Responsabilidades en teletrabajo</li>
+                            <li>Escritorio y pantalla limpios</li>
+                            <li>Protección de activos institucionales</li>
+                            <li>Seguridad en documentos físicos</li>
+                            <li>Entorno de trabajo seguro</li>
+                        </ul>
+                    </div>
+                    <div class="timeline-marker">AGO</div>
+                    <div class="timeline-content">
+                        <h4>Actividades</h4>
+                        <ul>
+                            <li>E-learning</li>
+                            <li>Micro-cápsulas</li>
+                            <li>Checklist de seguridad</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Septiembre -->
+                <div class="timeline-item fade-in">
+                    <div class="timeline-content">
+                        <span class="month-tag">Septiembre 2026</span>
+                        <h4>Dispositivos Móviles e IoT</h4>
+                        <ul>
+                            <li>Seguridad en smartphones y tablets</li>
+                            <li>Riesgos de aplicaciones no autorizadas</li>
+                            <li>Internet de las Cosas (IoT)</li>
+                            <li>Protocolo de pérdida/robo</li>
+                        </ul>
+                    </div>
+                    <div class="timeline-marker">SEP</div>
+                    <div class="timeline-content">
+                        <h4>Actividades</h4>
+                        <ul>
+                            <li>E-learning</li>
+                            <li>Configuración de dispositivos</li>
+                            <li>Micro-cápsulas</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Octubre -->
+                <div class="timeline-item fade-in">
+                    <div class="timeline-content">
+                        <span class="month-tag">Octubre 2026</span>
+                        <h4>Módulo 7: Gestión de Incidentes</h4>
+                        <ul>
+                            <li>Tipos de incidentes de seguridad</li>
+                            <li>Detección y reporte (SOS, correo seguridad)</li>
+                            <li>Rol del funcionario en la respuesta</li>
+                            <li>Análisis post-incidente</li>
+                        </ul>
+                    </div>
+                    <div class="timeline-marker">OCT</div>
+                    <div class="timeline-content">
+                        <h4>Actividades</h4>
+                        <ul>
+                            <li>E-learning</li>
+                            <li>Taller 3: "Simulación de Crisis"</li>
+                            <li>Role Playing</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Noviembre -->
+                <div class="timeline-item fade-in">
+                    <div class="timeline-content">
+                        <span class="month-tag">Noviembre 2026</span>
+                        <h4>Módulo 8: Aspectos Avanzados</h4>
+                        <ul>
+                            <li>Uso de criptografía</li>
+                            <li>Navegación en Internet y filtrado web</li>
+                            <li>Gestión de activos tecnológicos</li>
+                            <li>Desvinculación del personal</li>
+                            <li>Responsabilidades legales</li>
+                        </ul>
+                    </div>
+                    <div class="timeline-marker">NOV</div>
+                    <div class="timeline-content">
+                        <h4>Actividades</h4>
+                        <ul>
+                            <li>E-learning</li>
+                            <li>Casos de estudio</li>
+                            <li>Micro-cápsulas</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Diciembre -->
+                <div class="timeline-item fade-in">
+                    <div class="timeline-content">
+                        <span class="month-tag">Diciembre 2026</span>
+                        <h4>Evaluación Final y Cierre</h4>
+                        <ul>
+                            <li>Evaluación integral gamificada</li>
+                            <li>Concurso tipo Jeopardy</li>
+                            <li>Certificación "CGR Segur@"</li>
+                            <li>Reconocimiento a campeones</li>
+                            <li>Encuesta de satisfacción</li>
+                        </ul>
+                    </div>
+                    <div class="timeline-marker">DIC</div>
+                    <div class="timeline-content">
+                        <h4>Actividades</h4>
+                        <ul>
+                            <li>Simulacro de Phishing III</li>
+                            <li>Ciber-Graduación</li>
+                            <li>Premiación</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="modules-section">
+        <div class="container">
+            <h2 class="section-title fade-in">Módulos del Programa</h2>
+            <div class="modules-grid">
+                <div class="module-card fade-in">
+                    <div class="module-number">1</div>
+                    <h3><a href="modulo1-fundamentos.html"
+                            style="color: inherit; text-decoration: none; transition: color 0.3s ease;"
+                            onmouseover="this.style.color='#0ea5e9'" onmouseout="this.style.color='inherit'">Fundamentos
+                            de Seguridad →</a></h3>
+                    <ul class="module-topics">
+                        <li>Conceptos CIA (Confidencialidad, Integridad, Disponibilidad)</li>
+                        <li>Marco normativo CGR ISO 27001:2022</li>
+                        <li>Roles y responsabilidades</li>
+                        <li>Acuerdos de confidencialidad</li>
+                        <li>Autenticación de dos factores (2FA)</li>
+                        <li>Gestión de contraseñas</li>
+                    </ul>
+                </div>
+
+                <div class="module-card fade-in">
+                    <div class="module-number">2</div>
+                    <h3>Protección de Datos</h3>
+                    <ul class="module-topics">
+                        <li>Ley N° 8968 de Protección de Datos Personales</li>
+                        <li>Clasificación de información</li>
+                        <li>Despersonalización de datos</li>
+                        <li>Manejo de información restringida</li>
+                        <li>Almacenamiento seguro</li>
+                    </ul>
+                </div>
+
+                <div class="module-card fade-in">
+                    <div class="module-number">3</div>
+                    <h3>IA y Ciberseguridad</h3>
+                    <ul class="module-topics">
+                        <li>Inteligencia Artificial en la CGR</li>
+                        <li>Riesgos de seguridad en sistemas de IA</li>
+                        <li>Ciberseguridad en la IA</li>
+                        <li>Monitoreo y robustez de modelos</li>
+                        <li>Confidencialidad en IA</li>
+                    </ul>
+                </div>
+
+                <div class="module-card fade-in">
+                    <div class="module-number">4</div>
+                    <h3>Amenazas Digitales</h3>
+                    <ul class="module-topics">
+                        <li>Tipos de malware</li>
+                        <li>Phishing y Spear Phishing</li>
+                        <li>Vishing y Smishing</li>
+                        <li>Deepfakes con IA</li>
+                        <li>Protección contra malware</li>
+                        <li>Navegación segura</li>
+                    </ul>
+                </div>
+
+                <div class="module-card fade-in">
+                    <div class="module-number">5</div>
+                    <h3>Redes y Comunicaciones</h3>
+                    <ul class="module-topics">
+                        <li>Redes institucionales</li>
+                        <li>Redes inalámbricas (Wi-Fi)</li>
+                        <li>Uso de VPN</li>
+                        <li>Chat institucional</li>
+                        <li>Correo electrónico seguro</li>
+                    </ul>
+                </div>
+
+                <div class="module-card fade-in">
+                    <div class="module-number">6</div>
+                    <h3>Teletrabajo Seguro</h3>
+                    <ul class="module-topics">
+                        <li>Responsabilidades en teletrabajo</li>
+                        <li>Escritorio y pantalla limpios</li>
+                        <li>Protección de activos</li>
+                        <li>Seguridad física</li>
+                        <li>Entorno de trabajo seguro</li>
+                    </ul>
+                </div>
+
+                <div class="module-card fade-in">
+                    <div class="module-number">7</div>
+                    <h3>Gestión de Incidentes</h3>
+                    <ul class="module-topics">
+                        <li>Tipos de incidentes</li>
+                        <li>Detección y reporte</li>
+                        <li>Protocolos de respuesta</li>
+                        <li>Rol del funcionario</li>
+                        <li>Análisis post-incidente</li>
+                    </ul>
+                </div>
+
+                <div class="module-card fade-in">
+                    <div class="module-number">8</div>
+                    <h3>Aspectos Avanzados</h3>
+                    <ul class="module-topics">
+                        <li>Criptografía</li>
+                        <li>Navegación y filtrado web</li>
+                        <li>Gestión de activos tecnológicos</li>
+                        <li>Desvinculación de personal</li>
+                        <li>Responsabilidades legales</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">🛡️ CGR Segur@</div>
+                <p>Contraloría General de la República de Costa Rica</p>
+                <p style="margin-top: 1rem; font-size: 0.9rem;">Programa de Capacitación en Ciberseguridad 2026</p>
+                <p style="margin-top: 1rem; font-size: 0.85rem;">Basado en ISO/IEC 27001:2022 | Resolución
+                    R-DC-00069-2025</p>
+                <p style="margin-top: 2rem; font-size: 0.8rem; opacity: 0.7;">© 2026 CGR - Todos los derechos reservados
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Animación de entrada para elementos al hacer scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.fade-in').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(30px)';
+            el.style.transition = 'opacity 0.6s ease-out, transform 0.6s ease-out';
+            observer.observe(el);
+        });
+
+        // Efecto parallax suave en el header
+        window.addEventListener('scroll', () => {
+            const scrolled = window.pageYOffset;
+            const header = document.querySelector('header');
+            if (header) {
+                header.style.transform = `translateY(${scrolled * 0.5}px)`;
+            }
+        });
+    </script>
+</body>
+
+</html>

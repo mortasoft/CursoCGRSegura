@@ -1,0 +1,149 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 228 46% 15%;
+    /* #141b33 - Azul muy oscuro */
+    --foreground: 0 0% 100%;
+
+    /* PANTONE REFLEX BLUE U #384A99 */
+    --primary: 229 46% 41%;
+    --primary-foreground: 0 0% 100%;
+
+    /* PANTONE 152 U #E57B3C */
+    --secondary: 22 75% 57%;
+    --secondary-foreground: 0 0% 100%;
+
+    --border: 0 0% 86%;
+  }
+
+  body {
+    @apply bg-[#0f172a] text-white min-h-screen text-base antialiased;
+    font-family: "Century Gothic", CenturyGothic, AppleGothic, sans-serif;
+  }
+}
+
+/* Animaciones adicionales */
+.animate-spin-slow {
+  animation: spin 8s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes wiggle {
+
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+
+  25% {
+    transform: rotate(10deg);
+  }
+
+  75% {
+    transform: rotate(-10deg);
+  }
+}
+
+.animate-wiggle {
+  animation: wiggle 0.5s ease-in-out infinite;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+@layer components {
+
+  /* Botones alineados a la marca */
+  .btn-primary {
+    @apply bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-400 text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5 border border-primary-400/20;
+  }
+
+  .btn-secondary {
+    @apply bg-gradient-to-r from-secondary-600 to-secondary-500 hover:from-secondary-500 hover:to-secondary-400 text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 border border-secondary-400/20;
+  }
+
+  /* Tarjetas con estilo "Glassmorphism" azulado */
+  .card {
+    @apply bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-6 shadow-xl relative overflow-hidden;
+  }
+
+  .card-hover {
+    @apply hover:bg-white/10 hover:border-primary-400/30 hover:transform hover:-translate-y-1 transition-all duration-300;
+  }
+
+  /* Campos de entrada mejorados */
+  .input-field {
+    @apply w-full px-4 py-3 bg-black/20 border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-transparent transition-all duration-200 text-white placeholder-gray-400;
+  }
+
+  /* Badges alineados a la paleta complementaria */
+  .badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
+  }
+
+  .badge-success {
+    @apply bg-green-500/20 text-green-400 border border-green-500/30;
+  }
+
+  .badge-warning {
+    @apply bg-complementary-yellow/20 text-complementary-yellow border border-complementary-yellow/30;
+  }
+
+  .badge-info {
+    @apply bg-complementary-blue/20 text-complementary-blue border border-complementary-blue/30;
+  }
+
+  /* Barra de progreso con gradiente corporativo */
+  .progress-bar {
+    @apply w-full h-2 bg-black/20 rounded-full overflow-hidden border border-white/5;
+  }
+
+  .progress-fill {
+    @apply h-full bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full transition-all duration-1000 ease-out;
+  }
+}
+
+/* Scrollbar personalizado azulado */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1b2341;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #384A99;
+  border-radius: 5px;
+  border: 2px solid #1b2341;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #4d5eb0;
+}

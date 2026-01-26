@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Módulo 1: Fundamentos de Seguridad de la Información | CGR Segur@</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #1e40af;
+            --primary-dark: #1e3a8a;
+            --secondary: #0ea5e9;
+            --accent: #f59e0b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --dark: #0f172a;
+            --dark-light: #1e293b;
+            --gray: #64748b;
+            --light: #f1f5f9;
+            --white: #ffffff;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: var(--white);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        /* Header */
+        .module-header {
+            background: linear-gradient(135deg, rgba(30, 64, 175, 0.95) 0%, rgba(30, 58, 138, 0.95) 100%);
+            padding: 2rem 0;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--white);
+            text-decoration: none;
+            padding: 0.75rem 1.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .back-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(-5px);
+        }
+
+        .module-title {
+            flex: 1;
+            text-align: center;
+        }
+
+        .module-title h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .module-badge {
+            display: inline-block;
+            background: var(--accent);
+            color: var(--dark);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        /* Progress Bar */
+        .progress-section {
+            background: rgba(30, 41, 59, 0.5);
+            padding: 1.5rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary) 0%, var(--accent) 100%);
+            width: 0%;
+            transition: width 0.5s ease;
+            border-radius: 10px;
+        }
+
+        .progress-text {
+            text-align: center;
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+
+        /* Content Section */
+        .content-section {
+            padding: 3rem 0;
+        }
+
+        .section-intro {
+            background: linear-gradient(135deg, rgba(30, 64, 175, 0.2) 0%, rgba(14, 165, 233, 0.2) 100%);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 2.5rem;
+            margin-bottom: 3rem;
+            border-left: 5px solid var(--accent);
+        }
+
+        .section-intro h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: var(--secondary);
+        }
+
+        .objectives-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .objective-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1.5rem;
+            border-radius: 15px;
+            border-left: 4px solid var(--success);
+            transition: all 0.3s ease;
+        }
+
+        .objective-card:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+
+        .objective-card .icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Topic Section */
+        .topic-section {
+            margin-bottom: 4rem;
+        }
+
+        .topic-header {
+            background: linear-gradient(135deg, rgba(14, 165, 233, 0.2) 0%, rgba(245, 158, 11, 0.2) 100%);
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            border-left: 5px solid var(--secondary);
+        }
+
+        .topic-header h3 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+            color: var(--secondary);
+        }
+
+        .topic-number {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            background: var(--accent);
+            color: var(--dark);
+            border-radius: 50%;
+            text-align: center;
+            line-height: 40px;
+            font-weight: 700;
+            margin-right: 1rem;
+        }
+
+        .content-block {
+            background: rgba(30, 41, 59, 0.5);
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .content-block h4 {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            color: var(--accent);
+        }
+
+        .content-block p {
+            color: #cbd5e1;
+            margin-bottom: 1rem;
+            line-height: 1.8;
+        }
+
+        .content-block ul,
+        .content-block ol {
+            color: #cbd5e1;
+            margin-left: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .content-block li {
+            margin-bottom: 0.5rem;
+            line-height: 1.8;
+        }
+
+        /* Video Placeholder */
+        .video-placeholder {
+            background: linear-gradient(135deg, rgba(30, 64, 175, 0.3) 0%, rgba(14, 165, 233, 0.3) 100%);
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 15px;
+            padding: 3rem;
+            text-align: center;
+            margin: 2rem 0;
+            transition: all 0.3s ease;
+        }
+
+        .video-placeholder:hover {
+            border-color: var(--secondary);
+            background: linear-gradient(135deg, rgba(30, 64, 175, 0.4) 0%, rgba(14, 165, 233, 0.4) 100%);
+        }
+
+        .video-placeholder .icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.7;
+        }
+
+        .video-placeholder h4 {
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+            color: var(--secondary);
+        }
+
+        .video-placeholder p {
+            color: #94a3b8;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Info Box */
+        .info-box {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
+            border-left: 5px solid var(--success);
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin: 2rem 0;
+        }
+
+        .info-box.warning {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%);
+            border-left-color: var(--accent);
+        }
+
+        .info-box.danger {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%);
+            border-left-color: var(--danger);
+        }
+
+        .info-box .icon {
+            font-size: 1.5rem;
+            margin-right: 0.5rem;
+        }
+
+        .info-box h5 {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+        }
+
+        /* Key Concepts */
+        .key-concepts {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .concept-card {
+            background: linear-gradient(135deg, rgba(30, 64, 175, 0.15) 0%, rgba(14, 165, 233, 0.15) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .concept-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--secondary);
+            box-shadow: 0 15px 30px rgba(14, 165, 233, 0.2);
+        }
+
+        .concept-card .icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .concept-card h4 {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            color: var(--secondary);
+        }
+
+        .concept-card p {
+            color: #cbd5e1;
+            font-size: 0.95rem;
+        }
+
+        /* Quiz Section */
+        .quiz-section {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%);
+            border: 2px solid rgba(245, 158, 11, 0.3);
+            border-radius: 20px;
+            padding: 2.5rem;
+            margin: 3rem 0;
+        }
+
+        .quiz-section h3 {
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            color: var(--accent);
+            text-align: center;
+        }
+
+        .quiz-question {
+            background: rgba(30, 41, 59, 0.5);
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+        }
+
+        .quiz-question h4 {
+            margin-bottom: 1rem;
+            color: var(--white);
+        }
+
+        .quiz-options {
+            list-style: none;
+            margin-left: 0;
+        }
+
+        .quiz-options li {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .quiz-options li:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-left-color: var(--secondary);
+            transform: translateX(5px);
+        }
+
+        /* Navigation Buttons */
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(14, 165, 233, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--white);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Footer */
+        footer {
+            background: rgba(15, 23, 42, 0.95);
+            padding: 2rem 0;
+            margin-top: 4rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+            color: #94a3b8;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .module-title h1 {
+                font-size: 1.5rem;
+            }
+
+            .nav-buttons {
+                flex-direction: column;
+            }
+
+            .key-concepts {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="module-header">
+        <div class="container">
+            <div class="header-content">
+                <a href="curso-cgr-segura.html" class="back-link">
+                    ← Volver al Curso
+                </a>
+                <div class="module-title">
+                    <span class="module-badge">Módulo 1</span>
+                    <h1>Fundamentos de Seguridad de la Información</h1>
+                </div>
+                <div style="width: 150px;"></div>
+            </div>
+        </div>
+    </header>
+
+    <section class="progress-section">
+        <div class="container">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressBar"></div>
+            </div>
+            <p class="progress-text">Progreso del módulo: <span id="progressText">0%</span></p>
+        </div>
+    </section>
+
+    <main class="content-section">
+        <div class="container">
+            <!-- Introducción -->
+            <section class="section-intro fade-in">
+                <h2>🎯 Bienvenido al Módulo 1</h2>
+                <p style="font-size: 1.1rem; color: #cbd5e1; margin-bottom: 2rem;">
+                    En este módulo aprenderás los conceptos fundamentales de la seguridad de la información y cómo
+                    aplicarlos en tu trabajo diario en la Contraloría General de la República. Comprenderás la
+                    importancia de proteger los activos de información institucional y tu rol como guardián de la
+                    seguridad.
+                </p>
+
+                <div class="objectives-grid">
+                    <div class="objective-card">
+                        <div class="icon">📚</div>
+                        <h4>Comprender los conceptos básicos</h4>
+                        <p>Aprende sobre CIA: Confidencialidad, Integridad y Disponibilidad</p>
+                    </div>
+                    <div class="objective-card">
+                        <div class="icon">📋</div>
+                        <h4>Conocer el marco normativo</h4>
+                        <p>Familiarízate con ISO 27001:2022 y los lineamientos de la CGR</p>
+                    </div>
+                    <div class="objective-card">
+                        <div class="icon">👥</div>
+                        <h4>Identificar roles y responsabilidades</h4>
+                        <p>Conoce el papel del CISO, CSIRT y UTI en la seguridad</p>
+                    </div>
+                    <div class="objective-card">
+                        <div class="icon">🔐</div>
+                        <h4>Gestionar credenciales de forma segura</h4>
+                        <p>Domina las mejores prácticas de autenticación y contraseñas</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tema 1: Conceptos Básicos -->
+            <section class="topic-section fade-in">
+                <div class="topic-header">
+                    <h3><span class="topic-number">1</span>Conceptos Básicos de Seguridad de la Información</h3>
+                    <p style="color: #cbd5e1;">Fundamentos esenciales que todo funcionario debe conocer</p>
+                </div>
+
+                <div class="content-block">
+                    <h4>¿Qué es la Seguridad de la Información?</h4>
+                    <p>
+                        La seguridad de la información es la práctica de proteger la información de accesos no
+                        autorizados, uso, divulgación, interrupción, modificación o destrucción. En la CGR, esto
+                        significa proteger datos sensibles de auditorías, información financiera del Estado y datos
+                        personales de ciudadanos.
+                    </p>
+                    <p>
+                        <strong>¿Por qué es importante?</strong> Como funcionario de la CGR, manejas información crítica
+                        que, si se ve comprometida, podría afectar la confianza ciudadana, la transparencia del Estado y
+                        la integridad de las investigaciones.
+                    </p>
+                </div>
+
+                <div class="video-placeholder">
+                    <div class="icon">🎥</div>
+                    <h4>Video: Introducción a la Seguridad de la Información</h4>
+                    <p>
+                        <strong>Descripción del video:</strong> Animación explicativa de 5 minutos que muestra qué es la
+                        seguridad de la información, por qué es crucial en el sector público, y ejemplos de incidentes
+                        reales que afectaron instituciones gubernamentales. Incluye testimonios de funcionarios sobre la
+                        importancia de proteger la información.
+                    </p>
+                </div>
+
+                <div class="content-block">
+                    <h4>La Tríada CIA: Los Tres Pilares de la Seguridad</h4>
+
+                    <div class="key-concepts">
+                        <div class="concept-card">
+                            <div class="icon">🔒</div>
+                            <h4>Confidencialidad</h4>
+                            <p>
+                                Garantizar que la información solo sea accesible para personas autorizadas. Ejemplo: Los
+                                datos de una auditoría en curso solo deben ser vistos por el equipo asignado.
+                            </p>
+                        </div>
+                        <div class="concept-card">
+                            <div class="icon">✅</div>
+                            <h4>Integridad</h4>
+                            <p>
+                                Asegurar que la información sea precisa y no haya sido alterada sin autorización.
+                                Ejemplo: Un informe de auditoría debe mantener su contenido original sin modificaciones
+                                no autorizadas.
+                            </p>
+                        </div>
+                        <div class="concept-card">
+                            <div class="icon">⚡</div>
+                            <h4>Disponibilidad</h4>
+                            <p>
+                                Garantizar que la información esté accesible cuando se necesite. Ejemplo: Los sistemas
+                                de la CGR deben estar disponibles durante el horario laboral para realizar las funciones
+                                de fiscalización.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-box">
+                    <h5><span class="icon">💡</span>Ejemplo Práctico</h5>
+                    <p>
+                        Imagina que estás trabajando en un informe de auditoría sobre el uso de fondos públicos:
+                    </p>
+                    <ul>
+                        <li><strong>Confidencialidad:</strong> No compartes el borrador con personas fuera del equipo
+                        </li>
+                        <li><strong>Integridad:</strong> Usas controles de versión para evitar cambios no autorizados
+                        </li>
+                        <li><strong>Disponibilidad:</strong> Guardas el documento en el servidor institucional con
+                            respaldo automático</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Tema 2: Marco Normativo -->
+            <section class="topic-section fade-in">
+                <div class="topic-header">
+                    <h3><span class="topic-number">2</span>Marco Normativo de la CGR</h3>
+                    <p style="color: #cbd5e1;">Conoce las reglas y estándares que guían nuestra seguridad</p>
+                </div>
+
+                <div class="content-block">
+                    <h4>Lineamientos de Seguridad de la Información ISO/IEC 27001:2022</h4>
+                    <p>
+                        La CGR ha adoptado el estándar internacional ISO/IEC 27001:2022 como base para su Sistema de
+                        Gestión de Seguridad de la Información (SGSI). Este estándar proporciona un marco sistemático
+                        para gestionar la información sensible y protegerla de amenazas.
+                    </p>
+                    <p>
+                        <strong>Resolución R-DC-00069-2025:</strong> Esta resolución establece las Directrices de
+                        Seguridad de la Información que todos los funcionarios deben cumplir.
+                    </p>
+                </div>
+
+                <div class="video-placeholder">
+                    <div class="icon">🎥</div>
+                    <h4>Video: ISO 27001 Explicado para Funcionarios</h4>
+                    <p>
+                        <strong>Descripción del video:</strong> Video de 7 minutos que explica de manera sencilla qué es
+                        ISO 27001, por qué la CGR lo adoptó, y cómo afecta el trabajo diario de los funcionarios.
+                        Incluye infografías animadas y ejemplos específicos del contexto de la Contraloría.
+                    </p>
+                </div>
+
+                <div class="content-block">
+                    <h4>Principales Lineamientos que Debes Conocer</h4>
+                    <ul>
+                        <li><strong>Sección D:</strong> Compromiso de desarrollar una cultura de seguridad</li>
+                        <li><strong>Sección E:</strong> Controles organizacionales (clasificación, gestión de activos)
+                        </li>
+                        <li><strong>Sección F:</strong> Controles de personas (capacitación, concienciación)</li>
+                        <li><strong>Sección G:</strong> Controles físicos (acceso a instalaciones, escritorio limpio)
+                        </li>
+                        <li><strong>Sección H:</strong> Controles tecnológicos (acceso lógico, cifrado, respaldos)</li>
+                    </ul>
+                </div>
+
+                <div class="info-box warning">
+                    <h5><span class="icon">⚠️</span>Importante</h5>
+                    <p>
+                        El incumplimiento de los lineamientos de seguridad puede resultar en responsabilidades
+                        administrativas, civiles e incluso penales. La seguridad no es opcional, es una obligación de
+                        todos.
+                    </p>
+                </div>
+            </section>
+
+            <!-- Tema 3: Roles y Responsabilidades -->
+            <section class="topic-section fade-in">
+                <div class="topic-header">
+                    <h3><span class="topic-number">3</span>Roles y Responsabilidades en Seguridad</h3>
+                    <p style="color: #cbd5e1;">Conoce quién hace qué en la estructura de seguridad de la CGR</p>
+                </div>
+
+                <div class="content-block">
+                    <h4>Estructura de Seguridad de la Información</h4>
+
+                    <div class="key-concepts">
+                        <div class="concept-card">
+                            <div class="icon">👔</div>
+                            <h4>CISO (Chief Information Security Officer)</h4>
+                            <p>
+                                El Oficial de Seguridad de la Información lidera la estrategia de ciberseguridad, define
+                                políticas y supervisa el cumplimiento de los lineamientos.
+                            </p>
+                        </div>
+                        <div class="concept-card">
+                            <div class="icon">🚨</div>
+                            <h4>CSIRT (Equipo de Respuesta a Incidentes)</h4>
+                            <p>
+                                Equipo especializado que responde a incidentes de seguridad, investiga brechas y
+                                coordina la recuperación ante ataques.
+                            </p>
+                        </div>
+                        <div class="concept-card">
+                            <div class="icon">💻</div>
+                            <h4>UTI (Unidad de Tecnologías de Información)</h4>
+                            <p>
+                                Implementa y mantiene los controles técnicos de seguridad, gestiona la infraestructura y
+                                brinda soporte tecnológico.
+                            </p>
+                        </div>
+                        <div class="concept-card">
+                            <div class="icon">👤</div>
+                            <h4>TÚ: El Funcionario</h4>
+                            <p>
+                                Eres la primera línea de defensa. Tu responsabilidad es seguir las políticas, reportar
+                                incidentes y proteger la información que manejas.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="video-placeholder">
+                    <div class="icon">🎥</div>
+                    <h4>Video: Organigrama de Seguridad de la CGR</h4>
+                    <p>
+                        <strong>Descripción del video:</strong> Animación de 4 minutos que muestra la estructura
+                        organizacional de seguridad de la información en la CGR, con entrevistas breves del CISO y
+                        miembros del CSIRT explicando sus funciones. Incluye escenarios de cómo interactúan estos roles
+                        ante un incidente.
+                    </p>
+                </div>
+
+                <div class="content-block">
+                    <h4>Tus Responsabilidades como Funcionario</h4>
+                    <ol>
+                        <li><strong>Proteger tus credenciales:</strong> Tu usuario y contraseña son personales e
+                            intransferibles</li>
+                        <li><strong>Clasificar la información:</strong> Identificar correctamente el nivel de
+                            sensibilidad de los datos</li>
+                        <li><strong>Reportar incidentes:</strong> Notificar inmediatamente cualquier actividad
+                            sospechosa</li>
+                        <li><strong>Mantener escritorio limpio:</strong> No dejar información sensible expuesta</li>
+                        <li><strong>Completar capacitaciones:</strong> Participar en todos los módulos de CGR Segur@
+                        </li>
+                        <li><strong>Firmar acuerdos de confidencialidad:</strong> Comprometerse formalmente con la
+                            protección de datos</li>
+                    </ol>
+                </div>
+
+                <div class="info-box">
+                    <h5><span class="icon">📞</span>Canales de Reporte</h5>
+                    <p>Si detectas un incidente de seguridad, repórtalo inmediatamente a través de:</p>
+                    <ul>
+                        <li><strong>Correo:</strong> seguridad.informacion@cgr.go.cr</li>
+                        <li><strong>Sistema SOS:</strong> Crear una orden de servicio con categoría "Seguridad"</li>
+                        <li><strong>Teléfono UTI:</strong> Extensión interna (consultar directorio)</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Tema 4: Identidad Digital y Autenticación -->
+            <section class="topic-section fade-in">
+                <div class="topic-header">
+                    <h3><span class="topic-number">4</span>Identidad Digital y Autenticación</h3>
+                    <p style="color: #cbd5e1;">Tu identidad digital es tu llave de acceso: protégela</p>
+                </div>
+
+                <div class="content-block">
+                    <h4>La Identidad Digital como Nuevo Perímetro</h4>
+                    <p>
+                        En el mundo digital, tu identidad (usuario y contraseña) es equivalente a tu firma y cédula.
+                        Cualquier acción realizada con tus credenciales se atribuye a ti, por lo que protegerlas es
+                        fundamental.
+                    </p>
+                    <p>
+                        <strong>Principio de Intransferibilidad:</strong> Según el lineamiento H.1.1, tu identidad
+                        digital es personal e intransferible. Nunca compartas tu contraseña, ni siquiera con tu jefe o
+                        compañeros de confianza.
+                    </p>
+                </div>
+
+                <div class="info-box danger">
+                    <h5><span class="icon">🚫</span>Nunca Hagas Esto</h5>
+                    <ul>
+                        <li>Compartir tu contraseña con nadie, bajo ninguna circunstancia</li>
+                        <li>Escribir tu contraseña en papeles, post-its o archivos no cifrados</li>
+                        <li>Usar la misma contraseña para sistemas personales e institucionales</li>
+                        <li>Dejar tu sesión abierta cuando te alejas de tu escritorio</li>
+                        <li>Usar contraseñas simples como "123456" o "CGR2026"</li>
+                    </ul>
+                </div>
+
+                <div class="content-block">
+                    <h4>Autenticación de Dos Factores (2FA)</h4>
+                    <p>
+                        La autenticación de dos factores añade una capa adicional de seguridad al requerir dos formas de
+                        verificación:
+                    </p>
+                    <ol>
+                        <li><strong>Algo que sabes:</strong> Tu contraseña</li>
+                        <li><strong>Algo que tienes:</strong> Un código temporal en tu teléfono o token físico</li>
+                    </ol>
+                    <p>
+                        Según el lineamiento H.1.3, el 2FA es <strong>obligatorio</strong> para todos los sistemas
+                        críticos de la CGR.
+                    </p>
+                </div>
+
+                <div class="video-placeholder">
+                    <div class="icon">🎥</div>
+                    <h4>Video Tutorial: Configuración de 2FA en Sistemas CGR</h4>
+                    <p>
+                        <strong>Descripción del video:</strong> Tutorial paso a paso de 6 minutos que muestra cómo
+                        configurar la autenticación de dos factores en los sistemas de la CGR. Incluye capturas de
+                        pantalla, demostración en vivo de la instalación de la app Microsoft Authenticator, y solución
+                        de problemas comunes.
+                    </p>
+                </div>
+            </section>
+
+            <!-- Tema 5: Gestión de Contraseñas -->
+            <section class="topic-section fade-in">
+                <div class="topic-header">
+                    <h3><span class="topic-number">5</span>Gestión de Contraseñas Robustas</h3>
+                    <p style="color: #cbd5e1;">Aprende a crear y gestionar contraseñas seguras</p>
+                </div>
+
+                <div class="content-block">
+                    <h4>Estándares de Contraseñas de la CGR (Lineamiento H.1.7)</h4>
+                    <p>Todas las contraseñas institucionales deben cumplir con:</p>
+                    <ul>
+                        <li><strong>Longitud mínima:</strong> 12 caracteres (recomendado 16+)</li>
+                        <li><strong>Complejidad:</strong> Combinación de mayúsculas, minúsculas, números y símbolos</li>
+                        <li><strong>Caducidad:</strong> Cambio obligatorio cada 90 días</li>
+                        <li><strong>Historial:</strong> No reutilizar las últimas 5 contraseñas</li>
+                        <li><strong>Bloqueo:</strong> Cuenta bloqueada tras 5 intentos fallidos</li>
+                    </ul>
+                </div>
+
+                <div class="content-block">
+                    <h4>Método de Frases de Contraseña (Passphrases)</h4>
+                    <p>
+                        Una frase de contraseña es más segura y fácil de recordar que una contraseña compleja. Ejemplo:
+                    </p>
+                    <div class="info-box">
+                        <p><strong>❌ Contraseña débil:</strong> CGR2026!</p>
+                        <p><strong>✅ Frase de contraseña fuerte:</strong> MiGato$eLlama#Pelusa&Tiene3Años!</p>
+                        <p style="margin-top: 1rem; font-size: 0.9rem; color: #94a3b8;">
+                            La segunda tiene 38 caracteres, es fácil de recordar y extremadamente difícil de adivinar.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="video-placeholder">
+                    <div class="icon">🎥</div>
+                    <h4>Video: Cómo Crear Contraseñas Seguras y Memorables</h4>
+                    <p>
+                        <strong>Descripción del video:</strong> Video educativo de 5 minutos que enseña técnicas para
+                        crear contraseñas robustas usando el método de frases de contraseña. Incluye ejemplos visuales,
+                        un generador de contraseñas en vivo, y explicación de por qué ciertas contraseñas son débiles
+                        (con demostración de herramientas de cracking).
+                    </p>
+                </div>
+
+                <div class="content-block">
+                    <h4>Administradores de Contraseñas</h4>
+                    <p>
+                        Un administrador de contraseñas es una herramienta que almacena todas tus contraseñas de forma
+                        cifrada. Solo necesitas recordar una contraseña maestra.
+                    </p>
+                    <p>
+                        <strong>Herramientas aprobadas por la CGR:</strong>
+                    </p>
+                    <ul>
+                        <li>Solución institucional proporcionada por la UTI</li>
+                        <li>Administradores de contraseñas validados por el CISO</li>
+                    </ul>
+                    <div class="info-box warning">
+                        <h5><span class="icon">⚠️</span>Importante</h5>
+                        <p>
+                            No uses administradores de contraseñas gratuitos en la nube sin aprobación del CISO.
+                            Consulta con la UTI sobre las opciones autorizadas.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tema 6: Acuerdos de Confidencialidad -->
+            <section class="topic-section fade-in">
+                <div class="topic-header">
+                    <h3><span class="topic-number">6</span>Acuerdos de Confidencialidad</h3>
+                    <p style="color: #cbd5e1;">Tu compromiso formal con la protección de la información</p>
+                </div>
+
+                <div class="content-block">
+                    <h4>¿Qué es un Acuerdo de Confidencialidad?</h4>
+                    <p>
+                        Es un documento legal que firmas al ingresar a la CGR (y periódicamente) donde te comprometes a:
+                    </p>
+                    <ul>
+                        <li>Proteger la información institucional y de terceros</li>
+                        <li>No divulgar información sensible o restringida</li>
+                        <li>Usar la información solo para fines laborales autorizados</li>
+                        <li>Devolver toda la información al cesar funciones</li>
+                        <li>Cumplir con las políticas de seguridad</li>
+                    </ul>
+                </div>
+
+                <div class="info-box danger">
+                    <h5><span class="icon">⚖️</span>Consecuencias del Incumplimiento</h5>
+                    <p>
+                        Violar un acuerdo de confidencialidad puede resultar en:
+                    </p>
+                    <ul>
+                        <li><strong>Responsabilidad administrativa:</strong> Amonestaciones, suspensión o despido</li>
+                        <li><strong>Responsabilidad civil:</strong> Indemnización por daños causados</li>
+                        <li><strong>Responsabilidad penal:</strong> Delitos de revelación de secretos o abuso de
+                            autoridad</li>
+                    </ul>
+                </div>
+
+                <div class="content-block">
+                    <h4>Buenas Prácticas de Confidencialidad</h4>
+                    <ol>
+                        <li>No discutas información sensible en lugares públicos (cafeterías, transporte)</li>
+                        <li>No compartas detalles de auditorías en redes sociales</li>
+                        <li>Verifica la identidad de quien solicita información antes de compartirla</li>
+                        <li>Usa canales oficiales (correo institucional) para comunicar información sensible</li>
+                        <li>Al terminar tu relación laboral, devuelve toda la información y elimina copias personales
+                        </li>
+                    </ol>
+                </div>
+            </section>
+
+            <!-- Quiz de Autoevaluación -->
+            <section class="quiz-section fade-in">
+                <h3>🎯 Quiz de Autoevaluación</h3>
+                <p style="text-align: center; color: #cbd5e1; margin-bottom: 2rem;">
+                    Pon a prueba tus conocimientos sobre los fundamentos de seguridad
+                </p>
+
+                <div class="quiz-question">
+                    <h4>1. ¿Cuáles son los tres pilares de la seguridad de la información (Tríada CIA)?</h4>
+                    <ul class="quiz-options">
+                        <li>a) Confidencialidad, Integridad, Autenticación</li>
+                        <li>b) Confidencialidad, Integridad, Disponibilidad ✓</li>
+                        <li>c) Cifrado, Integridad, Autorización</li>
+                        <li>d) Confidencialidad, Identificación, Acceso</li>
+                    </ul>
+                </div>
+
+                <div class="quiz-question">
+                    <h4>2. ¿Qué estándar internacional adoptó la CGR para su Sistema de Gestión de Seguridad?</h4>
+                    <ul class="quiz-options">
+                        <li>a) ISO 9001</li>
+                        <li>b) ISO 27001:2022 ✓</li>
+                        <li>c) ISO 14001</li>
+                        <li>d) ISO 20000</li>
+                    </ul>
+                </div>
+
+                <div class="quiz-question">
+                    <h4>3. ¿Cuál es la longitud mínima requerida para contraseñas en la CGR?</h4>
+                    <ul class="quiz-options">
+                        <li>a) 8 caracteres</li>
+                        <li>b) 10 caracteres</li>
+                        <li>c) 12 caracteres ✓</li>
+                        <li>d) 16 caracteres</li>
+                    </ul>
+                </div>
+
+                <div class="quiz-question">
+                    <h4>4. ¿Qué significa que tu identidad digital es "intransferible"?</h4>
+                    <ul class="quiz-options">
+                        <li>a) Puedes compartirla solo con tu jefe</li>
+                        <li>b) Nunca debes compartir tu usuario y contraseña con nadie ✓</li>
+                        <li>c) Solo puedes usarla en la oficina</li>
+                        <li>d) Debes cambiarla cada semana</li>
+                    </ul>
+                </div>
+
+                <div class="quiz-question">
+                    <h4>5. Si detectas un correo sospechoso, ¿qué debes hacer?</h4>
+                    <ul class="quiz-options">
+                        <li>a) Eliminarlo inmediatamente</li>
+                        <li>b) Reportarlo a seguridad.informacion@cgr.go.cr ✓</li>
+                        <li>c) Reenviarlo a tus compañeros para advertirles</li>
+                        <li>d) Hacer clic para verificar si es real</li>
+                    </ul>
+                </div>
+
+                <div class="info-box" style="margin-top: 2rem;">
+                    <h5><span class="icon">📊</span>Evaluación Formal</h5>
+                    <p>
+                        Este quiz es solo para práctica. La evaluación formal del módulo se realizará en la plataforma
+                        LMS institucional y requiere un 80% de aciertos para aprobar.
+                    </p>
+                </div>
+            </section>
+
+            <!-- Recursos Adicionales -->
+            <section class="topic-section fade-in">
+                <div class="topic-header">
+                    <h3><span class="topic-number">📚</span>Recursos Adicionales</h3>
+                    <p style="color: #cbd5e1;">Material complementario para profundizar</p>
+                </div>
+
+                <div class="content-block">
+                    <h4>Documentos de Referencia</h4>
+                    <ul>
+                        <li>📄 Lineamientos de Seguridad de la Información CGR 2025 (PDF)</li>
+                        <li>📄 Resolución R-DC-00069-2025 (PDF)</li>
+                        <li>📄 Guía Rápida de Contraseñas Seguras (PDF)</li>
+                        <li>📄 Manual de Usuario: Autenticación de Dos Factores (PDF)</li>
+                        <li>📄 Plantilla de Acuerdo de Confidencialidad (PDF)</li>
+                    </ul>
+                </div>
+
+                <div class="content-block">
+                    <h4>Videos Externos Recomendados</h4>
+                    <ul>
+                        <li>🎥 <a href="https://www.youtube.com/watch?v=4AoQg8ady5M" target="_blank"
+                                style="color: var(--secondary);">Gestión de contraseñas seguras</a></li>
+                        <li>🎥 <a href="https://www.youtube.com/watch?v=20N6zckxBP4" target="_blank"
+                                style="color: var(--secondary);">Concienciación: El mejor escudo eres tú</a></li>
+                        <li>🎥 <a href="https://www.youtube.com/watch?v=I1cLmEFDwQg" target="_blank"
+                                style="color: var(--secondary);">¿Qué es ISO 27001? 8 pasos para su implementación</a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="content-block">
+                    <h4>Herramientas Útiles</h4>
+                    <ul>
+                        <li>🔧 Generador de contraseñas seguras (herramienta interna UTI)</li>
+                        <li>🔧 Verificador de robustez de contraseñas</li>
+                        <li>🔧 Plantilla de clasificación de información</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Navegación -->
+            <div class="nav-buttons">
+                <a href="curso-cgr-segura.html" class="btn btn-secondary">
+                    ← Volver al Curso
+                </a>
+                <button class="btn btn-primary" onclick="completeModule()">
+                    Marcar como Completado ✓
+                </button>
+                <a href="#" class="btn btn-primary">
+                    Siguiente Módulo →
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>🛡️ CGR Segur@ | Módulo 1: Fundamentos de Seguridad de la Información</p>
+            <p style="margin-top: 0.5rem; font-size: 0.9rem;">Contraloría General de la República de Costa Rica © 2026
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        // Simular progreso del módulo
+        let progress = 0;
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+
+        // Detectar scroll para actualizar progreso
+        window.addEventListener('scroll', () => {
+            const windowHeight = window.innerHeight;
+            const documentHeight = document.documentElement.scrollHeight - windowHeight;
+            const scrolled = window.scrollY;
+            const scrollProgress = (scrolled / documentHeight) * 100;
+
+            progress = Math.min(Math.round(scrollProgress), 100);
+            progressBar.style.width = progress + '%';
+            progressText.textContent = progress + '%';
+        });
+
+        // Función para marcar módulo como completado
+        function completeModule() {
+            if (progress >= 80) {
+                alert('¡Felicitaciones! Has completado el Módulo 1.\n\nAhora puedes proceder a la evaluación formal en la plataforma LMS.');
+                // Aquí se integraría con el sistema LMS real
+            } else {
+                alert('Por favor, revisa todo el contenido del módulo antes de marcarlo como completado.\n\nProgreso actual: ' + progress + '%');
+            }
+        }
+
+        // Animación de entrada para elementos
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.fade-in').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(30px)';
+            el.style.transition = 'opacity 0.6s ease-out, transform 0.6s ease-out';
+            observer.observe(el);
+        });
+
+        // Interactividad del quiz
+        document.querySelectorAll('.quiz-options li').forEach(option => {
+            option.addEventListener('click', function () {
+                // Remover selección previa
+                this.parentElement.querySelectorAll('li').forEach(li => {
+                    li.style.background = 'rgba(255, 255, 255, 0.05)';
+                    li.style.borderLeftColor = 'transparent';
+                });
+
+                // Marcar opción seleccionada
+                this.style.background = 'rgba(14, 165, 233, 0.2)';
+                this.style.borderLeftColor = 'var(--secondary)';
+
+                // Verificar si es correcta
+                if (this.textContent.includes('✓')) {
+                    this.style.borderLeftColor = 'var(--success)';
+                    this.style.background = 'rgba(16, 185, 129, 0.2)';
+                } else {
+                    this.style.borderLeftColor = 'var(--danger)';
+                    this.style.background = 'rgba(239, 68, 68, 0.2)';
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
