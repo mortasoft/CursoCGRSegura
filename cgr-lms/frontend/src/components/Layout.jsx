@@ -66,17 +66,15 @@ export default function Layout() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+        <div className="min-h-screen bg-[#0d1127]">
             {/* Navbar */}
-            <nav className="bg-slate-900/80 backdrop-blur-md border-b border-slate-700/50 sticky top-0 z-50">
+            <nav className="bg-[#0d1127]/90 backdrop-blur-md border-b border-primary-500/10 sticky top-0 z-50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center h-16">
                         {/* Logo */}
                         <div className="flex items-center gap-4 cursor-pointer" onClick={() => navigate('/dashboard')}>
-                            <div className="w-12 h-12 p-0.5 bg-gradient-to-br from-primary-400 to-secondary-500 rounded-xl shadow-lg border border-white/10 overflow-hidden">
-                                <div className="w-full h-full bg-slate-900 rounded-[10px] flex items-center justify-center">
-                                    <img src="/assets/logo.png" alt="CGR Logo" className="w-[85%] h-[85%] object-contain" />
-                                </div>
+                            <div className="w-12 h-12 flex items-center justify-center p-0.5">
+                                <img src="/images/Logotipo-CGR-blanco-transp.png" alt="CGR Logo" className="w-full h-full object-contain filter drop-shadow-[0_0_8px_rgba(255,255,255,0.2)]" />
                             </div>
                             <div className="hidden sm:block">
                                 <h1 className="text-xl font-black bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent tracking-tighter">
@@ -154,9 +152,9 @@ export default function Layout() {
                                                         className={`p-4 border-b border-white/5 flex gap-4 hover:bg-white/[0.02] transition-colors cursor-pointer relative group ${!n.is_read ? 'bg-primary-500/[0.03]' : 'opacity-60'}`}
                                                     >
                                                         <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${n.notification_type === 'success' ? 'bg-green-500/10 text-green-500' :
-                                                                n.notification_type === 'warning' ? 'bg-orange-500/10 text-orange-500' :
-                                                                    n.notification_type === 'danger' ? 'bg-red-500/10 text-red-500' :
-                                                                        'bg-blue-500/10 text-blue-500'
+                                                            n.notification_type === 'warning' ? 'bg-orange-500/10 text-orange-500' :
+                                                                n.notification_type === 'danger' ? 'bg-red-500/10 text-red-500' :
+                                                                    'bg-blue-500/10 text-blue-500'
                                                             }`}>
                                                             {n.notification_type === 'success' ? <CheckCircle2 className="w-5 h-5" /> :
                                                                 n.notification_type === 'warning' ? <AlertTriangle className="w-5 h-5" /> :
@@ -182,13 +180,13 @@ export default function Layout() {
                                                 ))
                                             ) : (
                                                 <div className="py-12 text-center space-y-4">
-                                                    <Bell className="w-12 h-12 text-gray-800 mx-auto opacity-20" />
+                                                    <Bell className="w-12 h-12 text-gray-700 mx-auto opacity-20" />
                                                     <p className="text-gray-600 text-[10px] font-black uppercase tracking-widest">Sin notificaciones nuevas</p>
                                                 </div>
                                             )}
                                         </div>
 
-                                        <div className="p-3 bg-white/5 text-center">
+                                        <div className="p-3 bg-primary-500/5 text-center border-t border-white/5">
                                             <button className="text-[10px] font-black text-gray-500 hover:text-white uppercase tracking-widest flex items-center justify-center gap-2 mx-auto transition-colors">
                                                 Ver todo el historial <ArrowRight className="w-3 h-3" />
                                             </button>
@@ -198,17 +196,17 @@ export default function Layout() {
                             </div>
 
                             {/* User Profile */}
-                            <div className="hidden sm:flex items-center gap-3 pl-1 pr-4 py-1 bg-slate-800/40 rounded-2xl border border-white/5 shadow-inner group hover:border-primary-500/30 transition-colors cursor-pointer" onClick={() => navigate('/profile')}>
+                            <div className="hidden sm:flex items-center gap-3 pl-1 pr-4 py-1 bg-slate-800/40 rounded-2xl border border-white/5 shadow-inner group hover:border-primary-500/30 transition-colors cursor-pointer overflow-hidden max-w-[200px]" onClick={() => navigate('/profile')}>
                                 <div className="p-0.5 bg-gradient-to-tr from-primary-500 to-secondary-500 rounded-full">
                                     <img
                                         src={user?.profilePicture || `https://ui-avatars.com/api/?name=${user?.firstName}+${user?.lastName}&background=384A99&color=fff`}
                                         alt={user?.firstName}
-                                        className="w-8 h-8 rounded-full border-2 border-slate-900"
+                                        className="w-8 h-8 rounded-full border-2 border-[#0d1127]"
                                         referrerPolicy="no-referrer"
                                     />
                                 </div>
-                                <div className="hidden lg:block">
-                                    <p className="text-xs font-black text-white group-hover:text-primary-400 transition-colors uppercase tracking-wider">
+                                <div className="hidden lg:block max-w-[120px]">
+                                    <p className="text-[10px] font-black text-white group-hover:text-primary-400 transition-colors uppercase tracking-tight truncate">
                                         {user?.firstName} {user?.lastName}
                                     </p>
                                     <div className="flex items-center gap-1">
@@ -240,7 +238,7 @@ export default function Layout() {
 
                 {/* Mobile Menu */}
                 {isMobileMenuOpen && (
-                    <div className="md:hidden border-t border-slate-700/50 bg-slate-900/95 backdrop-blur-md">
+                    <div className="md:hidden border-t border-primary-500/10 bg-[#0d1127]/95 backdrop-blur-md">
                         <div className="px-4 py-4 space-y-2">
                             {navItems.map((item) => (
                                 <NavLink
@@ -276,15 +274,24 @@ export default function Layout() {
             </main>
 
             {/* Footer */}
-            <footer className="mt-auto border-t border-slate-700/50 bg-slate-900/50 backdrop-blur-sm">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-                    <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-                        <p className="text-sm text-gray-400">
-                            © 2026 Contraloría General de la República de Costa Rica
-                        </p>
-                        <p className="text-xs text-gray-500">
-                            ISO/IEC 27001:2022 | Resolución R-DC-00069-2025
-                        </p>
+            <footer className="mt-auto border-t border-primary-500/10 bg-[#0d1127]/50 backdrop-blur-sm">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    <div className="flex flex-col sm:flex-row justify-between items-center gap-6">
+                        <div className="flex items-center gap-4 opacity-70">
+                            <img src="/images/Logotipo-CGR-blanco-transp.png" alt="CGR Logo" className="h-8 object-contain" />
+                            <div className="h-8 w-[1px] bg-white/10 hidden sm:block"></div>
+                            <p className="text-[10px] font-bold text-gray-400 leading-tight uppercase tracking-wider">
+                                República de Costa Rica<br />Contraloría General
+                            </p>
+                        </div>
+                        <div className="text-right flex flex-col items-end gap-1">
+                            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
+                                ISO/IEC 27001:2022 | Resolución R-DC-00069-2025
+                            </p>
+                            <p className="text-[9px] text-gray-600 font-medium italic">
+                                "Vigilancia de la Hacienda Pública para el bienestar de la ciudadanía"
+                            </p>
+                        </div>
                     </div>
                 </div>
             </footer>

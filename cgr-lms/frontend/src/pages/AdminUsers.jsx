@@ -11,7 +11,10 @@ import {
     ArrowLeft,
     User,
     Building2,
-    Briefcase
+    Briefcase,
+    Download,
+    Clock,
+    Calendar
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
@@ -94,6 +97,31 @@ export default function AdminUsers() {
         }
     };
 
+    const syncFromDirectory = async () => {
+        if (!editingUser?.email) return;
+
+        try {
+            const response = await axios.get(`${API_URL}/directory`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (response.data.success) {
+                const directoryEntry = response.data.directory.find(d => d.email.toLowerCase() === editingUser.email.toLowerCase());
+                if (directoryEntry) {
+                    setEditingUser({
+                        ...editingUser,
+                        department: directoryEntry.department,
+                        position: directoryEntry.position || editingUser.position // Update position too if available
+                    });
+                    toast.success('Datos sincronizados del directorio maestro');
+                } else {
+                    toast.error('No se encontró al funcionario en el directorio maestro');
+                }
+            }
+        } catch (error) {
+            toast.error('Error al consultar el directorio maestro');
+        }
+    };
+
     const filteredUsers = users.filter(user =>
         `${user.first_name} ${user.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -144,6 +172,7 @@ export default function AdminUsers() {
                             <th className="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Funcionario</th>
                             <th className="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Unidad / Cargo</th>
                             <th className="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Rol</th>
+                            <th className="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Acceso</th>
                             <th className="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Nivel / XP</th>
                             <th className="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Estado</th>
                             <th className="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-right">Acciones</th>
@@ -172,6 +201,18 @@ export default function AdminUsers() {
                                         }`}>
                                         {u.role}
                                     </span>
+                                </td>
+                                <td className="px-6 py-5 text-center">
+                                    <div className="inline-flex flex-col items-start gap-1">
+                                        <div className="flex items-center gap-1.5 text-[9px] font-bold text-gray-400">
+                                            <Calendar className="w-3 h-3 text-gray-600" />
+                                            <span>Reg: {new Date(u.created_at).toLocaleDateString()}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1.5 text-[9px] font-bold text-primary-400">
+                                            <Clock className="w-3 h-3 text-primary-600" />
+                                            <span>Visto: {u.last_login ? new Date(u.last_login).toLocaleDateString() : 'Nunca'}</span>
+                                        </div>
+                                    </div>
                                 </td>
                                 <td className="px-6 py-5 text-center">
                                     <p className="text-xs font-black text-white">{u.points} PTS</p>
@@ -216,9 +257,19 @@ export default function AdminUsers() {
             {isEditModalOpen && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
                     <div className="card w-full max-w-lg p-0 overflow-hidden shadow-[0_30px_60px_rgba(0,0,0,0.5)] border-white/10">
-                        <div className="p-8 border-b border-white/5 bg-white/5">
-                            <h2 className="text-xl font-black text-white uppercase tracking-tight">Editar Funcionario</h2>
-                            <p className="text-gray-500 text-xs font-medium mt-1">{editingUser.first_name} {editingUser.last_name}</p>
+                        <div className="p-8 border-b border-white/5 bg-white/5 flex justify-between items-center">
+                            <div>
+                                <h2 className="text-xl font-black text-white uppercase tracking-tight">Editar Funcionario</h2>
+                                <p className="text-gray-500 text-xs font-medium mt-1">{editingUser.first_name} {editingUser.last_name}</p>
+                            </div>
+                            <button
+                                onClick={syncFromDirectory}
+                                className="flex items-center gap-2 px-4 py-2 bg-primary-500/20 text-primary-400 border border-primary-500/30 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary-500/30 transition-all group"
+                                title="Sincronizar datos oficiales"
+                            >
+                                <Download className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                                Sincronizar Directorio
+                            </button>
                         </div>
 
                         <div className="p-8 space-y-6">

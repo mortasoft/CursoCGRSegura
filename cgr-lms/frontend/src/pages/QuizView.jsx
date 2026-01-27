@@ -14,7 +14,8 @@ import {
     RotateCcw,
     ArrowLeft,
     FileText,
-    Target
+    Target,
+    Star
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -266,14 +267,14 @@ export default function QuizView() {
                             key={option.id}
                             onClick={() => handleOptionSelect(currentQuestion.id, option.id)}
                             className={`w-full p-6 text-left rounded-2xl border-2 transition-all duration-200 group flex items-center justify-between ${answers[currentQuestion.id] === option.id
-                                    ? 'bg-primary-500/10 border-primary-500 text-white shadow-[0_0_30px_rgba(56,74,153,0.2)]'
-                                    : 'bg-slate-900/50 border-white/5 text-gray-400 hover:border-white/10 hover:bg-slate-900 group'
+                                ? 'bg-primary-500/10 border-primary-500 text-white shadow-[0_0_30px_rgba(56,74,153,0.2)]'
+                                : 'bg-slate-900/50 border-white/5 text-gray-400 hover:border-white/10 hover:bg-slate-900 group'
                                 }`}
                         >
                             <span className="font-bold">{option.option_text}</span>
                             <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${answers[currentQuestion.id] === option.id
-                                    ? 'border-primary-400 bg-primary-400'
-                                    : 'border-gray-700'
+                                ? 'border-primary-400 bg-primary-400'
+                                : 'border-gray-700'
                                 }`}>
                                 {answers[currentQuestion.id] === option.id && <div className="w-2 h-2 bg-white rounded-full"></div>}
                             </div>

@@ -47,8 +47,14 @@ export default function LessonView() {
                 setNavigation(response.data.navigation);
             }
         } catch (error) {
-            toast.error('Error al cargar la lección');
-            navigate('/modules');
+            const errorData = error.response?.data;
+            if (error.response?.status === 403) {
+                toast.error(errorData.message || 'Esta lección está bloqueada');
+                navigate(`/modules/${errorData.moduleId || ''}`);
+            } else {
+                toast.error('Error al cargar la lección');
+                navigate('/modules');
+            }
         } finally {
             setLoading(false);
         }

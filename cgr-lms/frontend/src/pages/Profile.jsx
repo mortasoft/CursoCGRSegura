@@ -96,9 +96,17 @@ export default function Profile() {
                                 {user.first_name} {user.last_name}
                             </h1>
                             <div className="flex flex-wrap justify-center md:justify-start gap-4 text-gray-400 text-sm font-medium">
-                                <span className="flex items-center gap-1.5"><Mail className="w-4 h-4 text-primary-400" /> {user.email}</span>
-                                <span className="flex items-center gap-1.5"><Building2 className="w-4 h-4 text-primary-400" /> {user.department || 'CGR'}</span>
-                                <span className="flex items-center gap-1.5"><Briefcase className="w-4 h-4 text-primary-400" /> {user.position || 'Funcionario'}</span>
+                                <span className="flex items-center gap-1.5" title="Correo Institucional"><Mail className="w-4 h-4 text-primary-400" /> {user.email}</span>
+                                <span className="mx-1 text-gray-700 hidden md:block">•</span>
+                                <span className="flex items-center gap-1.5" title="Unidad Administrativa">
+                                    <Building2 className="w-4 h-4 text-primary-400" />
+                                    <span className="text-gray-500 mr-1">Área:</span> {user.department || 'Sin asignar'}
+                                </span>
+                                <span className="mx-1 text-gray-700 hidden md:block">•</span>
+                                <span className="flex items-center gap-1.5" title="Cargo Institucional">
+                                    <Briefcase className="w-4 h-4 text-primary-400" />
+                                    <span className="text-gray-500 mr-1">Puesto:</span> {user.position || 'Sin asignar'}
+                                </span>
                             </div>
                         </div>
 

@@ -141,22 +141,7 @@ export default function AdminPanel() {
                 ))}
             </div>
 
-            {/* Global Admin Alerts / Notifications Section can go here */}
-            <div className="card bg-primary-500/5 border-primary-500/20 p-6">
-                <div className="flex items-center gap-4">
-                    <div className="p-3 bg-primary-500/20 rounded-full text-primary-400">
-                        <ShieldAlert className="w-6 h-6" />
-                    </div>
-                    <div className="flex-1">
-                        <h4 className="text-white font-bold">Estado del Sistema</h4>
-                        <p className="text-gray-400 text-sm">Todos los servicios operan correctamente. Sincronización con Directorio Activo exitosa.</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                        <span className="text-green-500 text-sm font-medium">Online</span>
-                    </div>
-                </div>
-            </div>
+
         </div>
     );
 }

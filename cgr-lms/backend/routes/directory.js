@@ -56,21 +56,21 @@ router.post('/upload', authMiddleware, adminMiddleware, upload.single('csv'), as
             const line = lines[i].trim();
             if (!line) continue;
 
-            const [email, fullName, department] = line.split(',').map(s => s.trim());
+            const [email, fullName, department, position] = line.split(',').map(s => s.trim());
 
             if (email && fullName) {
                 try {
                     await db.query(
-                        `INSERT INTO staff_directory (email, full_name, department) 
-                         VALUES (?, ?, ?) 
-                         ON DUPLICATE KEY UPDATE full_name = ?, department = ?`,
-                        [email, fullName, department, fullName, department]
+                        `INSERT INTO staff_directory (email, full_name, department, position) 
+                         VALUES (?, ?, ?, ?) 
+                         ON DUPLICATE KEY UPDATE full_name = ?, department = ?, position = ?`,
+                        [email, fullName, department, position, fullName, department, position]
                     );
 
-                    // Si el usuario ya está registrado en 'users' pero no tiene departamento, actualizarlo
+                    // Si el usuario ya está registrado en 'users' pero no tiene departamento o puesto actualizado, sincronizarlo
                     await db.query(
-                        'UPDATE users SET department = ? WHERE email = ? AND (department IS NULL OR department = "")',
-                        [department, email]
+                        'UPDATE users SET department = ?, position = ? WHERE email = ?',
+                        [department, position || '', email]
                     );
 
                     processed++;

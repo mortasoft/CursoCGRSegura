@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useModuleStore } from '../store/moduleStore';
+import { useAuthStore } from '../store/authStore';
 import {
     BookOpen,
     Clock,
@@ -15,6 +16,7 @@ import { useState } from 'react';
 
 export default function Modules() {
     const { modules, loading, fetchModules } = useModuleStore();
+    const { user } = useAuthStore();
     const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
@@ -60,82 +62,105 @@ export default function Modules() {
 
             {/* Módulos Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {filteredModules.length > 0 ? (
-                    filteredModules.map((module, index) => (
-                        <Link
-                            key={module.id}
-                            to={`/modules/${module.id}`}
-                            className="group relative flex flex-col bg-slate-800/20 border border-white/5 rounded-[2rem] overflow-hidden hover:bg-slate-800/40 hover:border-primary-500/30 transition-all duration-500 hover:shadow-[0_20px_50px_rgba(0,0,0,0.3)] hover:-translate-y-2"
-                        >
-                            {/* Accent line top */}
-                            <div className={`absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-primary-500 to-secondary-500 opacity-60`}></div>
+                {filteredModules.length > 0 ?
+                    filteredModules.map((module, index) => {
+                        const releaseDate = module.release_date ? new Date(module.release_date) : null;
+                        const isAdmin = user?.role === 'admin';
+                        const isLocked = releaseDate && releaseDate > new Date() && !isAdmin;
+                        const formattedDate = releaseDate
+                            ? releaseDate.toLocaleDateString('es-CR', { day: 'numeric', month: 'long' })
+                            : module.month;
 
-                            <div className="p-8 space-y-6">
-                                {/* Badge and Number */}
-                                <div className="flex justify-between items-start">
-                                    <div className="w-14 h-14 bg-slate-900 rounded-2xl border border-white/10 flex items-center justify-center text-2xl font-black text-white group-hover:text-secondary-500 transition-colors shadow-2xl">
-                                        {module.module_number < 10 ? `0${module.module_number}` : module.module_number}
-                                    </div>
-                                    <div className="flex flex-col items-end gap-2">
-                                        <span className="badge badge-primary py-1 px-3 text-[10px] uppercase font-bold tracking-widest bg-primary-500/10 border-primary-500/20 text-primary-400">
-                                            {module.month}
-                                        </span>
-                                        {module.completionPercentage === 100 && (
-                                            <div className="flex items-center gap-1 text-green-500 text-[10px] font-black uppercase tracking-tighter">
-                                                <CheckCircle className="w-3 h-3" /> Completado
+                        return (
+                            <div key={module.id} className="relative">
+                                <Link
+                                    to={isLocked ? '#' : `/modules/${module.id}`}
+                                    onClick={(e) => isLocked && e.preventDefault()}
+                                    className={`group relative flex flex-col bg-slate-800/20 border border-white/5 rounded-[2rem] overflow-hidden transition-all duration-500 ${isLocked
+                                        ? 'cursor-not-allowed grayscale-[0.5] opacity-80'
+                                        : 'hover:bg-slate-800/40 hover:border-primary-500/30 hover:shadow-[0_20px_50px_rgba(0,0,0,0.3)] hover:-translate-y-2'
+                                        }`}
+                                >
+                                    {/* Accent line top */}
+                                    <div className={`absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r ${isLocked ? 'from-gray-600 to-gray-400' : 'from-primary-500 to-secondary-500'} opacity-60`}></div>
+
+                                    <div className="p-8 space-y-6">
+                                        {/* Badge and Number */}
+                                        <div className="flex justify-between items-start">
+                                            <div className={`w-14 h-14 bg-slate-900 rounded-2xl border border-white/10 flex items-center justify-center text-2xl font-black text-white ${!isLocked && 'group-hover:text-secondary-500'} transition-colors shadow-2xl`}>
+                                                {module.module_number < 10 ? `0${module.module_number}` : module.module_number}
                                             </div>
-                                        )}
-                                    </div>
-                                </div>
+                                            <div className="flex flex-col items-end gap-2">
+                                                <span className={`badge ${isLocked ? 'bg-slate-700 text-gray-400 border-gray-600' : 'badge-primary bg-primary-500/10 border-primary-500/20 text-primary-400'} py-1 px-3 text-[10px] uppercase font-bold tracking-widest flex items-center gap-1.5`}>
+                                                    {isLocked ? <Lock className="w-3 h-3" /> : <Calendar className="w-3 h-3" />}
+                                                    {formattedDate}
+                                                </span>
+                                                {module.completionPercentage === 100 && (
+                                                    <div className="flex items-center gap-1 text-green-500 text-[10px] font-black uppercase tracking-tighter">
+                                                        <CheckCircle className="w-3 h-3" /> Completado
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
 
-                                {/* Content */}
-                                <div className="space-y-3">
-                                    <h3 className="text-xl font-bold text-white group-hover:text-primary-400 transition-colors leading-tight min-h-[3rem]">
-                                        {module.title}
-                                    </h3>
-                                    <p className="text-gray-400 text-sm line-clamp-3 leading-relaxed font-medium">
-                                        {module.description}
-                                    </p>
-                                </div>
-
-                                {/* Stats Footer */}
-                                <div className="pt-6 border-t border-white/5 space-y-4">
-                                    <div className="flex items-center gap-6">
-                                        <div className="flex items-center gap-2 text-gray-500">
-                                            <BookOpen className="w-4 h-4" />
-                                            <span className="text-[11px] font-bold uppercase tracking-widest">{module.total_lessons || 0} Lecciones</span>
+                                        {/* Content */}
+                                        <div className="space-y-3">
+                                            <h3 className={`text-xl font-bold text-white ${!isLocked && 'group-hover:text-primary-400'} transition-colors leading-tight min-h-[3rem]`}>
+                                                {module.title}
+                                            </h3>
+                                            <p className="text-gray-400 text-sm line-clamp-3 leading-relaxed font-medium">
+                                                {module.description}
+                                            </p>
                                         </div>
-                                        <div className="flex items-center gap-2 text-gray-500">
-                                            <Clock className="w-4 h-4" />
-                                            <span className="text-[11px] font-bold uppercase tracking-widest">{module.total_duration || 0} min</span>
+
+                                        {/* Stats Footer */}
+                                        <div className="pt-6 border-t border-white/5 space-y-4">
+                                            <div className="flex items-center gap-6">
+                                                <div className="flex items-center gap-2 text-gray-500">
+                                                    <BookOpen className="w-4 h-4" />
+                                                    <span className="text-[11px] font-bold uppercase tracking-widest">{module.total_lessons || 0} Lecciones</span>
+                                                </div>
+                                                <div className="flex items-center gap-2 text-gray-500">
+                                                    <Clock className="w-4 h-4" />
+                                                    <span className="text-[11px] font-bold uppercase tracking-widest">{module.total_duration || 0} min</span>
+                                                </div>
+                                            </div>
+
+                                            {/* Link and Arrow */}
+                                            <div className="flex items-center justify-between group/btn">
+                                                {isLocked ? (
+                                                    <div className="w-full py-2 flex items-center justify-center gap-2 bg-white/5 rounded-xl border border-white/5 text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em]">
+                                                        Disponible próximamente
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        <div className="h-1 flex-1 bg-white/5 rounded-full overflow-hidden mr-6">
+                                                            <div
+                                                                className="h-full bg-gradient-to-r from-primary-500 to-secondary-500 transition-all duration-700"
+                                                                style={{ width: `${module.completionPercentage || 0}%` }}
+                                                            ></div>
+                                                        </div>
+                                                        <div className="flex items-center gap-1 text-primary-400 font-black text-[11px] uppercase tracking-widest opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all duration-300">
+                                                            Explorar <ChevronRight className="w-4 h-4" />
+                                                        </div>
+                                                    </>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
-
-                                    {/* Link and Arrow */}
-                                    <div className="flex items-center justify-between group/btn">
-                                        <div className="h-1 flex-1 bg-white/5 rounded-full overflow-hidden mr-6">
-                                            <div
-                                                className="h-full bg-gradient-to-r from-primary-500 to-secondary-500 transition-all duration-700"
-                                                style={{ width: `${module.completionPercentage || 0}%` }}
-                                            ></div>
-                                        </div>
-                                        <div className="flex items-center gap-1 text-primary-400 font-black text-[11px] uppercase tracking-widest opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all duration-300">
-                                            Explorar <ChevronRight className="w-4 h-4" />
-                                        </div>
-                                    </div>
-                                </div>
+                                </Link>
                             </div>
-                        </Link>
-                    ))
-                ) : (
-                    <div className="col-span-full py-24 text-center">
-                        <div className="w-24 h-24 bg-slate-800/30 rounded-full flex items-center justify-center mx-auto mb-6 border border-dashed border-white/10">
-                            <Search className="w-10 h-10 text-gray-600" />
+                        );
+                    })
+                    : (
+                        <div className="col-span-full py-24 text-center">
+                            <div className="w-24 h-24 bg-slate-800/30 rounded-full flex items-center justify-center mx-auto mb-6 border border-dashed border-white/10">
+                                <Search className="w-10 h-10 text-gray-600" />
+                            </div>
+                            <h3 className="text-2xl font-bold text-white mb-2">No se encontraron resultados</h3>
+                            <p className="text-gray-500">Intenta ajustar los términos de búsqueda.</p>
                         </div>
-                        <h3 className="text-2xl font-bold text-white mb-2">No se encontraron resultados</h3>
-                        <p className="text-gray-500">Intenta ajustar los términos de búsqueda.</p>
-                    </div>
-                )}
+                    )}
             </div>
 
             {/* Banner de Certificación (Empty state o CTA) */}

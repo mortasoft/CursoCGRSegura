@@ -64,8 +64,8 @@ router.post('/google', async (req, res) => {
             const result = await db.query(
                 `INSERT INTO users (
                     email, google_id, first_name, last_name, 
-                    profile_picture, role, department, is_active
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, TRUE)`,
+                    profile_picture, role, department, position, is_active
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, TRUE)`,
                 [
                     email,
                     googleId,
@@ -73,7 +73,8 @@ router.post('/google', async (req, res) => {
                     family_name || '',
                     picture || null,
                     role,
-                    directoryInfo?.department || null
+                    directoryInfo?.department || null,
+                    directoryInfo?.position || null
                 ]
             );
 
@@ -88,14 +89,18 @@ router.post('/google', async (req, res) => {
 
             logger.info(`Nuevo usuario registrado: ${email}`);
         } else {
-            // Si el usuario existe pero no tiene departamento y el directorio sí lo tiene, actualizarlo
-            if (!user[0].department) {
-                const [directoryInfo] = await db.query(
-                    'SELECT department FROM staff_directory WHERE email = ?',
-                    [email]
-                );
-                if (directoryInfo?.department) {
-                    await db.query('UPDATE users SET department = ? WHERE id = ?', [directoryInfo.department, user[0].id]);
+            // Si el usuario existe pero no tiene departamento o puesto, y el directorio sí lo tiene, actualizarlo
+            const [directoryInfo] = await db.query(
+                'SELECT department, position FROM staff_directory WHERE email = ?',
+                [email]
+            );
+
+            if (directoryInfo) {
+                if (!user[0].department || !user[0].position) {
+                    await db.query(
+                        'UPDATE users SET department = ?, position = ? WHERE id = ?',
+                        [directoryInfo.department || user[0].department, directoryInfo.position || user[0].position, user[0].id]
+                    );
                 }
             }
 

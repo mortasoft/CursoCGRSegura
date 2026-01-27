@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
-const { authMiddleware } = require('../middleware/auth');
+const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 const { createNotification } = require('../utils/notifications');
 
 /**
@@ -25,6 +25,28 @@ router.get('/:id', authMiddleware, async (req, res) => {
 
         if (!lesson) {
             return res.status(404).json({ error: 'Lección no encontrada' });
+        }
+
+        // 1.1 Validar si la lección está bloqueada (si hay lecciones obligatorias previas no completadas)
+        const [prevMandatoryIncomplete] = await db.query(
+            `SELECT l.id, l.title 
+             FROM lessons l
+             LEFT JOIN user_progress up ON l.id = up.lesson_id AND up.user_id = ?
+             WHERE l.module_id = ? 
+             AND l.order_index < ? 
+             AND l.is_published = TRUE 
+             AND l.is_optional = FALSE 
+             AND (up.status IS NULL OR up.status != 'completed')
+             ORDER BY l.order_index ASC LIMIT 1`,
+            [userId, lesson.module_id, lesson.order_index]
+        );
+
+        if (prevMandatoryIncomplete && req.user.role !== 'admin') {
+            return res.status(403).json({
+                error: 'Lección bloqueada',
+                message: `Debes completar la lección "${prevMandatoryIncomplete.title}" para continuar.`,
+                moduleId: lesson.module_id
+            });
         }
 
         // 2. Obtener o crear progreso
@@ -131,6 +153,68 @@ router.post('/:id/complete', authMiddleware, async (req, res) => {
     } catch (error) {
         console.error('Error al completar lección:', error);
         res.status(500).json({ error: 'Error al registrar progreso' });
+    }
+});
+
+/**
+ * @route   POST /api/lessons
+ * @desc    Crear nueva lección
+ * @access  Private/Admin
+ */
+router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const { module_id, title, content, lesson_type, video_url, duration_minutes, order_index, is_published, is_optional } = req.body;
+
+        const result = await db.query(
+            `INSERT INTO lessons (module_id, title, content, lesson_type, video_url, duration_minutes, order_index, is_published, is_optional)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [module_id, title, content, lesson_type || 'reading', video_url || null, duration_minutes || 15, order_index, is_published || false, is_optional || false]
+        );
+
+        res.status(201).json({ success: true, lessonId: result.insertId });
+    } catch (error) {
+        console.error('Error creando lección:', error);
+        res.status(500).json({ error: 'Error al crear lección' });
+    }
+});
+
+/**
+ * @route   PUT /api/lessons/:id
+ * @desc    Actualizar lección
+ * @access  Private/Admin
+ */
+router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const { title, content, lesson_type, video_url, duration_minutes, order_index, is_published, is_optional } = req.body;
+        const lessonId = req.params.id;
+
+        await db.query(
+            `UPDATE lessons 
+             SET title = ?, content = ?, lesson_type = ?, video_url = ?, duration_minutes = ?, order_index = ?, is_published = ?, is_optional = ?
+             WHERE id = ?`,
+            [title, content, lesson_type, video_url, duration_minutes, order_index, is_published, is_optional, lessonId]
+        );
+
+        res.json({ success: true, message: 'Lección actualizada' });
+    } catch (error) {
+        console.error('Error actualizando lección:', error);
+        res.status(500).json({ error: 'Error al actualizar lección' });
+    }
+});
+
+/**
+ * @route   DELETE /api/lessons/:id
+ * @desc    Eliminar lección
+ * @access  Private/Admin
+ */
+router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const lessonId = req.params.id;
+        await db.query('DELETE FROM lessons WHERE id = ?', [lessonId]);
+        res.json({ success: true, message: 'Lección eliminada' });
+    } catch (error) {
+        console.error('Error eliminando lección:', error);
+        res.status(500).json({ error: 'Error al eliminar lección' });
     }
 });
 

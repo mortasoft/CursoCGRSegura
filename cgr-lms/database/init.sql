@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS modules (
     month VARCHAR(20) NOT NULL COMMENT 'Mes programado (Febrero, Marzo, etc.)',
     duration_minutes INT DEFAULT 60,
     is_published BOOLEAN DEFAULT FALSE,
+    release_date DATE COMMENT 'Fecha de lanzamiento',
     order_index INT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -51,6 +52,7 @@ CREATE TABLE IF NOT EXISTS lessons (
     duration_minutes INT DEFAULT 15,
     order_index INT NOT NULL,
     is_published BOOLEAN DEFAULT FALSE,
+    is_optional BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (module_id) REFERENCES modules(id) ON DELETE CASCADE,
@@ -257,6 +259,19 @@ CREATE TABLE IF NOT EXISTS notifications (
     INDEX idx_user_id (user_id),
     INDEX idx_is_read (is_read),
     INDEX idx_created_at (created_at DESC)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tabla de directorio maestro de funcionarios
+CREATE TABLE IF NOT EXISTS staff_directory (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    full_name VARCHAR(255) NOT NULL,
+    department VARCHAR(100),
+    position VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_email (email),
+    INDEX idx_department (department)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Tabla de logs de actividad

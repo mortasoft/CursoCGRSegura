@@ -99,7 +99,7 @@ router.get('/profile', authMiddleware, async (req, res) => {
 router.get('/', authMiddleware, adminMiddleware, async (req, res) => {
     try {
         const users = await db.query(
-            `SELECT u.id, u.first_name, u.last_name, u.email, u.role, u.department, u.position, u.is_active, u.created_at,
+            `SELECT u.id, u.first_name, u.last_name, u.email, u.role, u.department, u.position, u.is_active, u.created_at, u.last_login,
                     up.points, up.level
              FROM users u
              LEFT JOIN user_points up ON u.id = up.user_id

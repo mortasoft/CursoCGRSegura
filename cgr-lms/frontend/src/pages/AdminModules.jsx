@@ -13,7 +13,9 @@ import {
     Clock,
     BookOpen,
     AlertCircle,
-    CheckCircle2
+    CheckCircle2,
+    ChevronDown,
+    ChevronUp
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ConfirmModal from '../components/ConfirmModal';
@@ -30,11 +32,15 @@ export default function AdminModules() {
         month: 'Febrero',
         duration_minutes: 0,
         is_published: false,
+        release_date: new Date().toISOString().split('T')[0],
         order_index: ''
     });
 
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [moduleToDelete, setModuleToDelete] = useState(null);
+    const [expandedModule, setExpandedModule] = useState(null);
+    const [moduleLessons, setModuleLessons] = useState([]);
+    const [lessonsLoading, setLessonsLoading] = useState(false);
 
     useEffect(() => {
         fetchAdminModules();
@@ -50,6 +56,7 @@ export default function AdminModules() {
                 month: module.month,
                 duration_minutes: module.duration_minutes,
                 is_published: !!module.is_published,
+                release_date: module.release_date ? module.release_date.split('T')[0] : '',
                 order_index: module.order_index
             });
         } else {
@@ -61,6 +68,7 @@ export default function AdminModules() {
                 month: 'Febrero',
                 duration_minutes: 0,
                 is_published: false,
+                release_date: new Date().toISOString().split('T')[0],
                 order_index: modules.length + 1
             });
         }
@@ -94,6 +102,57 @@ export default function AdminModules() {
             toast.success('Módulo eliminado');
         } else {
             toast.error(res.error || 'Error al eliminar');
+        }
+    };
+
+    const toggleModuleLessons = async (moduleId) => {
+        if (expandedModule === moduleId) {
+            setExpandedModule(null);
+            return;
+        }
+
+        setExpandedModule(moduleId);
+        setLessonsLoading(true);
+        try {
+            const token = localStorage.getItem('cgr-lms-auth') ? JSON.parse(localStorage.getItem('cgr-lms-auth')).state.token : null;
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/modules/${moduleId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const data = await response.json();
+            if (data.success) {
+                setModuleLessons(data.module.lessons);
+            }
+        } catch (error) {
+            toast.error('Error al cargar lecciones');
+        } finally {
+            setLessonsLoading(false);
+        }
+    };
+
+    const toggleLessonOptional = async (lessonId) => {
+        const lesson = moduleLessons.find(l => l.id === lessonId);
+        if (!lesson) return;
+
+        try {
+            const token = localStorage.getItem('cgr-lms-auth') ? JSON.parse(localStorage.getItem('cgr-lms-auth')).state.token : null;
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/lessons/${lessonId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    ...lesson,
+                    is_optional: !lesson.is_optional
+                })
+            });
+            const data = await response.json();
+            if (data.success) {
+                setModuleLessons(prev => prev.map(l => l.id === lessonId ? { ...l, is_optional: !l.is_optional } : l));
+                toast.success('Estado de lección actualizado');
+            }
+        } catch (error) {
+            toast.error('Error al actualizar lección');
         }
     };
 
@@ -197,7 +256,7 @@ export default function AdminModules() {
                                         <div className="flex items-center gap-3 mt-1 text-sm text-gray-400">
                                             <span className="flex items-center gap-1">
                                                 <Calendar className="w-3.5 h-3.5" />
-                                                {module.month}
+                                                {module.release_date ? new Date(module.release_date).toLocaleDateString() : module.month}
                                             </span>
                                             {module.is_published ? (
                                                 <span className="badge badge-success py-0 px-2 text-[10px] uppercase">Publicado</span>
@@ -240,11 +299,60 @@ export default function AdminModules() {
                                         <p className="text-white font-medium">{module.total_duration || 0} min</p>
                                     </div>
                                 </div>
-                                <button className="text-primary-400 hover:text-primary-300 text-sm font-bold flex items-center gap-1 transition-colors">
-                                    Gestionar contenido
-                                    <MoreVertical className="w-4 h-4" />
+                                <button
+                                    onClick={() => toggleModuleLessons(module.id)}
+                                    className="text-primary-400 hover:text-primary-300 text-sm font-bold flex items-center gap-1 transition-colors"
+                                >
+                                    {expandedModule === module.id ? 'Cerrar contenido' : 'Gestionar contenido'}
+                                    {expandedModule === module.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                                 </button>
                             </div>
+
+                            {/* Expanded Lessons Table */}
+                            {expandedModule === module.id && (
+                                <div className="mt-6 pt-6 border-t border-white/5 animate-fade-in">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h4 className="text-sm font-black text-gray-400 uppercase tracking-widest">Lecciones del Módulo</h4>
+                                    </div>
+
+                                    {lessonsLoading ? (
+                                        <div className="flex justify-center py-4">
+                                            <div className="w-6 h-6 border-2 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            {moduleLessons.length > 0 ? (
+                                                moduleLessons.map((lesson) => (
+                                                    <div key={lesson.id} className="flex items-center justify-between p-3 bg-slate-900/40 rounded-xl border border-white/5 hover:border-white/10 transition-all">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="w-8 h-8 bg-slate-800 rounded-lg flex items-center justify-center text-xs font-bold text-gray-500 border border-slate-700">
+                                                                {lesson.order_index}
+                                                            </div>
+                                                            <div>
+                                                                <p className="text-sm font-bold text-white">{lesson.title}</p>
+                                                                <p className="text-[10px] text-gray-500 uppercase font-black">{lesson.lesson_type}</p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-4">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Opcional</span>
+                                                                <button
+                                                                    onClick={() => toggleLessonOptional(lesson.id)}
+                                                                    className={`w-10 h-5 rounded-full relative transition-colors ${lesson.is_optional ? 'bg-secondary-500' : 'bg-slate-700'}`}
+                                                                >
+                                                                    <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${lesson.is_optional ? 'left-6' : 'left-1'}`}></div>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <p className="text-center py-4 text-gray-500 text-sm">Este módulo no tiene lecciones.</p>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     ))}
                 </div>
@@ -306,16 +414,14 @@ export default function AdminModules() {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-gray-400">Mes Programado</label>
-                                    <select
-                                        className="input-field appearance-none bg-no-repeat bg-[right_1rem_center] bg-[length:1em_1em]"
-                                        value={formData.month}
-                                        onChange={(e) => setFormData({ ...formData, month: e.target.value })}
-                                    >
-                                        {['Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'].map(m => (
-                                            <option key={m} value={m} className="bg-slate-900">{m}</option>
-                                        ))}
-                                    </select>
+                                    <label className="text-sm font-medium text-gray-400">Fecha de Lanzamiento</label>
+                                    <input
+                                        type="date"
+                                        required
+                                        className="input-field"
+                                        value={formData.release_date}
+                                        onChange={(e) => setFormData({ ...formData, release_date: e.target.value })}
+                                    />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium text-gray-400">Duración Est. (min)</label>
@@ -325,6 +431,21 @@ export default function AdminModules() {
                                         value={formData.duration_minutes}
                                         onChange={(e) => setFormData({ ...formData, duration_minutes: e.target.value })}
                                     />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-gray-400">Mes (Opcional)</label>
+                                    <select
+                                        className="input-field appearance-none bg-no-repeat bg-[right_1rem_center] bg-[length:1em_1em]"
+                                        value={formData.month}
+                                        onChange={(e) => setFormData({ ...formData, month: e.target.value })}
+                                    >
+                                        {['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'].map(m => (
+                                            <option key={m} value={m} className="bg-slate-900">{m}</option>
+                                        ))}
+                                    </select>
                                 </div>
                             </div>
 

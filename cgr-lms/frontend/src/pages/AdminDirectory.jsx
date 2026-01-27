@@ -12,7 +12,9 @@ import {
     AlertCircle,
     Building2,
     Mail,
-    Download
+    Download,
+    Briefcase,
+    Filter
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
@@ -30,6 +32,8 @@ export default function AdminDirectory() {
 
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [recordToDelete, setRecordToDelete] = useState(null);
+    const [filterDepartment, setFilterDepartment] = useState('');
+    const [filterStatus, setFilterStatus] = useState('');
 
     useEffect(() => {
         fetchDirectory();
@@ -97,11 +101,20 @@ export default function AdminDirectory() {
         }
     };
 
-    const filteredDirectory = directory.filter(person =>
-        person.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        person.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (person.department && person.department.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
+    const filteredDirectory = directory.filter(person => {
+        const matchesSearch = person.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            person.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (person.department && person.department.toLowerCase().includes(searchTerm.toLowerCase())) ||
+            (person.position && person.position.toLowerCase().includes(searchTerm.toLowerCase()));
+
+        const matchesDepartment = !filterDepartment || person.department === filterDepartment;
+        const matchesStatus = !filterStatus ||
+            (filterStatus === 'registered' ? person.is_registered : !person.is_registered);
+
+        return matchesSearch && matchesDepartment && matchesStatus;
+    });
+
+    const departments = [...new Set(directory.map(p => p.department).filter(Boolean))].sort();
 
     const stats = {
         total: directory.length,
@@ -147,8 +160,8 @@ export default function AdminDirectory() {
 
             {/* Stats Dashboard */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="card p-8 flex items-center gap-6 bg-slate-800/20 border-white/5">
-                    <div className="w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-500">
+                <div className="card p-8 flex items-center gap-6 bg-primary-500/5 border-white/5">
+                    <div className="w-14 h-14 rounded-2xl bg-primary-500/10 flex items-center justify-center text-primary-500">
                         <Users className="w-7 h-7" />
                     </div>
                     <div>
@@ -165,8 +178,8 @@ export default function AdminDirectory() {
                         <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Iniciaron Sesión</p>
                     </div>
                 </div>
-                <div className="card p-8 flex items-center gap-6 bg-orange-500/5 border-orange-500/10">
-                    <div className="w-14 h-14 rounded-2xl bg-orange-500/10 flex items-center justify-center text-orange-500">
+                <div className="card p-8 flex items-center gap-6 bg-secondary-500/5 border-secondary-500/10">
+                    <div className="w-14 h-14 rounded-2xl bg-secondary-500/10 flex items-center justify-center text-secondary-500">
                         <AlertCircle className="w-7 h-7" />
                     </div>
                     <div>
@@ -177,22 +190,53 @@ export default function AdminDirectory() {
             </div>
 
             {/* Filter & Search */}
-            <div className="relative group">
-                <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-gray-500 group-focus-within:text-primary-400 transition-colors" />
-                <input
-                    type="text"
-                    placeholder="Filtrar por nombre, email o departamento..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-16 pr-8 py-6 bg-slate-900/50 border border-white/5 rounded-3xl text-white font-medium focus:outline-none focus:border-primary-500/50 transition-all shadow-inner"
-                />
+            <div className="flex flex-col lg:flex-row gap-4">
+                <div className="relative flex-1 group">
+                    <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-gray-500 group-focus-within:text-primary-400 transition-colors" />
+                    <input
+                        type="text"
+                        placeholder="Buscar por nombre, email, departamento o puesto..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full pl-16 pr-8 py-4 bg-slate-900/50 border border-white/5 rounded-2xl text-white font-medium focus:outline-none focus:border-primary-500/50 transition-all shadow-inner"
+                    />
+                </div>
+
+                <div className="flex gap-4">
+                    <div className="relative min-w-[200px]">
+                        <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                        <select
+                            value={filterDepartment}
+                            onChange={(e) => setFilterDepartment(e.target.value)}
+                            className="w-full pl-12 pr-4 py-4 bg-slate-900/50 border border-white/5 rounded-2xl text-white text-sm font-medium focus:outline-none focus:border-primary-500 appearance-none cursor-pointer"
+                        >
+                            <option value="">Todos las Unidades</option>
+                            {departments.map(dept => (
+                                <option key={dept} value={dept}>{dept}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="relative min-w-[200px]">
+                        <Filter className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                        <select
+                            value={filterStatus}
+                            onChange={(e) => setFilterStatus(e.target.value)}
+                            className="w-full pl-12 pr-4 py-4 bg-slate-900/50 border border-white/5 rounded-2xl text-white text-sm font-medium focus:outline-none focus:border-primary-500 appearance-none cursor-pointer"
+                        >
+                            <option value="">Todos los Estados</option>
+                            <option value="registered">Registrados</option>
+                            <option value="pending">Pendientes</option>
+                        </select>
+                    </div>
+                </div>
             </div>
 
             {/* Legend / Info */}
             <div className="bg-slate-900/30 rounded-2xl p-4 border border-dashed border-white/5 text-[10px] text-gray-600 font-bold uppercase tracking-[0.2em] flex flex-wrap gap-6 justify-center">
                 <span className="flex items-center gap-2"><div className="w-2 h-2 bg-green-500 rounded-full"></div> Registrado</span>
                 <span className="flex items-center gap-2"><div className="w-2 h-2 bg-gray-700 rounded-full"></div> Pendiente</span>
-                <span className="flex items-center gap-2">• El CSV debe tener el formato: correo, nombre_completo, departamento</span>
+                <span className="flex items-center gap-2">• El CSV debe tener el formato: correo, nombre_completo, departamento, puesto</span>
             </div>
 
             {/* List */}
@@ -202,7 +246,8 @@ export default function AdminDirectory() {
                         <thead className="bg-slate-900 border-b border-white/5 sticky top-0 z-10">
                             <tr>
                                 <th className="px-8 py-5 text-[10px] font-black text-gray-500 uppercase tracking-widest">Funcionario</th>
-                                <th className="px-8 py-5 text-[10px] font-black text-gray-500 uppercase tracking-widest">Departamento</th>
+                                <th className="px-8 py-5 text-[10px] font-black text-gray-500 uppercase tracking-widest">Departamento / Unidad</th>
+                                <th className="px-8 py-5 text-[10px] font-black text-gray-500 uppercase tracking-widest">Cargo / Puesto</th>
                                 <th className="px-8 py-5 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Estado</th>
                                 <th className="px-8 py-5 text-[10px] font-black text-gray-500 uppercase tracking-widest text-right">Acción</th>
                             </tr>
@@ -227,6 +272,12 @@ export default function AdminDirectory() {
                                         <div className="flex items-center gap-2 text-xs font-bold text-gray-400 uppercase tracking-tight">
                                             <Building2 className="w-4 h-4 text-gray-600" />
                                             {person.department || 'N/A'}
+                                        </div>
+                                    </td>
+                                    <td className="px-8 py-6">
+                                        <div className="flex items-center gap-2 text-xs font-bold text-gray-300">
+                                            <Briefcase className="w-4 h-4 text-gray-600" />
+                                            {person.position || 'Sin cargo'}
                                         </div>
                                     </td>
                                     <td className="px-8 py-6 text-center">

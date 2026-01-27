@@ -47,18 +47,14 @@ export default function Login() {
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent"></div>
-                    <div className="absolute bottom-4 left-6">
-                        <span className="badge badge-success py-1 px-3 text-[10px] uppercase tracking-widest font-bold">Plataforma Oficial</span>
-                    </div>
+
                 </div>
 
                 {/* Título Principal y Logo */}
                 <div className="text-center">
                     <div className="flex flex-col items-center gap-4">
-                        <div className="w-24 h-24 relative p-1 bg-gradient-to-br from-primary-400 to-secondary-500 rounded-2xl shadow-2xl animate-fade-in">
-                            <div className="w-full h-full bg-slate-900 rounded-[14px] flex items-center justify-center overflow-hidden">
-                                <img src="/assets/logo.png" alt="CGR Logo" className="w-[85%] h-[85%] object-contain" />
-                            </div>
+                        <div className="w-24 h-24 relative p-1">
+                            <img src="/images/Logotipo-CGR-blanco-transp.png" alt="CGR Logo" className="w-full h-full object-contain filter drop-shadow-[0_10px_30px_rgba(255,255,255,0.1)]" />
                         </div>
                         <div>
                             <h1 className="text-5xl font-black text-white tracking-tighter mb-1">
@@ -76,7 +72,7 @@ export default function Login() {
                     <div className="text-center space-y-2">
                         <h2 className="text-2xl font-bold text-white">Iniciar Sesión</h2>
                         <p className="text-gray-400 text-sm">
-                            Accede con tu identidad digital institucional
+                            Acceder con su cuenta de usuario de Google
                         </p>
                     </div>
 
@@ -85,7 +81,7 @@ export default function Login() {
                         <div className="flex gap-4 p-4 bg-primary-500/10 border border-primary-500/20 rounded-xl">
                             <Info className="w-6 h-6 text-primary-400 flex-shrink-0" />
                             <p className="text-xs text-gray-300 leading-relaxed font-medium">
-                                Esta plataforma es de uso exclusivo para funcionarios de la Contraloría General de la República. Requiere autenticación de dos factores si está activa en su cuenta.
+                                Esta plataforma es de uso exclusivo para funcionarios de la Contraloría General de la República.
                             </p>
                         </div>
 
@@ -107,24 +103,16 @@ export default function Login() {
                             <ExternalLink className="w-4 h-4 absolute right-4 opacity-0 group-hover:opacity-100 transition-opacity" />
                         </button>
 
-                        <div className="pt-4 flex flex-col items-center gap-4">
-                            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em]">Protección de Datos Personales</span>
-                            <p className="text-[11px] text-center text-gray-500/80 italic leading-snug">
-                                "Su seguridad es nuestra prioridad. CGR Segur@ cumple con la Ley N° 8968 de Protección de la Persona frente al Tratamiento de sus Datos Personales."
-                            </p>
-                        </div>
                     </div>
                 </div>
 
                 {/* Footer Credits */}
                 <div className="flex flex-col items-center gap-2 opacity-60">
                     <p className="text-[10px] font-bold text-gray-400 text-center uppercase tracking-widest">
-                        República de Costa Rica • Contraloría General
+                        Contraloría General de la República de Costa Rica
                     </p>
-                    <div className="flex gap-4 text-[9px] text-gray-500">
-                        <span>ISO/IEC 27001</span>
-                        <span>•</span>
-                        <span>V. 2.0.26</span>
+                    <div className="flex gap-4 text-[15px] text-gray-400">
+                        <span>2026</span>
                     </div>
                 </div>
             </div>

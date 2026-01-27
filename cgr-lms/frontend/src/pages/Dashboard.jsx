@@ -82,9 +82,7 @@ export default function Dashboard() {
                         <h1 className="text-5xl md:text-6xl font-black text-white leading-tight tracking-tighter">
                             ¡Hola, <span className="text-secondary-500">{user?.firstName}</span>!
                         </h1>
-                        <p className="text-gray-400 max-w-md text-lg font-medium leading-relaxed">
-                            Has completado el <span className="text-white font-bold">{stats?.completionPercentage}%</span> de tu formación obligatoria para 2026.
-                        </p>
+
                     </div>
 
                     <div className="flex gap-6">

@@ -147,12 +147,12 @@ router.get('/:id', authMiddleware, async (req, res) => {
  */
 router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
     try {
-        const { module_number, title, description, month, duration_minutes, is_published, order_index } = req.body;
+        const { module_number, title, description, month, duration_minutes, is_published, release_date, order_index } = req.body;
 
         const result = await db.query(
-            `INSERT INTO modules (module_number, title, description, month, duration_minutes, is_published, order_index)
-             VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [module_number, title, description, month, duration_minutes || 0, is_published || false, order_index || module_number]
+            `INSERT INTO modules (module_number, title, description, month, duration_minutes, is_published, release_date, order_index)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [module_number, title, description, month, duration_minutes || 0, is_published || false, release_date || null, order_index || module_number]
         );
 
         res.status(201).json({
@@ -173,15 +173,15 @@ router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
  */
 router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
     try {
-        const { module_number, title, description, month, duration_minutes, is_published, order_index } = req.body;
+        const { module_number, title, description, month, duration_minutes, is_published, release_date, order_index } = req.body;
         const moduleId = req.params.id;
 
         await db.query(
             `UPDATE modules 
              SET module_number = ?, title = ?, description = ?, month = ?, 
-                 duration_minutes = ?, is_published = ?, order_index = ?
+                 duration_minutes = ?, is_published = ?, release_date = ?, order_index = ?
              WHERE id = ?`,
-            [module_number, title, description, month, duration_minutes, is_published, order_index, moduleId]
+            [module_number, title, description, month, duration_minutes, is_published, release_date, order_index, moduleId]
         );
 
         res.json({ success: true, message: 'Módulo actualizado correctamente' });

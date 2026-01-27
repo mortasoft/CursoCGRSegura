@@ -31,23 +31,29 @@ function App() {
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Toaster
-          position="top-right"
+          position="bottom-center"
           toastOptions={{
             duration: 4000,
             style: {
-              background: '#1e293b',
+              background: '#0d1127',
               color: '#fff',
-              border: '1px solid #475569',
+              border: '1px solid rgba(56, 74, 153, 0.3)',
+              borderRadius: '1.2rem',
+              padding: '16px 24px',
+              fontSize: '1rem',
+              fontWeight: '600',
+              maxWidth: '500px',
+              backdropFilter: 'blur(10px)',
             },
             success: {
               iconTheme: {
-                primary: '#10b981',
+                primary: '#28a9e0',
                 secondary: '#fff',
               },
             },
             error: {
               iconTheme: {
-                primary: '#ef4444',
+                primary: '#e57b3c',
                 secondary: '#fff',
               },
             },
