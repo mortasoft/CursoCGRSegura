@@ -1,0 +1,16 @@
+Vamos a trabajar en una funcionalidad critica y primordial, agregar contenido a las lecciones del curso.
+
+Pueden existir varios tipos distintos de contenido:
+
+1. Archivos, se pueden subir archivos
+2. Cuestionarios o quizzes, debe haber un editor de cuestionarios con preguntas de seleccion unica, puntajes asociados
+3. Encuestas
+4. Links, un link a un URL
+5. Contenido, espacios de texto enriquecido donde se expongan los temas.
+6. Tareas, un espacio donde el funcionario sube una tarea y es calificado por un administrador.
+
+
+
+
+
+
