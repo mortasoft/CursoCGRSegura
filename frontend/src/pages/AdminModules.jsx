@@ -17,7 +17,8 @@ import {
     CheckCircle2,
     ChevronDown,
     ChevronUp,
-    Trophy
+    Trophy,
+    Award
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ConfirmModal from '../components/ConfirmModal';
@@ -35,6 +36,7 @@ export default function AdminModules() {
         is_published: false,
         release_date: new Date().toISOString().split('T')[0],
         order_index: '',
+        month: ''
     });
 
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -71,6 +73,7 @@ export default function AdminModules() {
                 is_published: !!module.is_published,
                 release_date: module.release_date ? module.release_date.split('T')[0] : '',
                 order_index: module.order_index,
+                month: module.month || ''
             });
         } else {
             setEditingModule(null);
@@ -81,6 +84,7 @@ export default function AdminModules() {
                 is_published: false,
                 release_date: new Date().toISOString().split('T')[0],
                 order_index: modules.length + 1,
+                month: new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(new Date())
             });
         }
         setIsModalOpen(true);

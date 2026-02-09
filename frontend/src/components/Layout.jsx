@@ -17,9 +17,12 @@ import {
 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
+import { useNotificationStore } from '../store/notificationStore';
+import LevelUpModal from './LevelUpModal';
 
 export default function Layout() {
     const { user, logout, viewAsStudent, setViewAsStudent } = useAuthStore();
+    const { pendingLevelUp, clearLevelUp } = useNotificationStore();
     const navigate = useNavigate();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -223,6 +226,13 @@ export default function Layout() {
                     </div>
                 </div>
             </footer>
+
+            {/* Gamification Modals */}
+            <LevelUpModal
+                isOpen={!!pendingLevelUp}
+                onClose={clearLevelUp}
+                levelData={pendingLevelUp}
+            />
         </div>
     );
 }

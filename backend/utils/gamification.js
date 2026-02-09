@@ -71,14 +71,17 @@ const getLevels = async (forceRefresh = false) => {
 const calculateLevel = async (points) => {
     const levels = await getLevels();
     let currentLevel = levels[0].name;
-    for (const level of levels) {
-        if (points >= level.minPoints) {
-            currentLevel = level.name;
+    let currentRank = 1;
+
+    for (let i = 0; i < levels.length; i++) {
+        if (points >= levels[i].minPoints) {
+            currentLevel = levels[i].name;
+            currentRank = i + 1;
         } else {
             break;
         }
     }
-    return currentLevel;
+    return { name: currentLevel, rank: currentRank };
 };
 
 /**
@@ -86,14 +89,31 @@ const calculateLevel = async (points) => {
  */
 const syncUserLevel = async (userId) => {
     try {
-        const [userData] = await db.query('SELECT points FROM user_points WHERE user_id = ?', [userId]);
-        if (!userData) return;
+        const [userData] = await db.query('SELECT points, level FROM user_points WHERE user_id = ?', [userId]);
+        if (!userData) return null;
 
-        const newLevel = await calculateLevel(userData.points);
-        await db.query('UPDATE user_points SET level = ?, last_updated = NOW() WHERE user_id = ?', [newLevel, userId]);
-        return newLevel;
+        const oldLevel = userData.level;
+        const levelInfo = await calculateLevel(userData.points);
+        const newLevel = levelInfo.name;
+
+        if (oldLevel !== newLevel) {
+            await db.query('UPDATE user_points SET level = ?, last_updated = NOW() WHERE user_id = ?', [newLevel, userId]);
+            return {
+                leveledUp: true,
+                oldLevel: oldLevel,
+                newLevel: newLevel,
+                levelNumber: levelInfo.rank
+            };
+        }
+
+        return {
+            leveledUp: false,
+            currentLevel: newLevel,
+            levelNumber: levelInfo.rank
+        };
     } catch (error) {
         console.error('Error syncing user level:', error);
+        return null;
     }
 };
 

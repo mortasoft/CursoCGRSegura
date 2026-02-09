@@ -193,12 +193,30 @@ router.get('/:id', authMiddleware, async (req, res) => {
  */
 router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
     try {
-        const { module_number, title, description, month, duration_minutes, is_published, release_date, order_index, points_to_earn } = req.body;
+        const {
+            module_number,
+            title,
+            description = null,
+            month = null,
+            duration_minutes = 0,
+            is_published = false,
+            release_date = null,
+            order_index
+        } = req.body;
 
         const result = await db.query(
-            `INSERT INTO modules (module_number, title, description, month, duration_minutes, is_published, release_date, order_index, points_to_earn)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [module_number, title, description, month, duration_minutes || 0, is_published || false, release_date || null, order_index || module_number, points_to_earn || 0]
+            `INSERT INTO modules (module_number, title, description, month, duration_minutes, is_published, release_date, order_index)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                module_number,
+                title,
+                description ?? null,
+                month ?? null,
+                duration_minutes ?? 0,
+                is_published ?? false,
+                release_date ?? null,
+                order_index ?? module_number
+            ]
         );
 
         res.status(201).json({
@@ -219,15 +237,34 @@ router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
  */
 router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
     try {
-        const { module_number, title, description, month, duration_minutes, is_published, release_date, order_index, points_to_earn } = req.body;
+        const {
+            module_number,
+            title,
+            description = null,
+            month = null,
+            duration_minutes = 0,
+            is_published = false,
+            release_date = null,
+            order_index
+        } = req.body;
         const moduleId = req.params.id;
 
         await db.query(
             `UPDATE modules 
              SET module_number = ?, title = ?, description = ?, month = ?, 
-                 duration_minutes = ?, is_published = ?, release_date = ?, order_index = ?, points_to_earn = ?
+                 duration_minutes = ?, is_published = ?, release_date = ?, order_index = ?
              WHERE id = ?`,
-            [module_number, title, description, month, duration_minutes, is_published, release_date, order_index, points_to_earn || 0, moduleId]
+            [
+                module_number,
+                title,
+                description ?? null,
+                month ?? null,
+                duration_minutes ?? 0,
+                is_published ?? false,
+                release_date ?? null,
+                order_index ?? module_number,
+                moduleId
+            ]
         );
 
         res.json({ success: true, message: 'Módulo actualizado correctamente' });

@@ -8,6 +8,10 @@ export const useNotificationStore = create((set, get) => ({
     notifications: [],
     unreadCount: 0,
     loading: false,
+    pendingLevelUp: null,
+
+    setPendingLevelUp: (data) => set({ pendingLevelUp: data }),
+    clearLevelUp: () => set({ pendingLevelUp: null }),
 
     fetchNotifications: async () => {
         set({ loading: true });

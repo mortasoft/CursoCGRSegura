@@ -18,6 +18,7 @@ import {
     Star
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useNotificationStore } from '../store/notificationStore';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -89,6 +90,10 @@ export default function QuizView() {
                         points: response.data.newBalance,
                         level: response.data.newLevel
                     });
+                }
+
+                if (response.data.levelUp) {
+                    useNotificationStore.getState().setPendingLevelUp(response.data.levelData);
                 }
 
                 toast.success(response.data.passed ? '¡Felicidades! Has aprobado.' : 'No has alcanzado la nota mínima.');

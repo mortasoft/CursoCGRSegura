@@ -165,7 +165,7 @@ router.post('/:id/complete', authMiddleware, async (req, res) => {
         );
 
         // Sincronizar nivel
-        await syncUserLevel(userId);
+        const levelSync = await syncUserLevel(userId);
 
         // Obtener balance actualizado
         const [updatedStats] = await db.query(
@@ -178,7 +178,9 @@ router.post('/:id/complete', authMiddleware, async (req, res) => {
             message: 'Lección completada',
             pointsAwarded,
             newBalance: updatedStats?.points || 0,
-            newLevel: updatedStats?.level || 'Novato'
+            newLevel: updatedStats?.level || 'Novato',
+            levelUp: levelSync?.leveledUp || false,
+            levelData: levelSync
         });
     } catch (error) {
         console.error('Error al completar lección:', error);
@@ -215,14 +217,38 @@ router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
  */
 router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
     try {
-        const { title, content, lesson_type, video_url, duration_minutes, order_index, is_published, is_optional } = req.body;
+        const {
+            title,
+            content = null,
+            lesson_type = 'reading',
+            video_url = null,
+            duration_minutes = 15,
+            order_index = 0,
+            is_published = false,
+            is_optional = false
+        } = req.body;
         const lessonId = req.params.id;
+
+        // Validar que los campos críticos no sean undefined
+        if (!title || order_index === undefined || !lessonId) {
+            return res.status(400).json({ error: 'Faltan campos obligatorios para actualizar la lección' });
+        }
 
         await db.query(
             `UPDATE lessons 
              SET title = ?, content = ?, lesson_type = ?, video_url = ?, duration_minutes = ?, order_index = ?, is_published = ?, is_optional = ?
              WHERE id = ?`,
-            [title, content, lesson_type, video_url, duration_minutes, order_index, is_published, is_optional, lessonId]
+            [
+                title,
+                content ?? null,
+                lesson_type ?? 'reading',
+                video_url ?? null,
+                duration_minutes ?? 15,
+                order_index,
+                is_published ?? false,
+                is_optional ?? false,
+                lessonId
+            ]
         );
 
         res.json({ success: true, message: 'Lección actualizada' });

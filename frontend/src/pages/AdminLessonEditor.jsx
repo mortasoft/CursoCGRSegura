@@ -17,7 +17,8 @@ import {
     MoveDown,
     Save,
     Pencil,
-    File
+    File,
+    Award
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 

@@ -167,6 +167,9 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
 
         }
 
+        // Sincronizar nivel
+        const levelSync = await syncUserLevel(userId);
+
         // Obtener balance actualizado (siempre para asegurar que el navbar esté sincronizado)
         const [updatedStats] = await db.query(
             'SELECT points, level FROM user_points WHERE user_id = ?',
@@ -182,7 +185,9 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
             pointsAwarded,
             feedback,
             newBalance: updatedStats?.points || 0,
-            newLevel: updatedStats?.level || 'Novato'
+            newLevel: updatedStats?.level || 'Novato',
+            levelUp: levelSync?.leveledUp || false,
+            levelData: levelSync
         });
 
     } catch (error) {

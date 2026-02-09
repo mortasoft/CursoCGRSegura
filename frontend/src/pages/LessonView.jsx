@@ -24,6 +24,7 @@ import {
     BookOpen
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { useNotificationStore } from '../store/notificationStore';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -183,6 +184,10 @@ export default function LessonView() {
                         points: response.data.newBalance,
                         level: response.data.newLevel
                     });
+                }
+
+                if (response.data.levelUp) {
+                    useNotificationStore.getState().setPendingLevelUp(response.data.levelData);
                 }
 
                 fetchLessonData(); // Refresh to show completion status
