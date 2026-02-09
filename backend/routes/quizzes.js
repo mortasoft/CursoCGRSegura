@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
 const { authMiddleware } = require('../middleware/auth');
-const { createNotification } = require('../utils/notifications');
+const { syncUserLevel, getSystemSettings } = require('../utils/gamification');
 
 /**
  * @route   GET /api/quizzes/:id
@@ -137,8 +137,9 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
         // 4. Si aprobó, dar puntos de gamificación y marcar lección/módulo como completado
         let pointsAwarded = 0;
         if (passed) {
-            pointsAwarded = 50; // Punto base por examen aprobado
-            if (score === 100) pointsAwarded += 25; // Bonus por score perfecto
+            const settings = await getSystemSettings();
+            pointsAwarded = settings.points_per_quiz; // Punto base por examen aprobado desde settings
+            if (score === 100) pointsAwarded += settings.bonus_perfect_score; // Bonus por score perfecto desde settings
 
             // Actualizar puntos del usuario
             await db.query(
@@ -164,23 +165,8 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
                 );
             }
 
-            // Notificación de éxito
-            await createNotification(
-                userId,
-                '¡Certificación Aprobada! 🏆',
-                `Aprobaste la evaluación "${quiz.title}" con un ${score.toFixed(1)}%. ¡Excelente trabajo!`,
-                'success',
-                `/modules/${quiz.module_id}`
-            );
-        } else {
-            // Notificación de fallo
-            await createNotification(
-                userId,
-                'Resultado de Evaluación 📝',
-                `No has alcanzado la nota mínima en "${quiz.title}" (${score.toFixed(1)}%). Revisa el contenido e inténtalo de nuevo.`,
-                'warning',
-                `/quizzes/${quizId}`
-            );
+            // Sincronizar nivel
+            await syncUserLevel(userId);
         }
 
         res.json({

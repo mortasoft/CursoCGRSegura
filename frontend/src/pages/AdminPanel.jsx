@@ -100,7 +100,7 @@ export default function AdminPanel() {
         },
         {
             title: 'Configuraciones',
-            description: 'Ajustes generales del sistema y notificaciones.',
+            description: 'Ajustes generales del sistema y parámetros globales.',
             icon: Settings,
             path: '/admin/settings',
             color: 'from-slate-500 to-slate-700',

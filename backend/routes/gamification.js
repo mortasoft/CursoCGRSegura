@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
-const { authMiddleware } = require('../middleware/auth');
+const { authMiddleware, adminMiddleware } = require('../middleware/auth');
+const { getLevels } = require('../utils/gamification');
 
 /**
  * @route   GET /api/gamification/leaderboard
@@ -129,6 +130,77 @@ router.get('/leaderboard', authMiddleware, async (req, res) => {
     } catch (error) {
         console.error('Error obteniendo leaderboard:', error);
         res.status(500).json({ error: 'Error al cargar el ranking' });
+    }
+});
+
+/**
+ * @route   GET /api/gamification/settings
+ * @desc    Obtener configuración de niveles y puntos
+ * @access  Private/Admin
+ */
+router.get('/settings', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const levels = await getLevels(true);
+        const settingsRaw = await db.query('SELECT setting_key, setting_value FROM system_settings');
+
+        const settings = {};
+        settingsRaw.forEach(s => {
+            settings[s.setting_key] = s.setting_value;
+        });
+
+        res.json({
+            success: true,
+            levels,
+            points: {
+                points_per_lesson: parseInt(settings.points_per_lesson) || 10,
+                points_per_quiz: parseInt(settings.points_per_quiz) || 50,
+                bonus_perfect_score: parseInt(settings.bonus_perfect_score) || 25
+            }
+        });
+    } catch (error) {
+        console.error('Error obteniendo settings de gamificación:', error);
+        res.status(500).json({ error: 'Error al cargar configuración' });
+    }
+});
+
+/**
+ * @route   PUT /api/gamification/settings
+ * @desc    Actualizar configuración de niveles y puntos
+ * @access  Private/Admin
+ */
+router.put('/settings', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const { levels, points } = req.body;
+
+        // 1. Actualizar niveles if present
+        if (levels && Array.isArray(levels)) {
+            await db.query('DELETE FROM gamification_levels');
+            for (const level of levels) {
+                await db.query(
+                    'INSERT INTO gamification_levels (name, min_points, icon) VALUES (?, ?, ?)',
+                    [level.name, level.minPoints || level.min_points, level.icon || 'Award']
+                );
+            }
+            await getLevels(true); // Refrescar caché
+        }
+
+        // 2. Actualizar puntos if present
+        if (points) {
+            const pointKeys = ['points_per_lesson', 'points_per_quiz', 'bonus_perfect_score'];
+            for (const key of pointKeys) {
+                if (points[key] !== undefined) {
+                    await db.query(
+                        'INSERT INTO system_settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = ?',
+                        [key, points[key].toString(), points[key].toString()]
+                    );
+                }
+            }
+        }
+
+        res.json({ success: true, message: 'Configuración actualizada correctamente' });
+    } catch (error) {
+        console.error('Error actualizando settings de gamificación:', error);
+        res.status(500).json({ error: 'Error al actualizar configuración' });
     }
 });
 

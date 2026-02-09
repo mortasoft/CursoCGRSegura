@@ -20,6 +20,7 @@ import AdminDirectory from './pages/AdminDirectory';
 import AdminDepartments from './pages/AdminDepartments';
 import AdminBadges from './pages/AdminBadges';
 import AdminLessonEditor from './pages/AdminLessonEditor';
+import AdminSettings from './pages/AdminSettings';
 
 // Components
 import ProtectedRoute from './components/ProtectedRoute';
@@ -89,6 +90,7 @@ function App() {
               <Route path="/admin/directory" element={<AdminDirectory />} />
               <Route path="/admin/areas" element={<AdminDepartments />} />
               <Route path="/admin/badges" element={<AdminBadges />} />
+              <Route path="/admin/settings" element={<AdminSettings />} />
               <Route path="/admin/lessons/:id/editor" element={<AdminLessonEditor />} />
             </Route>
           </Route>

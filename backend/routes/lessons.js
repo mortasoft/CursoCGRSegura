@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
-const { createNotification } = require('../utils/notifications');
+const { syncUserLevel, getSystemSettings } = require('../utils/gamification');
 
 /**
  * @route   GET /api/lessons/:id
@@ -118,12 +118,14 @@ router.post('/:id/complete', authMiddleware, async (req, res) => {
         if (!lesson) return res.status(404).json({ error: 'Lección no encontrada' });
 
         // 1. Calcular puntos totales de la lección
-        // (Suma de puntos de cada contenido + 10 pts base por completar la lección)
+        // (Suma de puntos de cada contenido + puntos base desde settings)
         const [contentPoints] = await db.query(
             'SELECT SUM(points) as total FROM lesson_contents WHERE lesson_id = ?',
             [lessonId]
         );
-        const pointsAwarded = (parseInt(contentPoints?.total) || 0) + 10;
+
+        const settings = await getSystemSettings();
+        const pointsAwarded = (parseInt(contentPoints?.total) || 0) + settings.points_per_lesson;
 
         // 2. Actualizar progreso con puntos ganados
         await db.query(
@@ -150,15 +152,8 @@ router.post('/:id/complete', authMiddleware, async (req, res) => {
             [userId, pointsAwarded, lessonId]
         );
 
-        // Generar notificación
-        const [lessonInfo] = await db.query('SELECT title FROM lessons WHERE id = ?', [lessonId]);
-        await createNotification(
-            userId,
-            'Lección Completada 📚',
-            `Has finalizado con éxito: ${lessonInfo?.title}. ¡Sumaste ${pointsAwarded} puntos!`,
-            'success',
-            `/lessons/${lessonId}`
-        );
+        // Sincronizar nivel
+        await syncUserLevel(userId);
 
         res.json({
             success: true,

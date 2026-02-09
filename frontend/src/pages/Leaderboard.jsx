@@ -111,25 +111,25 @@ export default function Leaderboard() {
 
             {/* Tabs Control */}
             <div className="flex flex-col md:flex-row gap-6 items-center justify-between">
-                <div className="flex p-1 bg-slate-900/50 rounded-2xl border border-white/5 overflow-x-auto no-scrollbar">
+                <div className="flex w-full md:w-auto p-1 bg-slate-900/50 rounded-2xl border border-white/5 items-stretch">
                     <button
                         onClick={() => setView('global')}
-                        className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${view === 'global' ? 'bg-primary-500 text-white shadow-lg' : 'text-gray-500 hover:text-white'}`}
+                        className={`flex-1 md:flex-none px-2 md:px-6 py-3 rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all ${view === 'global' ? 'bg-primary-500 text-white shadow-lg' : 'text-gray-500 hover:text-white'}`}
                     >
-                        Ranking Institucional
+                        Institucional
                     </button>
                     <button
                         onClick={() => setView('area')}
-                        className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${view === 'area' ? 'bg-primary-500 text-white shadow-lg' : 'text-gray-500 hover:text-white'}`}
+                        className={`flex-1 md:flex-none px-2 md:px-6 py-3 rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all ${view === 'area' ? 'bg-primary-500 text-white shadow-lg' : 'text-gray-500 hover:text-white'}`}
                     >
-                        Ranking de mi Área
+                        Mi Área
                     </button>
                     {isAdmin && (
                         <button
                             onClick={() => setView('strategic')}
-                            className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${view === 'strategic' ? 'bg-secondary-500 text-white shadow-lg' : 'text-gray-500 hover:text-white'}`}
+                            className={`flex-1 md:flex-none px-2 md:px-6 py-3 rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all ${view === 'strategic' ? 'bg-secondary-500 text-white shadow-lg' : 'text-gray-500 hover:text-white'}`}
                         >
-                            Comparativa por Áreas
+                            Comparativa
                         </button>
                     )}
                 </div>

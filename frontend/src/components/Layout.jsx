@@ -9,7 +9,6 @@ import {
     Shield,
     Menu,
     X,
-    Bell,
     CheckCircle2,
     ArrowRight,
     Info,
@@ -17,36 +16,14 @@ import {
     Check
 } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
-import { useNotificationStore } from '../store/notificationStore';
 import toast from 'react-hot-toast';
 
 export default function Layout() {
     const { user, logout } = useAuthStore();
-    const { notifications, unreadCount, fetchNotifications, fetchUnreadCount, markAsRead, markAllAsRead } = useNotificationStore();
     const navigate = useNavigate();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-    const notificationRef = useRef(null);
 
-    // Polling de notificaciones (Simulando Real-Time) cada 30 segundos
-    useEffect(() => {
-        fetchNotifications();
-        const interval = setInterval(() => {
-            fetchUnreadCount();
-        }, 30000);
-        return () => clearInterval(interval);
-    }, []);
 
-    // Cerrar al hacer clic fuera
-    useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (notificationRef.current && !notificationRef.current.contains(event.target)) {
-                setIsNotificationsOpen(false);
-            }
-        };
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
 
     const handleLogout = async () => {
         await logout();
@@ -105,95 +82,6 @@ export default function Layout() {
 
                         {/* User Menu */}
                         <div className="flex items-center gap-4">
-                            {/* Notifications */}
-                            <div className="relative" ref={notificationRef}>
-                                <button
-                                    onClick={() => {
-                                        setIsNotificationsOpen(!isNotificationsOpen);
-                                        if (!isNotificationsOpen) fetchNotifications();
-                                    }}
-                                    className={`relative p-2.5 rounded-xl transition-all border border-transparent group ${isNotificationsOpen ? 'text-white bg-white/10 border-white/10' : 'text-gray-400 hover:text-white hover:bg-white/5 hover:border-white/10'}`}
-                                >
-                                    <Bell className={`w-5 h-5 transition-transform ${unreadCount > 0 ? 'animate-wiggle' : 'group-hover:rotate-12'}`} />
-                                    {unreadCount > 0 && (
-                                        <span className="absolute top-2 right-2 w-4 h-4 bg-secondary-500 text-[10px] font-black text-white rounded-full border-2 border-slate-900 flex items-center justify-center animate-pulse">
-                                            {unreadCount > 9 ? '9+' : unreadCount}
-                                        </span>
-                                    )}
-                                </button>
-
-                                {/* Dropdown de Notificaciones */}
-                                {isNotificationsOpen && (
-                                    <div className="absolute right-0 mt-4 w-80 md:w-96 bg-slate-900 border border-white/10 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden z-[100] animate-slide-up">
-                                        <div className="p-4 border-b border-white/5 bg-white/5 flex items-center justify-between">
-                                            <h3 className="text-xs font-black text-white uppercase tracking-widest">Notificaciones</h3>
-                                            {unreadCount > 0 && (
-                                                <button
-                                                    onClick={markAllAsRead}
-                                                    className="text-[10px] font-bold text-primary-400 hover:text-primary-300 uppercase tracking-tighter"
-                                                >
-                                                    Marcar todo como leído
-                                                </button>
-                                            )}
-                                        </div>
-
-                                        <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
-                                            {notifications.length > 0 ? (
-                                                notifications.map((n) => (
-                                                    <div
-                                                        key={n.id}
-                                                        onClick={() => {
-                                                            if (!n.is_read) markAsRead(n.id);
-                                                            if (n.link_url) {
-                                                                navigate(n.link_url);
-                                                                setIsNotificationsOpen(false);
-                                                            }
-                                                        }}
-                                                        className={`p-4 border-b border-white/5 flex gap-4 hover:bg-white/[0.02] transition-colors cursor-pointer relative group ${!n.is_read ? 'bg-primary-500/[0.03]' : 'opacity-60'}`}
-                                                    >
-                                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${n.notification_type === 'success' ? 'bg-green-500/10 text-green-500' :
-                                                            n.notification_type === 'warning' ? 'bg-orange-500/10 text-orange-500' :
-                                                                n.notification_type === 'danger' ? 'bg-red-500/10 text-red-500' :
-                                                                    'bg-blue-500/10 text-blue-500'
-                                                            }`}>
-                                                            {n.notification_type === 'success' ? <CheckCircle2 className="w-5 h-5" /> :
-                                                                n.notification_type === 'warning' ? <AlertTriangle className="w-5 h-5" /> :
-                                                                    n.notification_type === 'danger' ? <Shield className="w-5 h-5" /> :
-                                                                        <Info className="w-5 h-5" />}
-                                                        </div>
-                                                        <div className="flex-1 space-y-1">
-                                                            <p className={`text-xs font-bold leading-tight ${!n.is_read ? 'text-white' : 'text-gray-400'}`}>
-                                                                {n.title}
-                                                            </p>
-                                                            <p className="text-[11px] text-gray-500 line-clamp-2">
-                                                                {n.message}
-                                                            </p>
-                                                            <p className="text-[9px] text-gray-600 font-bold uppercase tracking-tighter pt-1">
-                                                                {new Date(n.created_at).toLocaleDateString()} • {new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                            </p>
-                                                        </div>
-                                                        {!n.is_read && (
-                                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 w-2 h-2 bg-primary-500 rounded-full"></div>
-                                                        )}
-                                                        <div className="absolute inset-y-0 right-0 w-1 bg-primary-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                                                    </div>
-                                                ))
-                                            ) : (
-                                                <div className="py-12 text-center space-y-4">
-                                                    <Bell className="w-12 h-12 text-gray-700 mx-auto opacity-20" />
-                                                    <p className="text-gray-600 text-[10px] font-black uppercase tracking-widest">Sin notificaciones nuevas</p>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        <div className="p-3 bg-primary-500/5 text-center border-t border-white/5">
-                                            <button className="text-[10px] font-black text-gray-500 hover:text-white uppercase tracking-widest flex items-center justify-center gap-2 mx-auto transition-colors">
-                                                Ver todo el historial <ArrowRight className="w-3 h-3" />
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
 
                             {/* User Profile */}
                             <div className="hidden sm:flex items-center gap-3 pl-1 pr-4 py-1 bg-slate-800/40 rounded-2xl border border-white/5 shadow-inner group hover:border-primary-500/30 transition-colors cursor-pointer overflow-hidden max-w-[200px]" onClick={() => navigate('/profile')}>
