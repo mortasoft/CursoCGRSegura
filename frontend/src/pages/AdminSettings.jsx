@@ -23,29 +23,15 @@ import { useNavigate } from 'react-router-dom';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-/**
- * Los niveles están definidos actualmente en el backend (utils/gamification.js)
- * pero en un futuro podrían venir de una tabla de configuración.
- * Por ahora, los mostramos y permitimos entender la estructura.
- */
-const DEFAULT_LEVELS = [
-    { name: 'Novato', minPoints: 0, icon: Award, color: 'text-gray-400', bgColor: 'bg-gray-400/10' },
-    { name: 'Defensor', minPoints: 100, icon: Shield, color: 'text-blue-400', bgColor: 'bg-blue-400/10' },
-    { name: 'Guardián', minPoints: 500, icon: ShieldAlert, color: 'text-purple-400', bgColor: 'bg-purple-400/10' },
-    { name: 'CISO Honorario', minPoints: 1000, icon: Trophy, color: 'text-secondary-500', bgColor: 'bg-secondary-500/10' }
-];
-
 export default function AdminSettings() {
     const { token } = useAuthStore();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [activeTab, setActiveTab] = useState('levels');
 
     // Estado real de configuraciones
     const [settings, setSettings] = useState({
-        points_per_lesson: 10,
-        points_per_quiz: 50,
-        bonus_perfect_score: 25,
         levels: []
     });
 
@@ -59,12 +45,10 @@ export default function AdminSettings() {
                 });
 
                 if (response.data.success) {
-                    const { levels, points } = response.data;
+                    const { levels } = response.data;
                     setSettings({
-                        ...points,
                         levels: levels.map(l => ({
                             ...l,
-                            // Mapeo selectivo de íconos para Lucide
                             icon: l.icon === 'Award' ? Award :
                                 l.icon === 'Shield' ? Shield :
                                     l.icon === 'ShieldAlert' ? ShieldAlert :
@@ -75,7 +59,7 @@ export default function AdminSettings() {
                                                         l.icon === 'Zap' ? Zap :
                                                             l.icon === 'Star' ? Star :
                                                                 l.icon === 'Crown' ? Crown : Award,
-                            iconName: l.icon, // Guardamos el nombre string para el PUT
+                            iconName: l.icon,
                             color: l.icon === 'Award' ? 'text-gray-400' :
                                 l.icon === 'ChevronRight' ? 'text-gray-300' :
                                     l.icon === 'Shield' ? 'text-blue-400' :
@@ -107,19 +91,12 @@ export default function AdminSettings() {
     const handleSave = async () => {
         try {
             setSaving(true);
-
-            // Preparar data para el backend
             const payload = {
                 levels: settings.levels.map(l => ({
                     name: l.name,
                     minPoints: l.minPoints,
                     icon: l.iconName || 'Award'
-                })),
-                points: {
-                    points_per_lesson: settings.points_per_lesson,
-                    points_per_quiz: settings.points_per_quiz,
-                    bonus_perfect_score: settings.bonus_perfect_score
-                }
+                }))
             };
 
             const response = await axios.put(`${API_URL}/gamification/settings`, payload, {
@@ -146,159 +123,151 @@ export default function AdminSettings() {
         );
     }
 
+    const tabs = [
+        { id: 'levels', label: 'Estructura de Niveles', icon: Trophy },
+        { id: 'general', label: 'Ajustes Generales', icon: Settings },
+        { id: 'logs', label: 'Auditoría', icon: ShieldCheck }
+    ];
+
     return (
-        <div className="max-w-5xl mx-auto space-y-10 animate-fade-in pb-20">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 text-left">
-                <div className="space-y-1">
+        <div className="max-w-6xl mx-auto space-y-4 animate-fade-in pb-10 text-left">
+            {/* Header Compact - More inline */}
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-slate-900/40 px-6 py-4 rounded-3xl border border-white/5 shadow-xl">
+                <div className="flex items-center gap-4">
                     <button
                         onClick={() => navigate('/admin')}
-                        className="flex items-center gap-2 text-gray-500 hover:text-white transition-colors text-[10px] font-black uppercase tracking-widest mb-2"
+                        className="p-2 bg-white/5 hover:bg-white/10 rounded-xl transition-colors text-gray-400"
+                        title="Volver"
                     >
-                        <ArrowLeft className="w-4 h-4" /> Volver al Panel Admin
+                        <ArrowLeft className="w-5 h-5" />
                     </button>
-                    <h1 className="text-3xl font-black text-white uppercase tracking-tight">Configuraciones Globales</h1>
-                    <p className="text-gray-400 text-sm font-medium">Ajusta los parámetros de gamificación y niveles del sistema.</p>
+                    <div>
+                        <h1 className="text-xl font-black text-white uppercase tracking-tight">Configuraciones</h1>
+                        <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest leading-none">Gestión global de gamificación</p>
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-2 bg-slate-900/60 p-1 rounded-2xl border border-white/5">
+                    {tabs.map((tab) => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id)}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all duration-300 ${activeTab === tab.id
+                                ? 'bg-primary-500/20 text-white border border-primary-500/30'
+                                : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
+                                }`}
+                        >
+                            <tab.icon className={`w-3.5 h-3.5 ${activeTab === tab.id ? 'text-primary-400' : ''}`} />
+                            {tab.label}
+                        </button>
+                    ))}
                 </div>
 
                 <button
                     onClick={handleSave}
                     disabled={saving}
-                    className="px-8 py-3 bg-primary-500 text-white rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-primary-400 transition-all shadow-lg flex items-center gap-2 disabled:opacity-50"
+                    className="px-6 py-2 bg-primary-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary-400 transition-all shadow-lg flex items-center gap-2 disabled:opacity-50"
                 >
                     {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                    Guardar Cambios
+                    Guardar
                 </button>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Gamification Settings */}
-                <div className="lg:col-span-1 space-y-6">
-                    <div className="card space-y-6">
-                        <div className="flex items-center gap-3 border-b border-white/5 pb-4">
-                            <Award className="w-5 h-5 text-secondary-500" />
-                            <h2 className="text-lg font-bold text-white uppercase tracking-tight">Puntos y Recompensas</h2>
+            {/* Tab Content */}
+            <div className="min-h-[400px]">
+                {activeTab === 'levels' && (
+                    <div className="space-y-4 animate-fade-in">
+                        <div className="bg-slate-900/40 border border-white/5 rounded-3xl overflow-hidden shadow-2xl">
+                            <table className="w-full border-collapse">
+                                <thead>
+                                    <tr className="bg-white/5 border-b border-white/5">
+                                        <th className="px-6 py-4 text-left text-[10px] font-black text-gray-500 uppercase tracking-widest w-20 text-center">Rango</th>
+                                        <th className="px-6 py-4 text-left text-[10px] font-black text-gray-500 uppercase tracking-widest">Nombre del Nivel</th>
+                                        <th className="px-6 py-4 text-left text-[10px] font-black text-gray-500 uppercase tracking-widest w-40">Min. Puntos</th>
+                                        <th className="px-6 py-4 text-left text-[10px] font-black text-gray-500 uppercase tracking-widest w-40">Incremento</th>
+                                        <th className="px-6 py-4 text-right text-[10px] font-black text-gray-500 uppercase tracking-widest w-24">Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-white/5">
+                                    {settings.levels.map((level, index) => (
+                                        <tr key={index} className="hover:bg-white/[0.02] transition-colors group">
+                                            <td className="px-6 py-3 text-center">
+                                                <div className={`w-10 h-10 mx-auto rounded-xl ${level.bgColor} ${level.color} flex items-center justify-center shadow-inner group-hover:scale-110 transition-transform`}>
+                                                    <level.icon className="w-5 h-5" />
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-3">
+                                                <div className="flex flex-col">
+                                                    <span className="text-sm font-black text-white uppercase tracking-tight">{level.name}</span>
+                                                    <span className="text-[9px] text-gray-500 font-bold uppercase tracking-[0.2em]">Nivel {index + 1}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-3">
+                                                <div className="relative group/input max-w-[120px]">
+                                                    <input
+                                                        type="number"
+                                                        className="w-full bg-slate-950/40 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white font-black focus:outline-none focus:border-primary-500/50 hover:border-white/20 transition-all uppercase"
+                                                        value={level.minPoints}
+                                                        onChange={(e) => {
+                                                            const newLevels = [...settings.levels];
+                                                            newLevels[index].minPoints = parseInt(e.target.value) || 0;
+                                                            setSettings({ ...settings, levels: newLevels });
+                                                        }}
+                                                    />
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-3">
+                                                <div className="flex items-center gap-2">
+                                                    {index > 0 ? (
+                                                        <>
+                                                            <div className="w-1.5 h-1.5 rounded-full bg-secondary-500/40"></div>
+                                                            <span className="text-[10px] text-secondary-400 font-black tracking-widest">
+                                                                +{level.minPoints - settings.levels[index - 1].minPoints} PTS
+                                                            </span>
+                                                        </>
+                                                    ) : (
+                                                        <span className="text-[10px] text-emerald-500/40 font-black tracking-widest">CATEGORÍA BASE</span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-3 text-right">
+                                                <div className="flex justify-end">
+                                                    <div className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-widest border ${index === 0 ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-primary-500/10 text-primary-400 border-primary-500/20'}`}>
+                                                        {index === 0 ? 'ACTIVO' : 'DEF.'}
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
 
-                        <div className="space-y-4">
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Puntos por Lección</label>
-                                <input
-                                    type="number"
-                                    className="input-field"
-                                    value={settings.points_per_lesson}
-                                    onChange={(e) => setSettings({ ...settings, points_per_lesson: parseInt(e.target.value) })}
-                                />
-                                <p className="text-[10px] text-gray-600 italic">Puntos base otorgados al finalizar cualquier lección.</p>
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Puntos por Evaluación</label>
-                                <input
-                                    type="number"
-                                    className="input-field"
-                                    value={settings.points_per_quiz}
-                                    onChange={(e) => setSettings({ ...settings, points_per_quiz: parseInt(e.target.value) })}
-                                />
-                                <p className="text-[10px] text-gray-600 italic">Puntos base por aprobar un examen (80%+).</p>
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Bono de Perfección</label>
-                                <input
-                                    type="number"
-                                    className="input-field"
-                                    value={settings.bonus_perfect_score}
-                                    onChange={(e) => setSettings({ ...settings, bonus_perfect_score: parseInt(e.target.value) })}
-                                />
-                                <p className="text-[10px] text-gray-600 italic">Extra por obtener 100% en una evaluación.</p>
-                            </div>
-                        </div>
-
-                        <div className="pt-4 p-4 bg-primary-500/5 rounded-xl border border-primary-500/10">
-                            <div className="flex gap-3">
-                                <Info className="w-5 h-5 text-primary-400 shrink-0" />
-                                <p className="text-[11px] text-primary-200/70 leading-relaxed font-medium">
-                                    Estos valores afectan el cálculo de puntos en tiempo real para todos los funcionarios.
-                                    Los cambios no son retroactivos para actividades ya completadas.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Levels Grid */}
-                <div className="lg:col-span-2 space-y-6">
-                    <div className="card h-full space-y-6">
-                        <div className="flex items-center justify-between border-b border-white/5 pb-4">
-                            <div className="flex items-center gap-3">
-                                <Trophy className="w-5 h-5 text-secondary-500" />
-                                <h2 className="text-lg font-bold text-white uppercase tracking-tight">Escalafón de Niveles</h2>
-                            </div>
-                            <span className="px-3 py-1 bg-white/5 rounded-full text-[9px] font-black text-gray-400 uppercase tracking-[0.25em]">Definición Actual</span>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {settings.levels.map((level, index) => (
-                                <div
-                                    key={index}
-                                    className="p-5 bg-slate-800/20 border border-white/5 rounded-2xl hover:border-primary-500/30 transition-all group relative overflow-hidden text-left"
-                                >
-                                    <div className={`absolute top-0 right-0 w-16 h-16 ${level.bgColor} opacity-20 group-hover:opacity-40 transition-opacity rounded-bl-full`} />
-
-                                    <div className="flex items-center gap-4 mb-4">
-                                        <div className={`w-12 h-12 rounded-xl ${level.bgColor} ${level.color} flex items-center justify-center shadow-inner`}>
-                                            <level.icon className="w-6 h-6" />
-                                        </div>
-                                        <div>
-                                            <h3 className="text-white font-black uppercase tracking-tight">{level.name}</h3>
-                                            <div className="flex items-center gap-1.5">
-                                                <ChevronRight className="w-3 h-3 text-primary-500" />
-                                                <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Nivel {index + 1}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-4 relative">
-                                        <div className="space-y-1.5">
-                                            <label className="text-[9px] font-black text-gray-600 uppercase tracking-[0.2em]">Puntaje Mínimo Requerido</label>
-                                            <div className="relative">
-                                                <input
-                                                    type="number"
-                                                    className="w-full bg-slate-900/50 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white font-bold focus:outline-none focus:border-primary-500/50 group-hover:bg-slate-900 transition-colors"
-                                                    value={level.minPoints}
-                                                    onChange={(e) => {
-                                                        const newLevels = [...settings.levels];
-                                                        newLevels[index].minPoints = parseInt(e.target.value);
-                                                        setSettings({ ...settings, levels: newLevels });
-                                                    }}
-                                                />
-                                                <Award className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-700" />
-                                            </div>
-                                        </div>
-
-                                        <div className="pt-2 flex items-center justify-between">
-                                            <span className="text-[10px] text-gray-500 font-medium">Requisito de ascenso</span>
-                                            {index > 0 && (
-                                                <span className="text-[10px] text-secondary-400 font-black tracking-tighter">
-                                                    +{level.minPoints - settings.levels[index - 1].minPoints} pts desde anterior
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-
-                        <div className="mt-8 p-6 bg-secondary-500/5 rounded-2xl border border-secondary-500/10">
-                            <h4 className="text-secondary-400 text-xs font-black uppercase tracking-widest mb-2">Funcionamiento de Niveles</h4>
-                            <p className="text-[11px] text-gray-400 leading-relaxed font-medium">
-                                El sistema evalúa automáticamente el puntaje total del funcionario después de cada actividad completada.
-                                Cuando el puntaje alcanza el umbral definido aquí, el nivel del funcionario se actualiza instantáneamente en su perfil y en el Dashboard.
+                        <div className="p-4 bg-primary-500/5 rounded-2xl border border-primary-500/10 flex gap-4 items-center">
+                            <Info className="w-4 h-4 text-primary-400 shrink-0" />
+                            <p className="text-[10px] text-gray-500 font-medium leading-relaxed">
+                                <span className="text-primary-400 font-black uppercase mr-1">Regla de Progresión:</span>
+                                El sistema valida secuencialmente los puntos del usuario de abajo hacia arriba. Los niveles deben tener puntajes incrementales para un correcto funcionamiento.
                             </p>
                         </div>
                     </div>
-                </div>
+                )}
+
+                {activeTab === 'general' && (
+                    <div className="flex flex-col items-center justify-center py-20 bg-slate-900/20 rounded-3xl border border-dashed border-white/5 animate-fade-in text-center">
+                        <Settings className="w-10 h-10 text-gray-700 mb-3" />
+                        <h3 className="text-sm font-black text-gray-500 uppercase tracking-widest text-gray-400">Panel en Desarrollo</h3>
+                        <p className="text-[10px] text-gray-600 italic">Aquí se agregarán opciones de personalización visual global.</p>
+                    </div>
+                )}
+
+                {activeTab === 'logs' && (
+                    <div className="flex flex-col items-center justify-center py-20 bg-slate-900/20 rounded-3xl border border-dashed border-white/5 animate-fade-in text-center">
+                        <ShieldCheck className="w-10 h-10 text-gray-700 mb-3" />
+                        <h3 className="text-sm font-black text-gray-500 uppercase tracking-widest text-gray-400">Historial de Auditoría</h3>
+                        <p className="text-[10px] text-gray-600 italic">Próximamente: registro detallado de cambios por administrador.</p>
+                    </div>
+                )}
             </div>
         </div>
     );

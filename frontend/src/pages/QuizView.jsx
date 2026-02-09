@@ -24,7 +24,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 export default function QuizView() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { token } = useAuthStore();
+    const { token, updateUser } = useAuthStore();
     const [quizData, setQuizData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -82,6 +82,15 @@ export default function QuizView() {
 
             if (response.data.success) {
                 setResults(response.data);
+
+                // Actualizar stats globales en el store
+                if (response.data.newBalance !== undefined) {
+                    updateUser({
+                        points: response.data.newBalance,
+                        level: response.data.newLevel
+                    });
+                }
+
                 toast.success(response.data.passed ? '¡Felicidades! Has aprobado.' : 'No has alcanzado la nota mínima.');
                 window.scrollTo(0, 0);
             }

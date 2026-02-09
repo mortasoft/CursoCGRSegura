@@ -13,11 +13,12 @@ router.get('/:id', authMiddleware, async (req, res) => {
     try {
         const lessonId = req.params.id;
         const userId = req.user.id;
-        const isAdmin = req.user.role === 'admin';
+        const isAdmin = req.user.role === 'admin' && req.headers['x-view-as-student'] !== 'true';
 
         // 1. Obtener la lección
         const [lesson] = await db.query(
-            `SELECT l.*, m.title as module_title 
+            `SELECT l.*, m.title as module_title,
+                (SELECT SUM(points) FROM lesson_contents WHERE lesson_id = l.id) as total_points
              FROM lessons l 
              JOIN modules m ON l.module_id = m.id 
              WHERE l.id = ? ${isAdmin ? '' : 'AND l.is_published = TRUE'}`,
@@ -42,7 +43,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
             [userId, lesson.module_id, lesson.order_index]
         );
 
-        if (prevMandatoryIncomplete && req.user.role !== 'admin') {
+        if (prevMandatoryIncomplete && !isAdmin) {
             return res.status(403).json({
                 error: 'Lección bloqueada',
                 message: `Debes completar la lección "${prevMandatoryIncomplete.title}" para continuar.`,
@@ -89,10 +90,22 @@ router.get('/:id', authMiddleware, async (req, res) => {
             [lesson.module_id, lesson.order_index]
         );
 
+        // 4. Obtener todas las lecciones del módulo con progreso
+        const moduleLessons = await db.query(
+            `SELECT l.id, l.title, l.order_index, l.is_optional, up.status,
+                (SELECT SUM(points) FROM lesson_contents WHERE lesson_id = l.id) as total_points
+             FROM lessons l
+             LEFT JOIN user_progress up ON l.id = up.lesson_id AND up.user_id = ?
+             WHERE l.module_id = ? ${isAdmin ? '' : 'AND l.is_published = TRUE'}
+             ORDER BY l.order_index ASC`,
+            [userId, lesson.module_id]
+        );
+
         res.json({
             success: true,
             lesson,
             progress,
+            moduleLessons,
             navigation: {
                 prev: prevLesson?.id || null,
                 next: nextLesson?.id || null
@@ -124,8 +137,7 @@ router.post('/:id/complete', authMiddleware, async (req, res) => {
             [lessonId]
         );
 
-        const settings = await getSystemSettings();
-        const pointsAwarded = (parseInt(contentPoints?.total) || 0) + settings.points_per_lesson;
+        const pointsAwarded = (parseInt(contentPoints?.total) || 0);
 
         // 2. Actualizar progreso con puntos ganados
         await db.query(
@@ -155,10 +167,18 @@ router.post('/:id/complete', authMiddleware, async (req, res) => {
         // Sincronizar nivel
         await syncUserLevel(userId);
 
+        // Obtener balance actualizado
+        const [updatedStats] = await db.query(
+            'SELECT points, level FROM user_points WHERE user_id = ?',
+            [userId]
+        );
+
         res.json({
             success: true,
             message: 'Lección completada',
-            pointsAwarded
+            pointsAwarded,
+            newBalance: updatedStats?.points || 0,
+            newLevel: updatedStats?.level || 'Novato'
         });
     } catch (error) {
         console.error('Error al completar lección:', error);

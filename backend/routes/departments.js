@@ -75,4 +75,65 @@ router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
     }
 });
 
+/**
+ * @route   POST /api/departments/sync
+ * @desc    Sincronizar departamentos desde el directorio maestro
+ * @access  Private/Admin
+ */
+router.post('/sync', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        // 1. Obtener departamentos únicos del directorio maestro
+        // asume que la columna se llama 'department' en staff_directory
+        const directoryDepts = await db.query(
+            "SELECT DISTINCT department FROM staff_directory WHERE department IS NOT NULL AND department != ''"
+        );
+
+        let addedCount = 0;
+
+        // 2. Insertarlos en la tabla departments ignorando duplicados
+        for (const row of directoryDepts) {
+            const deptName = row.department.trim();
+            if (!deptName) continue;
+
+            try {
+                // Intentar insertar
+                // Usamos INSERT IGNORE si es MySQL/MariaDB para evitar error de duplicado y continuar
+                // O mejor aun, verificamos existencia primero para contar correctamente
+                const existing = await db.query("SELECT id FROM departments WHERE name = ?", [deptName]);
+
+                if (existing.length === 0) {
+                    await db.query("INSERT INTO departments (name) VALUES (?)", [deptName]);
+                    addedCount++;
+                }
+            } catch (err) {
+                console.error(`Error insertando departamento ${deptName}:`, err);
+                // Continuar con el siguiente
+            }
+        }
+
+        res.json({
+            success: true,
+            message: `Sincronización completada. ${addedCount} nuevas áreas agregadas desde el directorio maestro.`
+        });
+    } catch (error) {
+        console.error('Error sincronizando departamentos:', error);
+        res.status(500).json({ error: 'Error al sincronizar departamentos' });
+    }
+});
+
+/**
+ * @route   DELETE /api/departments/all
+ * @desc    Eliminar todos los departamentos
+ * @access  Private/Admin
+ */
+router.post('/delete-all', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        await db.query('DELETE FROM departments');
+        res.json({ success: true, message: 'Todas las áreas han sido eliminadas' });
+    } catch (error) {
+        console.error('Error al eliminar todas las áreas:', error);
+        res.status(500).json({ error: 'Error al eliminar las áreas' });
+    }
+});
+
 module.exports = router;

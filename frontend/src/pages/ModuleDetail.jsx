@@ -13,7 +13,10 @@ import {
     Download,
     Lock,
     ExternalLink,
-    Trophy
+    Trophy,
+    Zap,
+    Award,
+    AlertTriangle
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -70,13 +73,13 @@ export default function ModuleDetail() {
     }
 
     return (
-        <div className="space-y-10 animate-fade-in">
+        <div className="space-y-6 animate-fade-in">
             {/* Header / Hero Section */}
             <div className="relative rounded-[2.5rem] overflow-hidden bg-slate-800/40 border border-white/5 shadow-2xl">
                 <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-primary-500/10 to-transparent"></div>
 
-                <div className="relative z-10 p-10 md:p-16 flex flex-col md:flex-row gap-12 items-center">
-                    <div className="flex-1 space-y-6">
+                <div className="relative z-10 p-8 md:p-10 flex flex-col md:flex-row gap-8 items-center">
+                    <div className="flex-1 space-y-4">
                         <button
                             onClick={() => navigate('/modules')}
                             className="flex items-center gap-2 text-primary-400 hover:text-white transition-colors text-xs font-black uppercase tracking-widest group"
@@ -88,24 +91,19 @@ export default function ModuleDetail() {
                             <div className="inline-flex items-center gap-2 px-3 py-1 bg-secondary-500/20 border border-secondary-500/30 rounded-full text-secondary-500 text-[10px] font-black uppercase tracking-widest">
                                 Módulo {module.module_number} • {module.month}
                             </div>
-                            <h1 className="text-4xl md:text-5xl font-black text-white tracking-tighter leading-tight">
+                            <h1 className="text-3xl md:text-4xl font-black text-white tracking-tighter leading-tight">
                                 {module.title}
                             </h1>
-                            <p className="text-gray-400 text-lg leading-relaxed max-w-2xl font-medium">
+                            <div className="flex items-center gap-2 text-primary-400 font-black uppercase tracking-widest text-xs">
+                                <Clock className="w-3.5 h-3.5" />
+                                {module.lessons.filter(l => !l.is_optional).reduce((acc, l) => acc + (l.duration_minutes || 0), 0)} min
+                            </div>
+                            <p className="text-gray-400 text-base leading-relaxed max-w-2xl font-medium">
                                 {module.description}
                             </p>
                         </div>
 
                         <div className="flex flex-wrap gap-8 pt-4">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-primary-400 border border-white/5">
-                                    <Clock className="w-5 h-5" />
-                                </div>
-                                <div>
-                                    <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">Duración</p>
-                                    <p className="text-white font-bold">{module.duration_minutes || module.lessons.reduce((acc, l) => acc + (l.duration_minutes || 0), 0)} min</p>
-                                </div>
-                            </div>
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-primary-400 border border-white/5">
                                     <FileText className="w-5 h-5" />
@@ -169,9 +167,9 @@ export default function ModuleDetail() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+            <div className="space-y-8">
                 {/* Lessons List */}
-                <div className="lg:col-span-2 space-y-6">
+                <div className="space-y-6">
                     <h2 className="text-2xl font-black text-white tracking-tight uppercase flex items-center gap-3">
                         <div className="w-2 h-8 bg-primary-500 rounded-full"></div>
                         Contenido del Módulo
@@ -189,12 +187,21 @@ export default function ModuleDetail() {
                                     key={lesson.id}
                                     className={`group relative p-6 rounded-2xl border transition-all duration-300 ${isLocked
                                         ? 'bg-slate-900/40 border-white/5 opacity-60 cursor-not-allowed'
-                                        : lesson.status === 'completed'
-                                            ? 'border-green-500/20 bg-green-500/5 cursor-pointer'
-                                            : 'bg-slate-800/20 border-white/5 hover:border-primary-500/40 hover:bg-slate-800/40 cursor-pointer'
+                                        : !!lesson.is_optional
+                                            ? 'bg-indigo-500/5 border-dashed border-indigo-500/30 hover:border-indigo-500/50'
+                                            : lesson.status === 'completed'
+                                                ? 'border-green-500/20 bg-green-500/5 cursor-pointer'
+                                                : 'bg-slate-800/20 border-white/5 hover:border-primary-500/40 hover:bg-slate-800/40 cursor-pointer'
                                         }`}
                                     onClick={() => !isLocked && navigate(`/lessons/${lesson.id}`)}
                                 >
+                                    {!!lesson.is_optional && (
+                                        <div className="absolute top-0 right-10 mt-[-12px]">
+                                            <span className="bg-gradient-to-r from-indigo-600 to-primary-600 text-white text-[9px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full shadow-[0_5px_15px_rgba(79,70,229,0.4)] flex items-center gap-2 border border-white/10">
+                                                <Zap className="w-3 h-3 fill-white" /> Actividad Opcional
+                                            </span>
+                                        </div>
+                                    )}
                                     <div className="flex items-center gap-6">
                                         <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors ${isLocked
                                             ? 'bg-slate-900 text-gray-700'
@@ -202,13 +209,19 @@ export default function ModuleDetail() {
                                                 ? 'bg-green-500/20 text-green-500'
                                                 : 'bg-slate-900 text-gray-500 group-hover:text-primary-400'
                                             }`}>
-                                            {isLocked ? <Lock className="w-6 h-6" /> : (lesson.lesson_type === 'video' ? <PlayCircle className="w-6 h-6" /> : <FileText className="w-6 h-6" />)}
+                                            {isLocked ? (
+                                                <Lock className="w-6 h-6" />
+                                            ) : (
+                                                lesson.lesson_type === 'video' ? <PlayCircle className="w-6 h-6 text-blue-500" /> :
+                                                    (lesson.lesson_type === 'interactive' || lesson.lesson_type === 'h5p') ? <Zap className="w-6 h-6 text-yellow-500" /> :
+                                                        <FileText className="w-6 h-6 text-indigo-400" />
+                                            )}
                                         </div>
 
                                         <div className="flex-1">
                                             <div className="flex items-center gap-3 mb-1">
                                                 <span className="text-[10px] font-black text-gray-600 uppercase tracking-widest">
-                                                    Lección {index + 1} {lesson.is_optional && <span className="text-secondary-500 ml-1">• Opcional</span>}
+                                                    Lección {index + 1}
                                                 </span>
                                                 {lesson.status === 'completed' && (
                                                     <span className="flex items-center gap-1 text-green-500 text-[9px] font-black uppercase tracking-tighter bg-green-500/10 px-2 py-0.5 rounded-full">
@@ -219,12 +232,20 @@ export default function ModuleDetail() {
                                             <h3 className={`font-bold transition-colors ${isLocked ? 'text-gray-600' : 'text-white group-hover:text-primary-400'}`}>
                                                 {lesson.title}
                                             </h3>
+
+                                            <div className="flex items-center gap-4 mt-1">
+                                                <div className="flex items-center gap-1.5 text-gray-500">
+                                                    <Clock className="w-3 h-3" />
+                                                    <span className="text-[10px] font-bold uppercase tracking-widest">{lesson.duration_minutes} min</span>
+                                                </div>
+                                                <div className="flex items-center gap-1.5 text-secondary-500">
+                                                    <Award className="w-3 h-3" />
+                                                    <span className="text-[10px] font-black uppercase tracking-widest">+{lesson.total_points || 0} Puntos</span>
+                                                </div>
+                                            </div>
                                         </div>
 
                                         <div className="flex items-center gap-4 text-gray-500">
-                                            <span className="hidden sm:flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest">
-                                                <Clock className="w-4 h-4" /> {lesson.duration_minutes} min
-                                            </span>
                                             {!isLocked && <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />}
                                         </div>
                                     </div>
@@ -277,49 +298,38 @@ export default function ModuleDetail() {
                         })}
                     </div>
                 </div>
-            </div>
 
-            {/* Sidebar: Resources and Info */}
-            <div className="space-y-8">
-                {/* Resources Card */}
-                <div className="card bg-slate-800/40 p-8 space-y-6">
-                    <h3 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-3">
-                        <Download className="w-5 h-5 text-primary-400" />
-                        Recursos
-                    </h3>
-                    {module.resources && module.resources.length > 0 ? (
-                        <div className="space-y-3">
-                            {module.resources.map((resource) => (
-                                <a
-                                    key={resource.id}
-                                    href={resource.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center justify-between p-4 rounded-xl bg-slate-900/50 border border-white/5 hover:border-primary-500/30 transition-all group"
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <div className="text-xs font-bold text-gray-400 uppercase tracking-widest">{resource.type || 'PDF'}</div>
-                                        <div className="text-sm font-medium text-white group-hover:text-primary-400">{resource.title}</div>
-                                    </div>
-                                    <ExternalLink className="w-4 h-4 text-gray-600 group-hover:text-primary-400" />
-                                </a>
-                            ))}
-                        </div>
-                    ) : (
-                        <p className="text-gray-500 text-sm font-medium italic">No hay recursos adicionales para este módulo.</p>
-                    )}
-                </div>
+                {/* Sidebar: Resources and Info */}
+                <div className="space-y-8">
+                    {/* Resources Card */}
+                    <div className="card bg-slate-800/40 p-8 space-y-6">
+                        <h3 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-3">
+                            <Download className="w-5 h-5 text-primary-400" />
+                            Recursos
+                        </h3>
+                        {module.resources && module.resources.length > 0 ? (
+                            <div className="space-y-3">
+                                {module.resources.map((resource) => (
+                                    <a
+                                        key={resource.id}
+                                        href={resource.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center justify-between p-4 rounded-xl bg-slate-900/50 border border-white/5 hover:border-primary-500/30 transition-all group"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="text-xs font-bold text-gray-400 uppercase tracking-widest">{resource.type || 'PDF'}</div>
+                                            <div className="text-sm font-medium text-white group-hover:text-primary-400">{resource.title}</div>
+                                        </div>
+                                        <ExternalLink className="w-4 h-4 text-gray-600 group-hover:text-primary-400" />
+                                    </a>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-gray-500 text-sm font-medium italic">No hay recursos adicionales para este módulo.</p>
+                        )}
+                    </div>
 
-                {/* Support Card */}
-                <div className="card bg-gradient-to-br from-primary-600/10 to-transparent p-8 border-primary-500/20">
-                    <Lock className="w-10 h-10 text-primary-500 mb-4" />
-                    <h4 className="text-white font-black uppercase tracking-tight mb-2">Canales de Soporte</h4>
-                    <p className="text-gray-400 text-sm leading-relaxed mb-6 font-medium">
-                        Si tienes dudas sobre el contenido técnico, contacta al equipo de Ciberseguridad Institucional.
-                    </p>
-                    <button className="w-full py-3 rounded-xl border border-primary-500/30 text-primary-400 text-xs font-black uppercase tracking-widest hover:bg-primary-500/10 transition-all">
-                        Enviar Consulta
-                    </button>
                 </div>
             </div>
         </div>

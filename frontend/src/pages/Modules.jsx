@@ -164,27 +164,7 @@ export default function Modules() {
             </div>
 
             {/* Banner de Certificación (Empty state o CTA) */}
-            <div className="relative p-10 rounded-[3rem] bg-gradient-to-br from-primary-900/40 via-slate-900 to-secondary-900/10 border border-white/5 overflow-hidden shadow-2xl">
-                <div className="absolute top-0 right-0 p-12 opacity-10">
-                    <BarChart3 className="w-48 h-48 text-white" />
-                </div>
-                <div className="relative z-10 max-w-2xl space-y-4">
-                    <h4 className="text-2xl font-black text-white uppercase tracking-tighter">¿Listo para el examen final?</h4>
-                    <p className="text-gray-400 font-medium leading-relaxed">
-                        Completa todos los módulos mensuales para desbloquear tu certificado institucional de Ciberseguridad CGR 2026.
-                    </p>
-                    <div className="pt-4 flex items-center gap-4">
-                        <div className="flex -space-x-3">
-                            {[1, 2, 3, 4].map(i => (
-                                <div key={i} className="w-10 h-10 rounded-full border-2 border-slate-900 bg-slate-800 flex items-center justify-center overflow-hidden">
-                                    <img src={`https://ui-avatars.com/api/?name=User+${i}&background=384A99&color=fff`} alt="user" />
-                                </div>
-                            ))}
-                        </div>
-                        <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">+120 funcionarios certificados hoy</p>
-                    </div>
-                </div>
-            </div>
+
         </div>
     );
 }

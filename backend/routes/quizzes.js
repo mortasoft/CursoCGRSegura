@@ -165,9 +165,13 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
                 );
             }
 
-            // Sincronizar nivel
-            await syncUserLevel(userId);
         }
+
+        // Obtener balance actualizado (siempre para asegurar que el navbar esté sincronizado)
+        const [updatedStats] = await db.query(
+            'SELECT points, level FROM user_points WHERE user_id = ?',
+            [userId]
+        );
 
         res.json({
             success: true,
@@ -176,7 +180,9 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
             earnedPoints,
             totalPoints,
             pointsAwarded,
-            feedback
+            feedback,
+            newBalance: updatedStats?.points || 0,
+            newLevel: updatedStats?.level || 'Novato'
         });
 
     } catch (error) {

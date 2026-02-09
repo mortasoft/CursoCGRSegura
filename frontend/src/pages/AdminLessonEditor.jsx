@@ -41,6 +41,7 @@ export default function AdminLessonEditor() {
         content_type: 'text', // text, video, image, file, link, quiz, survey, assignment
         data: '', // text content, url, or json string
         file: null,
+        video_source: 'file', // 'file' or 'url'
         is_required: false,
         points: 0
     });
@@ -90,6 +91,7 @@ export default function AdminLessonEditor() {
                 content_type: item.content_type,
                 data: typeof item.data === 'object' ? JSON.stringify(item.data) : item.data,
                 file: null,
+                video_source: item.data?.url ? 'url' : 'file',
                 is_required: !!item.is_required,
                 points: item.points || 0
             });
@@ -100,6 +102,7 @@ export default function AdminLessonEditor() {
                 content_type: type,
                 data: '',
                 file: null,
+                video_source: 'file',
                 is_required: false,
                 points: 0
             });
@@ -124,6 +127,12 @@ export default function AdminLessonEditor() {
                 finalData = { text: formData.data };
             } else if (formData.content_type === 'link') {
                 finalData = { url: formData.data };
+            } else if (formData.content_type === 'video') {
+                if (formData.video_source === 'url') {
+                    finalData = { url: formData.data };
+                } else {
+                    finalData = { file_url: editingItem?.data?.file_url };
+                }
             } else if (['quiz', 'survey', 'assignment'].includes(formData.content_type)) {
                 // For simplified version, data might be description or instructions
                 finalData = { description: formData.data };
@@ -256,12 +265,25 @@ export default function AdminLessonEditor() {
                     >
                         <ArrowLeft className="w-4 h-4" /> Volver a Módulos
                     </button>
-                    <h1 className="text-3xl font-bold text-white tracking-tight">
-                        Editor de Lección
-                    </h1>
-                    <p className="text-gray-400 text-lg">
-                        {lesson?.title || 'Cargando...'}
-                    </p>
+                    <div className="flex flex-col md:flex-row md:items-center gap-4">
+                        <div>
+                            <h1 className="text-3xl font-bold text-white tracking-tight">
+                                Editor de Lección
+                            </h1>
+                            <p className="text-gray-400 text-lg">
+                                {lesson?.title || 'Cargando...'}
+                            </p>
+                        </div>
+                        <div className="flex items-center gap-1.5 px-4 py-2 bg-primary-500/10 rounded-2xl border border-primary-500/20">
+                            <Award className="w-5 h-5 text-primary-400" />
+                            <div className="flex flex-col">
+                                <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest leading-none mb-0.5">Total Puntos</span>
+                                <span className="text-xl font-bold text-primary-400 leading-none">
+                                    {contents.reduce((sum, item) => sum + (Number(item.points) || 0), 0)} PTS
+                                </span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -419,7 +441,61 @@ export default function AdminLessonEditor() {
                                 </div>
                             )}
 
-                            {['file', 'image', 'video'].includes(formData.content_type) && (
+                            {formData.content_type === 'video' && (
+                                <div className="space-y-4">
+                                    <div className="flex gap-4">
+                                        <button
+                                            type="button"
+                                            onClick={() => setFormData({ ...formData, video_source: 'file' })}
+                                            className={`flex-1 py-2 text-xs font-bold uppercase tracking-widest rounded-lg border transition-all ${formData.video_source === 'file' ? 'bg-primary-500/20 border-primary-500 text-primary-400' : 'bg-slate-900 border-white/5 text-gray-500'}`}
+                                        >
+                                            Subir Archivo
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setFormData({ ...formData, video_source: 'url' })}
+                                            className={`flex-1 py-2 text-xs font-bold uppercase tracking-widest rounded-lg border transition-all ${formData.video_source === 'url' ? 'bg-primary-500/20 border-primary-500 text-primary-400' : 'bg-slate-900 border-white/5 text-gray-500'}`}
+                                        >
+                                            Enlace (YouTube)
+                                        </button>
+                                    </div>
+
+                                    {formData.video_source === 'file' ? (
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium text-gray-300">Archivo de Video</label>
+                                            <input
+                                                type="file"
+                                                required={!editingItem && !editingItem?.data?.file_url}
+                                                className="block w-full text-sm text-gray-400
+                                                    file:mr-4 file:py-2 file:px-4
+                                                    file:rounded-full file:border-0
+                                                    file:text-xs file:font-semibold
+                                                    file:bg-primary-500/20 file:text-primary-400
+                                                    hover:file:bg-primary-500/30
+                                                    cursor-pointer"
+                                                onChange={e => setFormData({ ...formData, file: e.target.files[0] })}
+                                                accept="video/*"
+                                            />
+                                            {editingItem?.data?.file_url && <p className="text-xs text-green-400">Archivo actual: {editingItem.data.original_name || 'Video subido'}</p>}
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-medium text-gray-300">URL de YouTube</label>
+                                            <input
+                                                type="url"
+                                                required
+                                                className="input-field bg-slate-950/50 border-white/10 focus:border-primary-500"
+                                                placeholder="https://www.youtube.com/watch?v=..."
+                                                value={formData.data}
+                                                onChange={e => setFormData({ ...formData, data: e.target.value })}
+                                            />
+                                            <p className="text-xs text-gray-500">Pega el enlace directo del video de YouTube.</p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {['file', 'image'].includes(formData.content_type) && (
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium text-gray-300">Archivo</label>
                                     <input
@@ -433,10 +509,10 @@ export default function AdminLessonEditor() {
                                             hover:file:bg-primary-500/30
                                             cursor-pointer"
                                         onChange={e => setFormData({ ...formData, file: e.target.files[0] })}
-                                        accept={formData.content_type === 'image' ? 'image/*' : formData.content_type === 'video' ? 'video/*' : '*/*'}
+                                        accept={formData.content_type === 'image' ? 'image/*' : '*/*'}
                                     />
                                     <p className="text-xs text-gray-500 mt-1">
-                                        Formatos permitidos: PDF, Word, Excel, PowerPoint, Imágenes (JPG, PNG), Video (MP4), Audio (MP3), ZIP. Máx 50MB.
+                                        Máx 50MB. Para imágenes usa JPG, PNG o GIF.
                                     </p>
                                     {editingItem?.data?.original_name && (
                                         <p className="text-xs text-green-400 mt-1">Archivo actual: {editingItem.data.original_name}</p>

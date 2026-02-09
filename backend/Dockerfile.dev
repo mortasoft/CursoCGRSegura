@@ -1,0 +1,20 @@
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Copiar package files
+COPY package*.json ./
+
+# Instalar TODAS las dependencias (incluyendo nodemon)
+RUN npm install
+
+# Copiar resto del código
+COPY . .
+
+# El volumen en docker-compose sobreescribirá esto, 
+# pero es bueno tenerlo para que funcione solo también.
+
+EXPOSE 5000
+
+# Comando para desarrollo con hot reload
+CMD ["npm", "run", "dev"]

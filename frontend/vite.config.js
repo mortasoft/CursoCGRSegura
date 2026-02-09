@@ -10,6 +10,9 @@ export default defineConfig({
     host: true,
     allowedHosts: [
       'gondor-linux.tail0310b2.ts.net'
-    ]
+    ],
+    watch: {
+      usePolling: true
+    }
   }
 })

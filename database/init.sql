@@ -194,7 +194,7 @@ CREATE TABLE IF NOT EXISTS user_points (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     points INT DEFAULT 0,
-    level ENUM('Novato', 'Defensor', 'Guardián', 'CISO Honorario') DEFAULT 'Novato',
+    level VARCHAR(100) DEFAULT 'Novato',
     badges JSON COMMENT 'Insignias obtenidas en formato JSON',
     rank_position INT,
     last_updated DATETIME,
@@ -204,6 +204,24 @@ CREATE TABLE IF NOT EXISTS user_points (
     UNIQUE KEY unique_user_points (user_id),
     INDEX idx_points (points DESC),
     INDEX idx_level (level)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tabla de niveles de gamificación
+CREATE TABLE IF NOT EXISTS gamification_levels (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) UNIQUE NOT NULL,
+    min_points INT NOT NULL,
+    icon VARCHAR(50) DEFAULT 'Award',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tabla de configuraciones del sistema
+CREATE TABLE IF NOT EXISTS system_settings (
+    setting_key VARCHAR(100) PRIMARY KEY,
+    setting_value VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Tabla de insignias (badges)
@@ -349,7 +367,3 @@ INSERT IGNORE INTO departments (name) VALUES
 -- Crear usuario administrador por defecto
 INSERT INTO users (employee_id, email, password_hash, first_name, last_name, department, position, role, is_active) VALUES
 ('ADMIN001', 'admin@cgr.go.cr', '$2b$10$YourHashedPasswordHere', 'Administrador', 'Sistema', 'TI', 'Administrador LMS', 'admin', TRUE);
-
--- Crear usuario de prueba
-INSERT INTO users (employee_id, email, password_hash, first_name, last_name, department, position, role, is_active) VALUES
-('EMP001', 'funcionario@cgr.go.cr', '$2b$10$YourHashedPasswordHere', 'Juan', 'Pérez', 'Auditoría', 'Auditor', 'student', TRUE);

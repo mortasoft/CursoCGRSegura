@@ -64,8 +64,8 @@ router.post('/google', async (req, res) => {
             const result = await db.query(
                 `INSERT INTO users (
                     email, google_id, first_name, last_name, 
-                    profile_picture, role, department, position, is_active
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, TRUE)`,
+                    profile_picture, role, department, position, is_active, last_login
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, TRUE, NOW())`,
                 [
                     email,
                     googleId,
@@ -169,7 +169,9 @@ router.post('/google', async (req, res) => {
                 position: user.position,
                 role: user.role,
                 profilePicture: user.profile_picture,
-                stats: stats || { completed_lessons: 0, points: 0, level: 'Novato' }
+                points: stats?.points || 0,
+                level: stats?.level || 'Novato',
+                stats: stats || { completed_lessons: 0 }
             }
         });
 
@@ -226,7 +228,11 @@ router.get('/verify', async (req, res) => {
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'cgr-jwt-secret');
 
         const [user] = await db.query(
-            'SELECT id, email, first_name, last_name, profile_picture, role, is_active FROM users WHERE id = ?',
+            `SELECT u.id, u.email, u.first_name, u.last_name, u.profile_picture, u.role, u.is_active,
+                    up.points, up.level
+             FROM users u
+             LEFT JOIN user_points up ON u.id = up.user_id
+             WHERE u.id = ?`,
             [decoded.id]
         );
 
@@ -242,7 +248,9 @@ router.get('/verify', async (req, res) => {
                 firstName: user.first_name,
                 lastName: user.last_name,
                 profilePicture: user.profile_picture,
-                role: user.role
+                role: user.role,
+                points: user.points || 0,
+                level: user.level || 'Novato'
             }
         });
     } catch (error) {

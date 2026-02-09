@@ -17,7 +17,7 @@ import axios from 'axios';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export default function Dashboard() {
-    const { user } = useAuthStore();
+    const { user, updateUser } = useAuthStore();
     const navigate = useNavigate();
     const [stats, setStats] = useState(null);
     const [modules, setModules] = useState([]);
@@ -31,8 +31,17 @@ export default function Dashboard() {
     const fetchDashboardData = async () => {
         try {
             const response = await axios.get(`${API_URL}/dashboard`);
-            setStats(response.data.stats || null);
+            const dashboardStats = response.data.stats || null;
+            setStats(dashboardStats);
             setModules(response.data.modules || []);
+
+            // Sincronizar stats globales con el store de autenticación
+            if (dashboardStats) {
+                updateUser({
+                    points: dashboardStats.points,
+                    level: dashboardStats.level
+                });
+            }
         } catch (error) {
             console.warn('Usando datos de ejemplo (Backend no listo):', error.message);
             setStats({
@@ -68,40 +77,12 @@ export default function Dashboard() {
 
     return (
         <div className="space-y-10 animate-fade-in">
-            {/* Header section with Stats Integrated */}
-            <div className="relative overflow-hidden rounded-[2rem] bg-slate-800/40 border border-white/5 p-8 md:p-12 shadow-2xl">
-                {/* Background decorative elements */}
-                <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/10 rounded-full blur-[80px] -mr-32 -mt-32"></div>
-                <div className="absolute bottom-0 left-0 w-48 h-48 bg-secondary-500/10 rounded-full blur-[60px] -ml-24 -mb-24"></div>
 
-                <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-8">
-                    <div className="text-center md:text-left space-y-4">
-                        <h1 className="text-5xl md:text-6xl font-black text-white leading-tight tracking-tighter">
-                            ¡Hola, <span className="text-secondary-500">{user?.firstName}</span>!
-                        </h1>
-                    </div>
-
-                    <div className="flex gap-6">
-                        <div className="flex flex-col items-center gap-3">
-                            <div className="w-20 h-20 rounded-2xl bg-slate-900 border border-white/10 flex items-center justify-center shadow-xl group hover:border-secondary-500/50 transition-colors">
-                                <Award className="w-10 h-10 text-secondary-500 transition-transform group-hover:scale-110" />
-                            </div>
-                            <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Nivel {stats?.level}</span>
-                        </div>
-                        <div className="flex flex-col items-center gap-3">
-                            <div className="w-20 h-20 rounded-2xl bg-slate-900 border border-white/10 flex items-center justify-center shadow-xl group hover:border-primary-500/50 transition-colors">
-                                <Trophy className="w-10 h-10 text-primary-400 transition-transform group-hover:scale-110" />
-                            </div>
-                            <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{stats?.points} Puntos</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             {/* Main Content Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
                 {/* Left Column: Progress and Modules */}
-                <div className="lg:col-span-2 space-y-8">
+                <div className="lg:col-span-3 space-y-8">
                     <div className="card bg-slate-800/30 p-8">
                         <div className="flex items-center justify-between mb-8">
                             <div className="flex items-center gap-3">
@@ -121,7 +102,7 @@ export default function Dashboard() {
                             </button>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {(filterCompleted ? modules.filter(m => m.status === 'completed') : modules).length > 0 ? (
                                 (filterCompleted ? modules.filter(m => m.status === 'completed') : modules).map((module) => (
                                     <div
@@ -191,34 +172,48 @@ export default function Dashboard() {
 
                 {/* Right Column: Leaderboard Snippet and Rank */}
                 <div className="space-y-8">
-                    <div className="card bg-slate-800/50 p-6 flex flex-col items-center text-center">
+                    <div className="card bg-slate-800/50 p-6 flex flex-col items-center text-center relative overflow-hidden">
+                        {/* Decorative background for the card */}
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-primary-500/5 rounded-full blur-3xl -mr-16 -mt-16"></div>
+
                         <div className="mb-6 relative">
-                            <div className="w-32 h-32 rounded-full border-4 border-slate-700 p-1">
+                            <div className="w-32 h-32 rounded-full border-4 border-slate-700 p-1 relative z-10">
                                 <img
                                     src={user?.profilePicture || `https://ui-avatars.com/api/?name=${user?.firstName}+${user?.lastName}&background=384A99&color=fff`}
                                     alt="Avatar"
                                     className="w-full h-full rounded-full object-cover"
                                 />
                             </div>
-                            <div className="absolute -bottom-2 right-0 bg-secondary-500 text-white w-10 h-10 rounded-full flex items-center justify-center font-black border-4 border-slate-800 shadow-xl">
+                            <div className="absolute -bottom-2 right-0 bg-secondary-500 text-white w-10 h-10 rounded-full flex items-center justify-center font-black border-4 border-slate-800 shadow-xl z-20">
                                 #{stats?.rank}
                             </div>
                         </div>
-                        <h3 className="text-xl font-black text-white uppercase tracking-tight">Posición Global</h3>
-                        <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mt-1">de {stats?.totalUsers} Funcionarios</p>
 
-                        <div className="w-full mt-8 space-y-2">
-                            <div className="flex justify-between text-[10px] font-black uppercase text-gray-500 tracking-widest mb-1 px-1">
-                                <span>Ranking Institucional</span>
-                                <span className="text-secondary-500">Top 10%</span>
+                        <div className="space-y-1">
+                            <h3 className="text-xl font-black text-white uppercase tracking-tight">Posición Global</h3>
+                            <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest">De {stats?.totalUsers} Funcionarios</p>
+                        </div>
+
+                        {/* Ranking Details */}
+                        <div className="w-full mt-8 grid grid-cols-2 gap-4">
+                            <div className="p-4 bg-slate-900/50 rounded-2xl border border-white/5">
+                                <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1">Institucional</p>
+                                <p className="text-xl font-black text-secondary-500">#{stats?.rank}</p>
+                                <p className="text-[8px] font-bold text-gray-600 uppercase mt-1">
+                                    Top {Math.max(1, Math.round((stats?.rank / stats?.totalUsers) * 100))}%
+                                </p>
                             </div>
-                            <div className="progress-bar h-2">
-                                <div className="progress-fill bg-secondary-500" style={{ width: '90%' }}></div>
+                            <div className="p-4 bg-slate-900/50 rounded-2xl border border-white/5">
+                                <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-1">En su Área</p>
+                                <p className="text-xl font-black text-primary-400">#{stats?.departmentRank || '-'}</p>
+                                <p className="text-[8px] font-bold text-gray-600 uppercase mt-1">
+                                    {stats?.totalInDepartment > 0 ? `De ${stats.totalInDepartment} pers.` : 'No asignado'}
+                                </p>
                             </div>
                         </div>
 
-                        <Link to="/leaderboard" className="mt-8 w-full py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-black uppercase tracking-widest transition-all">
-                            Ver Tabla Completa
+                        <Link to="/leaderboard" className="mt-8 w-full py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 group">
+                            Ver Tabla Completa <TrendingUp className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                         </Link>
                     </div>
 

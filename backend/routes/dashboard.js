@@ -11,70 +11,133 @@ const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 router.get('/', authMiddleware, async (req, res) => {
     try {
         const userId = req.user.id;
+        const isAdmin = req.user.role === 'admin' && req.headers['x-view-as-student'] !== 'true';
 
-        // 1. Obtener estadísticas de módulos
-        const [moduleStats] = await db.query(
-            `SELECT 
-                (SELECT COUNT(*) FROM modules WHERE is_published = TRUE) as totalModules,
-                (SELECT COUNT(DISTINCT module_id) FROM user_progress WHERE user_id = ? AND status = 'completed') as completedModules
-            `,
-            [userId]
+        // 1. Obtener todos los módulos (Admins ven todos, estudiantes solo publicados)
+        const modules = await db.query(
+            `SELECT m.id, m.title, m.order_index
+             FROM modules m
+             WHERE 1=1 ${isAdmin ? '' : 'AND m.is_published = TRUE'}
+             ORDER BY m.order_index ASC`
         );
 
-        // 2. Obtener puntos y rango del usuario
+        let completedModulesCount = 0;
+        let totalMandatoryItemsGlobally = 0;
+        let completedMandatoryItemsGlobally = 0;
+        const totalModulesCount = modules.length;
+        const modulesWithProgress = [];
+
+        for (const m of modules) {
+            // Contar lecciones totales (SOLO OBLIGATORIAS) y completadas (SOLO OBLIGATORIAS)
+            const [lessonsData] = await db.query(
+                `SELECT 
+                    COUNT(CASE WHEN l.is_optional = FALSE THEN 1 END) as total,
+                    COUNT(CASE WHEN up.status = 'completed' AND l.is_optional = FALSE THEN 1 END) as completed
+                 FROM lessons l
+                 LEFT JOIN user_progress up ON l.id = up.lesson_id AND up.user_id = ?
+                 WHERE l.module_id = ? ${isAdmin ? '' : 'AND l.is_published = TRUE'}`,
+                [userId, m.id]
+            );
+
+            // Contar quizzes totales y aprobados
+            const [quizzesData] = await db.query(
+                `SELECT 
+                    COUNT(*) as total,
+                    (SELECT COUNT(DISTINCT quiz_id) FROM quiz_attempts qa 
+                     WHERE qa.user_id = ? AND qa.passed = TRUE 
+                     AND qa.quiz_id IN (SELECT id FROM quizzes WHERE module_id = ? ${isAdmin ? '' : 'AND is_published = TRUE'})) as completed
+                 FROM quizzes q
+                 WHERE q.module_id = ? ${isAdmin ? '' : 'AND q.is_published = TRUE'}`,
+                [userId, m.id, m.id]
+            );
+
+            const totalItems = (lessonsData.total || 0) + (quizzesData.total || 0);
+            const completedItems = (lessonsData.completed || 0) + (quizzesData.completed || 0);
+
+            totalMandatoryItemsGlobally += totalItems;
+            completedMandatoryItemsGlobally += completedItems;
+
+            const progress = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+            const isFullyCompleted = totalItems > 0 && completedItems === totalItems;
+
+            if (isFullyCompleted) completedModulesCount++;
+
+            // Determinar siguiente lección
+            const [nextLesson] = await db.query(
+                `SELECT l.id FROM lessons l
+                 LEFT JOIN user_progress up ON l.id = up.lesson_id AND up.user_id = ?
+                 WHERE l.module_id = ? AND l.is_published = TRUE 
+                 AND (up.status IS NULL OR up.status != 'completed')
+                 ORDER BY l.order_index ASC LIMIT 1`,
+                [userId, m.id]
+            );
+
+            modulesWithProgress.push({
+                id: m.id,
+                title: m.title,
+                order_index: m.order_index,
+                progress: progress,
+                status: isFullyCompleted ? 'completed' : (completedItems > 0 ? 'in_progress' : 'not_started'),
+                next_lesson_id: nextLesson?.id || null
+            });
+        }
+
+        // 2. Obtener puntos y nivel del usuario
         const [userPoints] = await db.query(
-            `SELECT points, level, rank_position FROM user_points WHERE user_id = ?`,
+            `SELECT points, level FROM user_points WHERE user_id = ?`,
             [userId]
         );
 
-        // 3. Obtener total de usuarios para el ranking
-        const [totalUsersData] = await db.query('SELECT COUNT(*) as total FROM users WHERE is_active = TRUE');
+        // 3. Rankings
+        const [userData] = await db.query(`SELECT email, department FROM users WHERE id = ?`, [userId]);
+        const email = userData?.email;
+        const dept = userData?.department;
 
-        // 4. Obtener todos los módulos con progreso y la siguiente lección
-        const allModules = await db.query(
-            `SELECT 
-                m.id, 
-                m.title, 
-                m.order_index,
-                COALESCE(SUM(up.progress_percentage) / COUNT(l.id), 0) as progress,
-                CASE 
-                    WHEN COUNT(CASE WHEN up.status = 'completed' THEN 1 END) = COUNT(l.id) AND COUNT(l.id) > 0 THEN 'completed'
-                    WHEN COUNT(up.id) > 0 THEN 'in_progress'
-                    ELSE 'not_started'
-                END as status,
-                (SELECT l2.id FROM lessons l2 
-                 LEFT JOIN user_progress up2 ON l2.id = up2.lesson_id AND up2.user_id = ?
-                 WHERE l2.module_id = m.id AND l2.is_published = TRUE 
-                 AND (up2.status IS NULL OR up2.status != 'completed')
-                 ORDER BY l2.order_index ASC LIMIT 1) as next_lesson_id
-            FROM modules m
-            LEFT JOIN lessons l ON m.id = l.module_id AND l.is_published = TRUE
-            LEFT JOIN user_progress up ON l.id = up.lesson_id AND up.user_id = ?
-            WHERE m.is_published = TRUE
-            GROUP BY m.id
-            ORDER BY m.order_index ASC`,
-            [userId, userId]
+        const globalRanking = await db.query(
+            `SELECT LOWER(sd.email) as email, RANK() OVER (ORDER BY COALESCE(up.points, -1) DESC, sd.full_name ASC) as pos
+             FROM staff_directory sd
+             LEFT JOIN users u ON sd.email = u.email
+             LEFT JOIN user_points up ON u.id = up.user_id`
         );
+
+        const userEmailLower = (email || '').toLowerCase();
+        const userGlobalRankRaw = globalRanking.find(r => r.email.toLowerCase() === userEmailLower);
+        const institutionalRank = userGlobalRankRaw ? userGlobalRankRaw.pos : (globalRanking.length + 1);
+
+        let departmentalRank = null;
+        let totalInDepartment = 0;
+        if (dept) {
+            const deptRanking = await db.query(
+                `SELECT LOWER(sd.email) as email, RANK() OVER (ORDER BY COALESCE(up.points, -1) DESC, sd.full_name ASC) as pos
+                 FROM staff_directory sd
+                 LEFT JOIN users u ON sd.email = u.email
+                 LEFT JOIN user_points up ON u.id = up.user_id
+                 WHERE sd.department = ?`,
+                [dept]
+            );
+            const userDeptRankRaw = deptRanking.find(r => r.email.toLowerCase() === userEmailLower);
+            departmentalRank = userDeptRankRaw ? userDeptRankRaw.pos : null;
+            totalInDepartment = deptRanking.length;
+        }
 
         const stats = {
-            completedModules: moduleStats.completedModules || 0,
-            totalModules: moduleStats.totalModules || 0,
+            completedModules: completedModulesCount,
+            totalModules: totalModulesCount,
             points: userPoints?.points || 0,
             level: userPoints?.level || 'Novato',
-            rank: userPoints?.rank_position || totalUsersData.total,
-            totalUsers: totalUsersData.total,
-            completionPercentage: moduleStats.totalModules > 0
-                ? Math.round((moduleStats.completedModules / moduleStats.totalModules) * 100)
+            rank: institutionalRank,
+            departmentRank: departmentalRank,
+            totalInDepartment,
+            totalUsers: globalRanking.length,
+            completionPercentage: totalMandatoryItemsGlobally > 0
+                ? Math.round((completedMandatoryItemsGlobally / totalMandatoryItemsGlobally) * 100)
                 : 0
         };
 
         res.json({
             success: true,
             stats,
-            modules: allModules.map(m => ({
-                ...m,
-                progress: Math.round(m.progress)
-            }))
+            modules: modulesWithProgress
         });
     } catch (error) {
         console.error('Error en dashboard:', error);

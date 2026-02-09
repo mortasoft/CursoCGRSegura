@@ -11,7 +11,9 @@ import {
     ChevronRight,
     Lock,
     ShieldCheck,
-    Star
+    Star,
+    Filter,
+    Award
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -26,7 +28,25 @@ export default function Leaderboard() {
     const [loading, setLoading] = useState(true);
     const [view, setView] = useState('global'); // 'global', 'area', or 'strategic'
     const [searchTerm, setSearchTerm] = useState('');
+    const [filterLevel, setFilterLevel] = useState('all');
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [scope, setScope] = useState('department');
+
+    const levels = [
+        { id: 'all', name: 'Todos los Niveles', icon: Filter },
+        { id: 'Novato', name: 'Novato', icon: Award },
+        { id: 'Iniciado', name: 'Iniciado', icon: Award },
+        { id: 'Defensor', name: 'Defensor', icon: ShieldCheck },
+        { id: 'Protector', name: 'Protector', icon: ShieldCheck },
+        { id: 'Guardián', name: 'Guardián', icon: ShieldCheck },
+        { id: 'Vigilante', name: 'Vigilante', icon: ShieldCheck },
+        { id: 'Centinela', name: 'Centinela', icon: ShieldCheck },
+        { id: 'Maestro Segur@', name: 'Maestro Segur@', icon: Trophy },
+        { id: 'CISO Honorario', name: 'CISO Honorario', icon: Medal },
+        { id: 'Leyenda Cyber', name: 'Leyenda Cyber', icon: Crown }
+    ];
+
+    const currentLevel = levels.find(l => l.id === filterLevel) || levels[0];
 
     const isAdmin = loggedUser?.role === 'admin';
 
@@ -54,10 +74,14 @@ export default function Leaderboard() {
         }
     };
 
-    const filteredParticipants = (view === 'global' ? institutionalLeaderboard : departmentLeaderboard).filter(user =>
-        `${user.first_name} ${user.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.department?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredParticipants = (view === 'global' ? institutionalLeaderboard : departmentLeaderboard)
+        .filter(user => {
+            const matchesSearch = `${user.first_name} ${user.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                user.department?.toLowerCase().includes(searchTerm.toLowerCase());
+            const matchesLevel = filterLevel === 'all' || user.level === filterLevel;
+            return matchesSearch && matchesLevel;
+        })
+        .sort((a, b) => (a.rank_position || 9999) - (b.rank_position || 9999));
 
     const filteredDepts = deptRanking.filter(dept =>
         dept.department?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -134,15 +158,60 @@ export default function Leaderboard() {
                     )}
                 </div>
 
-                <div className="relative w-full md:w-96 group">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-hover:text-primary-400 transition-colors" />
-                    <input
-                        type="text"
-                        placeholder={view === 'area' && isAdmin ? "Buscar área o líder..." : "Buscar funcionario..."}
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-12 pr-6 py-4 bg-slate-800/20 border border-white/5 rounded-2xl text-white font-medium placeholder:text-gray-600 focus:outline-none focus:border-primary-500/50 transition-all shadow-inner"
-                    />
+                <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto relative">
+                    {/* Custom Premium Dropdown */}
+                    <div className="relative w-full md:w-64">
+                        <button
+                            onClick={() => setIsFilterOpen(!isFilterOpen)}
+                            className="w-full flex items-center justify-between px-6 py-4 bg-slate-800/40 border border-white/5 rounded-2xl text-white text-[10px] font-black uppercase tracking-widest hover:bg-slate-800/60 transition-all shadow-inner group"
+                        >
+                            <div className="flex items-center gap-3">
+                                <currentLevel.icon className="w-4 h-4 text-primary-400" />
+                                <span>{currentLevel.name}</span>
+                            </div>
+                            <ChevronRight className={`w-4 h-4 text-gray-500 transition-transform duration-300 ${isFilterOpen ? '-rotate-90' : 'rotate-90'}`} />
+                        </button>
+
+                        {isFilterOpen && (
+                            <>
+                                <div
+                                    className="fixed inset-0 z-40"
+                                    onClick={() => setIsFilterOpen(false)}
+                                ></div>
+                                <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-2xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] animate-in fade-in zoom-in-95 duration-200">
+                                    <div className="max-h-80 overflow-y-auto custom-scrollbar p-1">
+                                        {levels.map((level) => (
+                                            <button
+                                                key={level.id}
+                                                onClick={() => {
+                                                    setFilterLevel(level.id);
+                                                    setIsFilterOpen(false);
+                                                }}
+                                                className={`w-full flex items-center gap-3 px-5 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${filterLevel === level.id
+                                                    ? 'bg-primary-500 text-white'
+                                                    : 'text-gray-400 hover:bg-white/5 hover:text-white'
+                                                    }`}
+                                            >
+                                                <level.icon className={`w-4 h-4 ${filterLevel === level.id ? 'text-white' : 'text-gray-500'}`} />
+                                                {level.name}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                    </div>
+
+                    <div className="relative w-full md:w-80 group">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-hover:text-primary-400 transition-colors" />
+                        <input
+                            type="text"
+                            placeholder={view === 'area' && isAdmin ? "Buscar" : "Buscar funcionario..."}
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full pl-12 pr-6 py-4 bg-slate-800/20 border border-white/5 rounded-2xl text-white font-medium placeholder:text-gray-600 focus:outline-none focus:border-primary-500/50 transition-all shadow-inner"
+                        />
+                    </div>
                 </div>
             </div>
 

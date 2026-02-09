@@ -115,29 +115,55 @@ export default function Profile() {
                             </div>
                         </div>
 
-                        {/* Level & Points Bar */}
-                        <div className="max-w-md space-y-3 pt-4">
-                            <div className="flex justify-between items-end px-2">
-                                <div className="space-y-1">
-                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Rango Actual</p>
-                                    <p className="text-xl font-black text-secondary-500 uppercase">{stats.level}</p>
+                        {/* Level & Points Bar - Refactored to match reference */}
+                        <div className="space-y-4 pt-4 w-full">
+                            <div className="flex justify-between items-end">
+                                <div className="flex flex-col gap-1">
+                                    <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Rango Actual</span>
+                                    <h2 className="text-2xl font-black text-white tracking-tighter uppercase italic leading-none">
+                                        {stats.level}
+                                    </h2>
                                 </div>
-                                <div className="text-right space-y-1">
-                                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Puntos Totales</p>
-                                    <p className="text-xl font-black text-white">{stats.points} <span className="text-[10px] text-gray-500 uppercase">pts</span></p>
+                                <div className="flex flex-col items-end gap-1 pb-1">
+                                    <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Siguiente Rango</span>
+                                    <span className="text-2xl font-black text-secondary-500 uppercase italic leading-none">
+                                        {stats.next_level_name}
+                                    </span>
                                 </div>
                             </div>
-                            <div className="h-4 bg-slate-900 rounded-full border border-white/5 overflow-hidden p-1 shadow-inner">
-                                <div className="h-full bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full" style={{ width: '65%' }}></div>
+
+                            <div className="relative">
+                                <div className="h-2.5 bg-slate-900/80 rounded-full border border-white/5 overflow-hidden shadow-inner">
+                                    <div
+                                        className="h-full bg-gradient-to-r from-secondary-600 via-secondary-400 to-secondary-500 rounded-full transition-all duration-1000 ease-out shadow-[0_0_15px_rgba(229,123,60,0.4)]"
+                                        style={{ width: `${stats.level_progress_percentage || 0}%` }}
+                                    ></div>
+                                </div>
                             </div>
-                            <p className="text-[10px] text-center text-gray-500 font-bold uppercase tracking-widest">Faltan 150 pts para el siguiente nivel</p>
+
+                            <div className="flex justify-between items-center px-1">
+                                <div className="flex flex-col">
+                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
+                                        <span className="text-white text-sm">{stats.points}</span> XP TOTAL
+                                    </span>
+                                </div>
+
+                                {stats.next_level_min_points ? (
+                                    <div className="text-right">
+                                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
+                                            PRÓXIMO NIVEL: <span className="text-secondary-400 text-sm">{stats.next_level_min_points}</span> XP
+                                        </span>
+                                    </div>
+                                ) : (
+                                    <div className="text-right">
+                                        <span className="text-[10px] font-black text-secondary-500 uppercase tracking-widest animate-pulse">
+                                            LEYENDA MÁXIMA ALCANZADA
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
-
-                    {/* Settings Button */}
-                    <button className="p-3 bg-white/5 border border-white/5 rounded-2xl text-gray-500 hover:text-white hover:bg-white/10 transition-all self-start hidden md:block">
-                        <Settings className="w-6 h-6" />
-                    </button>
                 </div>
             </div>
 
@@ -157,8 +183,9 @@ export default function Profile() {
                         <Trophy className="w-6 h-6" />
                     </div>
                     <div>
-                        <p className="text-3xl font-black text-white leading-none">#{stats.rank_position || '---'}</p>
-                        <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mt-1">Institucional</p>
+                        <p className="text-3xl font-black text-white leading-none">#{stats.rank || '--'}</p>
+                        <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mt-1">Ranking Institucional</p>
+                        <p className="text-[8px] font-bold text-gray-600 uppercase mt-1">De {stats.totalUsers || '--'} funcionarios</p>
                     </div>
                 </div>
                 <div className="card p-6 flex flex-col items-center text-center gap-3">
@@ -166,8 +193,9 @@ export default function Profile() {
                         <Star className="w-6 h-6" />
                     </div>
                     <div>
-                        <p className="text-3xl font-black text-white leading-none">#{stats.departmental_rank || '---'}</p>
-                        <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mt-1">Mi Área</p>
+                        <p className="text-3xl font-black text-white leading-none">#{stats.departmentRank || '--'}</p>
+                        <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mt-1">Ranking en su Área</p>
+                        <p className="text-[8px] font-bold text-gray-600 uppercase mt-1">{user.department || 'Área no asignada'}</p>
                     </div>
                 </div>
                 <div className="card p-6 flex flex-col items-center text-center gap-3">
@@ -215,7 +243,7 @@ export default function Profile() {
                                     <div className="flex-1">
                                         <div className="flex items-center gap-2 mb-0.5">
                                             <span className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-500 px-2 py-0.5 bg-white/5 rounded-md">
-                                                {activity.type.replace('_', ' ')}
+                                                {(activity.type || 'Actividad').replace('_', ' ')}
                                             </span>
                                             {activity.module_id && (
                                                 <span className="text-[9px] font-black uppercase tracking-[0.2em] text-primary-500/70">

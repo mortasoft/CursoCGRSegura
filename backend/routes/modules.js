@@ -10,6 +10,8 @@ const { authMiddleware, adminMiddleware } = require('../middleware/auth');
  */
 router.get('/', authMiddleware, async (req, res) => {
     try {
+        const isAdmin = req.user.role === 'admin' && req.headers['x-view-as-student'] !== 'true';
+
         const modules = await db.query(
             `SELECT 
                 m.*,
@@ -17,8 +19,10 @@ router.get('/', authMiddleware, async (req, res) => {
                 (SELECT COUNT(*) FROM quizzes q WHERE q.module_id = m.id AND q.is_published = TRUE) as total_quizzes,
                 SUM(l.duration_minutes) as total_duration
             FROM modules m
-            LEFT JOIN lessons l ON m.id = l.module_id AND l.is_published = TRUE
-            WHERE m.is_published = TRUE
+            LEFT JOIN lessons l ON m.id = l.module_id 
+                AND l.is_optional = FALSE
+                ${isAdmin ? '' : 'AND l.is_published = TRUE'}
+            WHERE 1=1 ${isAdmin ? '' : 'AND m.is_published = TRUE'}
             GROUP BY m.id
             ORDER BY m.order_index ASC`
         );
@@ -85,7 +89,7 @@ router.get('/admin/all', authMiddleware, adminMiddleware, async (req, res) => {
                 COUNT(DISTINCT l.id) as total_lessons,
                 SUM(l.duration_minutes) as total_duration
             FROM modules m
-            LEFT JOIN lessons l ON m.id = l.module_id
+            LEFT JOIN lessons l ON m.id = l.module_id AND l.is_optional = FALSE
             GROUP BY m.id
             ORDER BY m.order_index ASC`
         );
@@ -106,7 +110,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
     try {
         const moduleId = req.params.id;
         const userId = req.user.id;
-        const isAdmin = req.user.role === 'admin';
+        const isAdmin = req.user.role === 'admin' && req.headers['x-view-as-student'] !== 'true';
 
         // Si es admin, puede ver módulos no publicados
         const [module] = await db.query(
@@ -125,7 +129,8 @@ router.get('/:id', authMiddleware, async (req, res) => {
                 up.status,
                 up.progress_percentage,
                 up.time_spent_minutes,
-                up.completed_at
+                up.completed_at,
+                (SELECT SUM(points) FROM lesson_contents WHERE lesson_id = l.id) as total_points
             FROM lessons l
             LEFT JOIN user_progress up ON l.id = up.lesson_id AND up.user_id = ?
             WHERE l.module_id = ? ${isAdmin ? '' : 'AND l.is_published = TRUE'}
@@ -150,15 +155,16 @@ router.get('/:id', authMiddleware, async (req, res) => {
             [userId, userId, moduleId]
         );
 
-        // Calcular porcentaje de completado basado en lecciones y quizzes
-        const completedLessons = lessons.filter(l => l.status === 'completed').length;
-        const totalLessonsCount = lessons.length;
+        // Calcular porcentaje de completado basado en lecciones (OBLIGATORIAS) y quizzes
+        const requiredLessons = lessons.filter(l => !l.is_optional);
+        const completedRequiredLessons = requiredLessons.filter(l => l.status === 'completed').length;
 
-        const completedQuizzes = quizzes.filter(q => q.best_score >= q.passing_score).length;
+        // Por ahora asumimos que todos los quizzes son obligatorios
         const totalQuizzesCount = quizzes.length;
+        const completedQuizzes = quizzes.filter(q => q.best_score >= q.passing_score).length;
 
-        const totalItems = totalLessonsCount + totalQuizzesCount;
-        const totalCompleted = completedLessons + completedQuizzes;
+        const totalItems = requiredLessons.length + totalQuizzesCount;
+        const totalCompleted = completedRequiredLessons + completedQuizzes;
 
         const completionPercentage = totalItems > 0
             ? Math.round((totalCompleted / totalItems) * 100)

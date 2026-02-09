@@ -32,12 +32,9 @@ export default function AdminModules() {
         module_number: '',
         title: '',
         description: '',
-        month: 'Febrero',
-        duration_minutes: 0,
         is_published: false,
         release_date: new Date().toISOString().split('T')[0],
         order_index: '',
-        points_to_earn: 0
     });
 
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -71,12 +68,9 @@ export default function AdminModules() {
                 module_number: module.module_number,
                 title: module.title,
                 description: module.description,
-                month: module.month,
-                duration_minutes: module.duration_minutes,
                 is_published: !!module.is_published,
                 release_date: module.release_date ? module.release_date.split('T')[0] : '',
                 order_index: module.order_index,
-                points_to_earn: module.points_to_earn || 0
             });
         } else {
             setEditingModule(null);
@@ -84,12 +78,9 @@ export default function AdminModules() {
                 module_number: modules.length + 1,
                 title: '',
                 description: '',
-                month: 'Febrero',
-                duration_minutes: 0,
                 is_published: false,
                 release_date: new Date().toISOString().split('T')[0],
                 order_index: modules.length + 1,
-                points_to_earn: 0
             });
         }
         setIsModalOpen(true);
@@ -452,7 +443,12 @@ export default function AdminModules() {
                                                             </div>
                                                             <div>
                                                                 <p className="text-sm font-bold text-white">{lesson.title}</p>
-                                                                <p className="text-[10px] text-gray-500 uppercase font-black">{lesson.lesson_type}</p>
+                                                                <div className="flex items-center gap-2">
+                                                                    <p className="text-[10px] text-gray-500 uppercase font-black">{lesson.lesson_type}</p>
+                                                                    <span className="text-[10px] font-black text-primary-400 flex items-center gap-0.5">
+                                                                        <Award className="w-2.5 h-2.5" /> {lesson.total_points || 0} PTS
+                                                                    </span>
+                                                                </div>
                                                             </div>
                                                         </div>
                                                         <div className="flex items-center gap-4">
@@ -560,53 +556,15 @@ export default function AdminModules() {
                                     />
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium text-gray-400">Fecha de Lanzamiento</label>
-                                        <input
-                                            type="date"
-                                            required
-                                            className="input-field"
-                                            value={formData.release_date}
-                                            onChange={(e) => setFormData({ ...formData, release_date: e.target.value })}
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium text-gray-400">Duración Est. (min)</label>
-                                        <input
-                                            type="number"
-                                            className="input-field"
-                                            value={formData.duration_minutes}
-                                            onChange={(e) => setFormData({ ...formData, duration_minutes: e.target.value })}
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium text-gray-400">Mes (Opcional)</label>
-                                        <select
-                                            className="input-field appearance-none bg-no-repeat bg-[right_1rem_center] bg-[length:1em_1em]"
-                                            value={formData.month}
-                                            onChange={(e) => setFormData({ ...formData, month: e.target.value })}
-                                        >
-                                            {['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'].map(m => (
-                                                <option key={m} value={m} className="bg-slate-900">{m}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium text-gray-400 flex items-center gap-2">
-                                            <Trophy className="w-4 h-4 text-primary-400" />
-                                            Puntos al Completar
-                                        </label>
-                                        <input
-                                            type="number"
-                                            className="input-field border-primary-500/20 focus:border-primary-500"
-                                            value={formData.points_to_earn}
-                                            onChange={(e) => setFormData({ ...formData, points_to_earn: e.target.value })}
-                                        />
-                                    </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-gray-400">Fecha de Lanzamiento</label>
+                                    <input
+                                        type="date"
+                                        required
+                                        className="input-field"
+                                        value={formData.release_date}
+                                        onChange={(e) => setFormData({ ...formData, release_date: e.target.value })}
+                                    />
                                 </div>
 
                                 <div className="flex items-center gap-2 pt-2">
@@ -618,7 +576,7 @@ export default function AdminModules() {
                                         onChange={(e) => setFormData({ ...formData, is_published: e.target.checked })}
                                     />
                                     <label htmlFor="is_published" className="text-sm font-medium text-gray-300">
-                                        Publicar módulo inmediatamente
+                                        Publicar módulo
                                     </label>
                                 </div>
 
@@ -644,90 +602,92 @@ export default function AdminModules() {
             }
 
             {/* Lesson Modal */}
-            {isLessonModalOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-                    <div className="card w-full max-w-lg bg-[#1b2341] border-slate-700 p-0 overflow-hidden shadow-2xl">
-                        <div className="p-6 border-b border-white/5 bg-slate-900/50">
-                            <h2 className="text-xl font-bold text-white">
-                                {editingLesson ? 'Editar Lección' : 'Nueva Lección'}
-                            </h2>
-                        </div>
-                        <form onSubmit={handleSaveLesson} className="p-6 space-y-4">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-400">Título de la Lección</label>
-                                <input
-                                    type="text"
-                                    required
-                                    className="input-field"
-                                    value={lessonFormData.title}
-                                    onChange={(e) => setLessonFormData({ ...lessonFormData, title: e.target.value })}
-                                />
+            {
+                isLessonModalOpen && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+                        <div className="card w-full max-w-lg bg-[#1b2341] border-slate-700 p-0 overflow-hidden shadow-2xl">
+                            <div className="p-6 border-b border-white/5 bg-slate-900/50">
+                                <h2 className="text-xl font-bold text-white">
+                                    {editingLesson ? 'Editar Lección' : 'Nueva Lección'}
+                                </h2>
                             </div>
-
-                            <div className="grid grid-cols-2 gap-4">
+                            <form onSubmit={handleSaveLesson} className="p-6 space-y-4">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-gray-400">Tipo (Referencia)</label>
-                                    <select
+                                    <label className="text-sm font-medium text-gray-400">Título de la Lección</label>
+                                    <input
+                                        type="text"
+                                        required
                                         className="input-field"
-                                        value={lessonFormData.lesson_type}
-                                        onChange={(e) => setLessonFormData({ ...lessonFormData, lesson_type: e.target.value })}
+                                        value={lessonFormData.title}
+                                        onChange={(e) => setLessonFormData({ ...lessonFormData, title: e.target.value })}
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-gray-400">Tipo (Referencia)</label>
+                                        <select
+                                            className="input-field"
+                                            value={lessonFormData.lesson_type}
+                                            onChange={(e) => setLessonFormData({ ...lessonFormData, lesson_type: e.target.value })}
+                                        >
+                                            <option value="reading" className="bg-slate-900 text-gray-300">Lectura</option>
+                                            <option value="video" className="bg-slate-900 text-gray-300">Video</option>
+                                            <option value="interactive" className="bg-slate-900 text-gray-300">Interactivo</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium text-gray-400">Duración (min)</label>
+                                        <input
+                                            type="number"
+                                            className="input-field"
+                                            value={lessonFormData.duration_minutes}
+                                            onChange={(e) => setLessonFormData({ ...lessonFormData, duration_minutes: Number(e.target.value) })}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-4 pt-2">
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            className="rounded border-white/10 bg-black/20 text-primary-500"
+                                            checked={lessonFormData.is_published}
+                                            onChange={(e) => setLessonFormData({ ...lessonFormData, is_published: e.target.checked })}
+                                        />
+                                        <span className="text-sm text-gray-400">Publicado</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            className="rounded border-white/10 bg-black/20 text-secondary-500"
+                                            checked={lessonFormData.is_optional}
+                                            onChange={(e) => setLessonFormData({ ...lessonFormData, is_optional: e.target.checked })}
+                                        />
+                                        <span className="text-sm text-gray-400">Opcional</span>
+                                    </label>
+                                </div>
+
+                                <div className="flex justify-end gap-3 pt-6 border-t border-white/5">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsLessonModalOpen(false)}
+                                        className="px-6 py-2.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-all font-bold"
                                     >
-                                        <option value="reading" className="bg-slate-900 text-gray-300">Lectura</option>
-                                        <option value="video" className="bg-slate-900 text-gray-300">Video</option>
-                                        <option value="interactive" className="bg-slate-900 text-gray-300">Interactivo</option>
-                                    </select>
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="btn-primary"
+                                    >
+                                        {editingLesson ? 'Guardar Cambios' : 'Crear Lección'}
+                                    </button>
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-gray-400">Duración (min)</label>
-                                    <input
-                                        type="number"
-                                        className="input-field"
-                                        value={lessonFormData.duration_minutes}
-                                        onChange={(e) => setLessonFormData({ ...lessonFormData, duration_minutes: Number(e.target.value) })}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="flex items-center gap-4 pt-2">
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        className="rounded border-white/10 bg-black/20 text-primary-500"
-                                        checked={lessonFormData.is_published}
-                                        onChange={(e) => setLessonFormData({ ...lessonFormData, is_published: e.target.checked })}
-                                    />
-                                    <span className="text-sm text-gray-400">Publicado</span>
-                                </label>
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        className="rounded border-white/10 bg-black/20 text-secondary-500"
-                                        checked={lessonFormData.is_optional}
-                                        onChange={(e) => setLessonFormData({ ...lessonFormData, is_optional: e.target.checked })}
-                                    />
-                                    <span className="text-sm text-gray-400">Opcional</span>
-                                </label>
-                            </div>
-
-                            <div className="flex justify-end gap-3 pt-6 border-t border-white/5">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsLessonModalOpen(false)}
-                                    className="px-6 py-2.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-all font-bold"
-                                >
-                                    Cancelar
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="btn-primary"
-                                >
-                                    {editingLesson ? 'Guardar Cambios' : 'Crear Lección'}
-                                </button>
-                            </div>
-                        </form>
+                            </form>
+                        </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             <ConfirmModal
                 isOpen={deleteModalOpen}

@@ -13,7 +13,7 @@ services:
     networks:
       - cgr-network
     healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      test: [ "CMD", "healthcheck.sh", "--connect", "--innodb_initialized" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -34,7 +34,7 @@ services:
     networks:
       - cgr-network
     healthcheck:
-      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      test: [ "CMD", "redis-cli", "--raw", "incr", "ping" ]
       interval: 10s
       timeout: 3s
       retries: 5
@@ -43,7 +43,7 @@ services:
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     container_name: cgr-lms-backend
     restart: unless-stopped
     env_file: .env
@@ -58,7 +58,6 @@ services:
       - ./backend:/app
       - /app/node_modules
       - ./uploads:/app/uploads
-      # Montar logs del host para persistencia y permisos
       - ./backend/logs:/app/logs
     networks:
       - cgr-network
@@ -67,7 +66,7 @@ services:
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
       # Vite necesita estas variables en tiempo de construcción
       args:
         VITE_API_URL: ${VITE_API_URL}
@@ -80,8 +79,7 @@ services:
     depends_on:
       - backend
     volumes:
-      - ./frontend/src:/app/src
-      - ./frontend/public:/app/public
+      - ./frontend:/app
       - /app/node_modules
     networks:
       - cgr-network

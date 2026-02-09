@@ -137,6 +137,20 @@ export default function AdminUsers() {
         }
     };
 
+    const formatRelativeTime = (dateString) => {
+        if (!dateString) return 'Nunca';
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffInSeconds = Math.floor((now - date) / 1000);
+
+        if (diffInSeconds < 60) return 'Ahora mismo';
+        if (diffInSeconds < 3600) return `Hace ${Math.floor(diffInSeconds / 60)} min`;
+        if (diffInSeconds < 86400) return `Hace ${Math.floor(diffInSeconds / 3600)} h`;
+        if (diffInSeconds < 604800) return `Hace ${Math.floor(diffInSeconds / 86400)} d`;
+
+        return date.toLocaleDateString();
+    };
+
     const filteredUsers = users.filter(user =>
         `${user.first_name} ${user.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -187,7 +201,7 @@ export default function AdminUsers() {
                             <th className="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Funcionario</th>
                             <th className="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Unidad / Cargo</th>
                             <th className="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Rol</th>
-                            <th className="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Acceso</th>
+                            <th className="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">Acceso</th>
                             <th className="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Nivel / XP</th>
                             <th className="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-center">Estado</th>
                             <th className="px-6 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest text-right">Acciones</th>
@@ -217,15 +231,19 @@ export default function AdminUsers() {
                                         {u.role}
                                     </span>
                                 </td>
-                                <td className="px-6 py-5 text-center">
-                                    <div className="inline-flex flex-col items-start gap-1">
-                                        <div className="flex items-center gap-1.5 text-[9px] font-bold text-gray-400">
-                                            <Calendar className="w-3 h-3 text-gray-600" />
-                                            <span>Reg: {new Date(u.created_at).toLocaleDateString()}</span>
+                                <td className="px-6 py-5">
+                                    <div className="flex flex-col gap-1.5">
+                                        <div className="flex items-center gap-2 text-[10px] font-bold text-gray-500">
+                                            <Calendar className="w-3.5 h-3.5 text-gray-600" />
+                                            <span className="uppercase tracking-tight">Registro:</span>
+                                            <span className="text-gray-400">{new Date(u.created_at).toLocaleDateString()}</span>
                                         </div>
-                                        <div className="flex items-center gap-1.5 text-[9px] font-bold text-primary-400">
-                                            <Clock className="w-3 h-3 text-primary-600" />
-                                            <span>Visto: {u.last_login ? new Date(u.last_login).toLocaleDateString() : 'Nunca'}</span>
+                                        <div className={`flex items-center gap-2 text-[10px] font-bold ${u.last_login ? 'text-primary-400' : 'text-gray-600'}`}>
+                                            <Clock className={`w-3.5 h-3.5 ${u.last_login ? 'text-primary-500' : 'text-gray-700'}`} />
+                                            <span className="uppercase tracking-tight">Última vez:</span>
+                                            <span className={u.last_login ? 'text-white' : 'text-gray-600 italic'}>
+                                                {formatRelativeTime(u.last_login)}
+                                            </span>
                                         </div>
                                     </div>
                                 </td>

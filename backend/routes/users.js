@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
+const { getLevels } = require('../utils/gamification');
 
 /**
  * @route   GET /api/users/profile
@@ -30,38 +31,82 @@ router.get('/profile', authMiddleware, async (req, res) => {
             [userId]
         );
 
-        // Calculate institutional rank from staff_directory (matching leaderboard logic)
-        const [userEmail] = await db.query('SELECT email, department FROM users WHERE id = ?', [userId]);
-        const email = userEmail?.email;
-        const dept = userEmail?.department;
+        // Calculate rankings
+        const [userEmailData] = await db.query('SELECT email, department FROM users WHERE id = ?', [userId]);
+        const email = userEmailData?.email;
+        const dept = userEmailData?.department;
+        const userEmailLower = email ? email.toLowerCase() : '';
 
         const globalRanking = await db.query(
-            `SELECT sd.email, RANK() OVER (ORDER BY COALESCE(up.points, 0) DESC) as pos, COALESCE(up.points, 0) as points
+            `SELECT LOWER(sd.email) as email, RANK() OVER (ORDER BY COALESCE(up.points, -1) DESC, sd.full_name ASC) as pos
              FROM staff_directory sd
              LEFT JOIN users u ON sd.email = u.email
              LEFT JOIN user_points up ON u.id = up.user_id`
         );
-        const userGlobalRankRaw = globalRanking.find(r => r.email === email);
-        const institutionalRank = (userGlobalRankRaw && userGlobalRankRaw.points > 0) ? userGlobalRankRaw.pos : null;
+        const userGlobalRankRaw = globalRanking.find(r => r.email === userEmailLower);
+        const rank = userGlobalRankRaw ? userGlobalRankRaw.pos : (globalRanking.length + 1);
 
-        let departmentalRank = 0;
+        let departmentRank = null;
         if (dept) {
             const deptRanking = await db.query(
-                `SELECT sd.email, RANK() OVER (ORDER BY COALESCE(up.points, 0) DESC) as pos, COALESCE(up.points, 0) as points
+                `SELECT LOWER(sd.email) as email, RANK() OVER (ORDER BY COALESCE(up.points, -1) DESC, sd.full_name ASC) as pos
                  FROM staff_directory sd
                  LEFT JOIN users u ON sd.email = u.email
                  LEFT JOIN user_points up ON u.id = up.user_id
                  WHERE sd.department = ?`,
                 [dept]
             );
-            const userDeptRankRaw = deptRanking.find(r => r.email === email);
-            departmentalRank = (userDeptRankRaw && userDeptRankRaw.points > 0) ? userDeptRankRaw.pos : null;
+            const userDeptRankRaw = deptRanking.find(r => r.email === userEmailLower);
+            departmentRank = userDeptRankRaw ? userDeptRankRaw.pos : null;
+        }
+
+        // Force refresh of levels to ensure we have the newly migrated data
+        const levels = await getLevels(true);
+        const currentPoints = Number(stats?.points || 0);
+
+        // Find current level and next level
+        let currentLevelIdx = -1;
+        for (let i = 0; i < levels.length; i++) {
+            // Support both camelCase and snake_case from DB
+            const levelPoints = Number(levels[i].minPoints ?? levels[i].min_points ?? 0);
+            if (currentPoints >= levelPoints) {
+                currentLevelIdx = i;
+            } else {
+                break;
+            }
+        }
+
+        const currentLevel = currentLevelIdx >= 0 ? levels[currentLevelIdx] : { name: 'Novato', minPoints: 0 };
+        const nextLevel = (currentLevelIdx + 1 < levels.length) ? levels[currentLevelIdx + 1] : null;
+
+        let pointsForNext = 0;
+        let pointsInCurrentLevel = 0;
+        let levelProgressPercentage = 0;
+
+        if (nextLevel) {
+            const nextLevelMinPoints = Number(nextLevel.minPoints ?? nextLevel.min_points ?? 0);
+            const currentLevelMinPoints = Number(currentLevel.minPoints ?? currentLevel.min_points ?? 0);
+
+            pointsForNext = Math.max(0, nextLevelMinPoints - currentPoints);
+            const levelRange = Math.max(1, nextLevelMinPoints - currentLevelMinPoints);
+            pointsInCurrentLevel = Math.max(0, currentPoints - currentLevelMinPoints);
+            levelProgressPercentage = Math.round((pointsInCurrentLevel / levelRange) * 100);
+        } else {
+            // Already at max level
+            levelProgressPercentage = 100;
         }
 
         const statsWithRank = {
-            ...(stats || { points: 0, level: 'Novato', badges: '[]' }),
-            rank_position: institutionalRank,
-            departmental_rank: departmentalRank
+            points: currentPoints,
+            level: `Nivel ${currentLevelIdx + 1}: ${stats?.level || currentLevel.name}`,
+            next_level_name: nextLevel ? `Nivel ${currentLevelIdx + 2}: ${nextLevel.name}` : 'Nivel Máximo',
+            next_level_min_points: nextLevel ? Number(nextLevel.minPoints ?? nextLevel.min_points ?? 0) : null,
+            points_for_next: pointsForNext,
+            level_progress_percentage: levelProgressPercentage,
+            badges: stats?.badges || '[]',
+            rank: rank,
+            departmentRank: departmentRank,
+            totalUsers: globalRanking.length
         };
 
         // 3. Resumen de progreso (Módulos completados)
@@ -76,7 +121,7 @@ router.get('/profile', authMiddleware, async (req, res) => {
 
         // 4. Actividad reciente
         const activities = await db.query(
-            `SELECT ga.activity_type, ga.points_earned, ga.created_at, ga.reference_id,
+            `SELECT ga.activity_type as type, ga.points_earned, ga.created_at, ga.reference_id,
                 CASE 
                     WHEN ga.activity_type = 'lesson_completed' THEN (SELECT title FROM lessons WHERE id = ga.reference_id)
                     WHEN ga.activity_type = 'quiz_passed' THEN (SELECT title FROM quizzes WHERE id = ga.reference_id)

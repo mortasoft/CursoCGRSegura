@@ -12,6 +12,9 @@ export const useAuthStore = create(
             isAuthenticated: false,
             isLoading: false,
             error: null,
+            viewAsStudent: false,
+
+            setViewAsStudent: (val) => set({ viewAsStudent: val }),
 
             // Login con Google
             loginWithGoogle: async (credential) => {
@@ -109,12 +112,21 @@ export const useAuthStore = create(
                 user: state.user,
                 token: state.token,
                 isAuthenticated: state.isAuthenticated,
+                viewAsStudent: state.viewAsStudent,
             }),
         }
     )
 );
 
-// Configurar interceptor de axios para manejar errores 401
+// Configurar interceptor de axios para incluir header de modo estudiante y manejar errores 401
+axios.interceptors.request.use((config) => {
+    const viewAsStudent = useAuthStore.getState().viewAsStudent;
+    if (viewAsStudent) {
+        config.headers['x-view-as-student'] = 'true';
+    }
+    return config;
+});
+
 axios.interceptors.response.use(
     (response) => response,
     (error) => {

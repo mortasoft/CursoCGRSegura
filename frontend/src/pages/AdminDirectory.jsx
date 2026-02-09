@@ -52,7 +52,7 @@ export default function AdminDirectory() {
     const [filterDepartment, setFilterDepartment] = useState('');
     const [filterStatus, setFilterStatus] = useState('');
 
-    const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+    const [sortConfig, setSortConfig] = useState({ key: 'full_name', direction: 'asc' });
 
     const handleSort = (key) => {
         let direction = 'asc';
@@ -267,94 +267,94 @@ export default function AdminDirectory() {
     }
 
     return (
-        <div className="max-w-7xl mx-auto space-y-10 animate-fade-in pb-20">
+        <div className="max-w-7xl mx-auto space-y-6 animate-fade-in pb-10">
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div className="space-y-1">
                     <button
                         onClick={() => navigate('/admin')}
-                        className="flex items-center gap-2 text-gray-500 hover:text-white transition-colors text-[10px] font-black uppercase tracking-widest mb-2"
+                        className="flex items-center gap-2 text-gray-500 hover:text-white transition-colors text-[9px] font-black uppercase tracking-widest mb-1"
                     >
-                        <ArrowLeft className="w-4 h-4" /> Volver al Panel Admin
+                        <ArrowLeft className="w-3.5 h-3.5" /> Volver al Panel Admin
                     </button>
-                    <h1 className="text-3xl font-black text-white uppercase tracking-tight">Directorio Maestro</h1>
-                    <p className="text-gray-300 text-sm font-medium">Lista oficial de funcionarios para pre-asignación y control de acceso.</p>
+                    <h1 className="text-2xl font-black text-white uppercase tracking-tight">Directorio Maestro</h1>
+                    <p className="text-gray-400 text-xs font-medium">Lista oficial de funcionarios para pre-asignación y control de acceso.</p>
                 </div>
 
-                <div className="flex gap-4 w-full md:w-auto">
+                <div className="flex gap-3 w-full md:w-auto">
                     <button
                         onClick={() => setIsAddModalOpen(true)}
-                        className="px-6 py-4 bg-secondary-500 text-white text-xs font-black uppercase tracking-widest rounded-2xl shadow-xl hover:bg-secondary-400 transition-all flex items-center justify-center gap-3"
+                        className="px-5 py-3 bg-secondary-500 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-xl hover:bg-secondary-400 transition-all flex items-center justify-center gap-2"
                     >
-                        <Plus className="w-5 h-5" />
+                        <Plus className="w-4 h-4" />
                         Agregar Funcionario
                     </button>
-                    <label className={`flex-1 md:flex-none px-6 py-4 bg-primary-500 text-white text-xs font-black uppercase tracking-widest rounded-2xl shadow-xl cursor-pointer hover:bg-primary-400 transition-all flex items-center justify-center gap-3 ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
-                        <FileUp className="w-5 h-5" />
+                    <label className={`flex-1 md:flex-none px-5 py-3 bg-primary-500 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-xl cursor-pointer hover:bg-primary-400 transition-all flex items-center justify-center gap-2 ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
+                        <FileUp className="w-4 h-4" />
                         {uploading ? 'Sincronizando...' : 'Subir CSV'}
                         <input type="file" accept=".csv" className="hidden" onChange={handleFileUpload} />
                     </label>
                     <button
                         onClick={handleDownloadTemplate}
-                        className="p-4 bg-slate-800 text-white rounded-2xl border border-white/5 hover:bg-slate-700 transition-colors"
+                        className="p-3 bg-slate-800 text-white rounded-xl border border-white/5 hover:bg-slate-700 transition-colors"
                         title="Descargar Plantilla"
                     >
-                        <Download className="w-5 h-5" />
+                        <Download className="w-4 h-4" />
                     </button>
                 </div>
             </div>
 
             {/* Stats Dashboard */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="card p-8 flex items-center gap-6 bg-primary-500/5 border-white/5">
-                    <div className="w-14 h-14 rounded-2xl bg-primary-500/10 flex items-center justify-center text-primary-500">
-                        <Users className="w-7 h-7" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="card p-5 flex items-center gap-4 bg-primary-500/5 border-white/5">
+                    <div className="w-11 h-11 rounded-xl bg-primary-500/10 flex items-center justify-center text-primary-500">
+                        <Users className="w-6 h-6" />
                     </div>
                     <div>
-                        <p className="text-3xl font-black text-white">{stats.total}</p>
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Funcionarios Totales</p>
+                        <p className="text-2xl font-black text-white">{stats.total}</p>
+                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Funcionarios Totales</p>
                     </div>
                 </div>
-                <div className="card p-8 flex items-center gap-6 bg-green-500/5 border-green-500/10">
-                    <div className="w-14 h-14 rounded-2xl bg-green-500/10 flex items-center justify-center text-green-500">
-                        <CheckCircle className="w-7 h-7" />
+                <div className="card p-5 flex items-center gap-4 bg-green-500/5 border-green-500/10">
+                    <div className="w-11 h-11 rounded-xl bg-green-500/10 flex items-center justify-center text-green-500">
+                        <CheckCircle className="w-6 h-6" />
                     </div>
                     <div>
-                        <p className="text-3xl font-black text-green-500">{stats.registered}</p>
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Iniciaron Sesión</p>
+                        <p className="text-2xl font-black text-green-500">{stats.registered}</p>
+                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Iniciaron Sesión</p>
                     </div>
                 </div>
-                <div className="card p-8 flex items-center gap-6 bg-secondary-500/5 border-secondary-500/10">
-                    <div className="w-14 h-14 rounded-2xl bg-secondary-500/10 flex items-center justify-center text-secondary-500">
-                        <AlertCircle className="w-7 h-7" />
+                <div className="card p-5 flex items-center gap-4 bg-secondary-500/5 border-secondary-500/10">
+                    <div className="w-11 h-11 rounded-xl bg-secondary-500/10 flex items-center justify-center text-secondary-500">
+                        <AlertCircle className="w-6 h-6" />
                     </div>
                     <div>
-                        <p className="text-3xl font-black text-orange-500">{stats.pending}</p>
-                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pendientes de Acceso</p>
+                        <p className="text-2xl font-black text-orange-500">{stats.pending}</p>
+                        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Pendientes de Acceso</p>
                     </div>
                 </div>
             </div>
 
             {/* Filter & Search */}
-            <div className="flex flex-col lg:flex-row gap-4">
+            <div className="flex flex-col lg:flex-row gap-3">
                 <div className="relative flex-1 group">
-                    <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-gray-500 group-focus-within:text-primary-400 transition-colors" />
+                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 group-focus-within:text-primary-400 transition-colors" />
                     <input
                         type="text"
                         placeholder="Buscar por nombre, email, departamento o puesto..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-16 pr-8 py-4 bg-slate-900/50 border border-white/5 rounded-2xl text-white font-medium focus:outline-none focus:border-primary-500/50 transition-all shadow-inner"
+                        className="w-full pl-14 pr-6 py-3 bg-slate-900/50 border border-white/5 rounded-xl text-white text-sm font-medium focus:outline-none focus:border-primary-500/50 transition-all shadow-inner"
                     />
                 </div>
 
-                <div className="flex gap-4">
-                    <div className="relative min-w-[200px]">
+                <div className="flex gap-3">
+                    <div className="relative min-w-[180px]">
                         <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                         <select
                             value={filterDepartment}
                             onChange={(e) => setFilterDepartment(e.target.value)}
-                            className="w-full pl-12 pr-4 py-4 bg-slate-900/50 border border-white/5 rounded-2xl text-white text-sm font-medium focus:outline-none focus:border-primary-500 appearance-none cursor-pointer"
+                            className="w-full pl-11 pr-4 py-3 bg-slate-900/50 border border-white/5 rounded-xl text-white text-xs font-bold focus:outline-none focus:border-primary-500 appearance-none cursor-pointer uppercase tracking-tight"
                         >
                             <option value="">Todas las Unidades</option>
                             {departments.map(dept => (
@@ -363,12 +363,12 @@ export default function AdminDirectory() {
                         </select>
                     </div>
 
-                    <div className="relative min-w-[200px]">
+                    <div className="relative min-w-[180px]">
                         <Filter className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                         <select
                             value={filterStatus}
                             onChange={(e) => setFilterStatus(e.target.value)}
-                            className="w-full pl-12 pr-4 py-4 bg-slate-900/50 border border-white/5 rounded-2xl text-white text-sm font-medium focus:outline-none focus:border-primary-500 appearance-none cursor-pointer"
+                            className="w-full pl-11 pr-4 py-3 bg-slate-900/50 border border-white/5 rounded-xl text-white text-xs font-bold focus:outline-none focus:border-primary-500 appearance-none cursor-pointer uppercase tracking-tight"
                         >
                             <option value="">Todos los Estados</option>
                             <option value="registered">Registrados</option>
@@ -378,19 +378,13 @@ export default function AdminDirectory() {
                 </div>
             </div>
 
-            {/* Legend / Info */}
-            <div className="bg-slate-900/30 rounded-2xl p-4 border border-dashed border-white/5 text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] flex flex-wrap gap-6 justify-center">
-                <span className="flex items-center gap-2"><div className="w-2 h-2 bg-green-500 rounded-full"></div> Registrado</span>
-                <span className="flex items-center gap-2"><div className="w-2 h-2 bg-gray-500 rounded-full"></div> Pendiente</span>
-            </div>
-
             {/* List */}
             <div className="card overflow-hidden !p-0 border-white/5">
                 <div className="max-h-[800px] overflow-y-auto custom-scrollbar">
                     <table className="w-full text-left">
                         <thead className="bg-slate-900 border-b border-white/5 sticky top-0 z-10">
                             <tr>
-                                <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest pl-12 cursor-pointer group hover:bg-white/5 transition-colors" onClick={() => handleSort('full_name')}>
+                                <th className="px-6 py-3 text-[9px] font-black text-white uppercase tracking-widest pl-10 cursor-pointer group hover:bg-white/5 transition-colors" onClick={() => handleSort('full_name')}>
                                     <div className="flex items-center gap-2">
                                         Funcionario
                                         {sortConfig.key === 'full_name' ? (
@@ -398,7 +392,7 @@ export default function AdminDirectory() {
                                         ) : <ArrowUpDown className="w-3 h-3 text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity" />}
                                     </div>
                                 </th>
-                                <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest cursor-pointer group hover:bg-white/5 transition-colors" onClick={() => handleSort('department')}>
+                                <th className="px-6 py-3 text-[9px] font-black text-white uppercase tracking-widest cursor-pointer group hover:bg-white/5 transition-colors" onClick={() => handleSort('department')}>
                                     <div className="flex items-center gap-2">
                                         Departamento / Unidad
                                         {sortConfig.key === 'department' ? (
@@ -406,7 +400,7 @@ export default function AdminDirectory() {
                                         ) : <ArrowUpDown className="w-3 h-3 text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity" />}
                                     </div>
                                 </th>
-                                <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest cursor-pointer group hover:bg-white/5 transition-colors" onClick={() => handleSort('position')}>
+                                <th className="px-6 py-3 text-[9px] font-black text-white uppercase tracking-widest cursor-pointer group hover:bg-white/5 transition-colors" onClick={() => handleSort('position')}>
                                     <div className="flex items-center gap-2">
                                         Cargo / Puesto
                                         {sortConfig.key === 'position' ? (
@@ -414,7 +408,7 @@ export default function AdminDirectory() {
                                         ) : <ArrowUpDown className="w-3 h-3 text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity" />}
                                     </div>
                                 </th>
-                                <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest text-center cursor-pointer group hover:bg-white/5 transition-colors" onClick={() => handleSort('is_registered')}>
+                                <th className="px-6 py-3 text-[9px] font-black text-white uppercase tracking-widest text-center cursor-pointer group hover:bg-white/5 transition-colors" onClick={() => handleSort('is_registered')}>
                                     <div className="flex items-center justify-center gap-2">
                                         Estado
                                         {sortConfig.key === 'is_registered' ? (
@@ -422,13 +416,13 @@ export default function AdminDirectory() {
                                         ) : <ArrowUpDown className="w-3 h-3 text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity" />}
                                     </div>
                                 </th>
-                                <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest text-right">Acción</th>
+                                <th className="px-6 py-3 text-[9px] font-black text-white uppercase tracking-widest text-right">Acción</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">
                             {currentItems.map((person) => (
                                 <tr key={person.email} className={`hover:bg-white/[0.02] transition-colors ${!person.is_registered ? 'opacity-60 grayscale-[0.5]' : ''}`}>
-                                    <td className="px-8 py-6">
+                                    <td className="px-6 py-3.5 pl-10">
                                         <div className="flex items-center gap-4">
                                             <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${person.is_registered ? 'bg-green-500/10 text-green-500 border-green-500/20' : 'bg-slate-800 text-gray-600 border-white/5'}`}>
                                                 <Users className="w-5 h-5" />
@@ -441,19 +435,19 @@ export default function AdminDirectory() {
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="px-8 py-6">
+                                    <td className="px-6 py-3.5">
                                         <div className="flex items-center gap-2 text-xs font-bold text-white uppercase tracking-tight">
-                                            <Building2 className="w-4 h-4 text-secondary-400" />
+                                            <Building2 className="w-3.5 h-3.5 text-secondary-400" />
                                             {person.department || 'N/A'}
                                         </div>
                                     </td>
-                                    <td className="px-8 py-6">
+                                    <td className="px-6 py-3.5">
                                         <div className="flex items-center gap-2 text-xs font-bold text-white">
-                                            <Briefcase className="w-4 h-4 text-primary-400" />
+                                            <Briefcase className="w-3.5 h-3.5 text-primary-400" />
                                             {person.position || 'Sin cargo'}
                                         </div>
                                     </td>
-                                    <td className="px-8 py-6 text-center">
+                                    <td className="px-6 py-3.5 text-center">
                                         {person.is_registered ? (
                                             <div className="inline-flex flex-col items-center text-center">
                                                 <span className="text-[9px] font-black text-green-500 uppercase tracking-tighter bg-green-500/10 px-3 py-1 rounded-full mb-1 whitespace-nowrap border border-green-500/20">Activo</span>
@@ -467,7 +461,7 @@ export default function AdminDirectory() {
                                             </div>
                                         )}
                                     </td>
-                                    <td className="px-8 py-6 text-right">
+                                    <td className="px-6 py-3.5 text-right">
                                         <div className="flex items-center justify-end gap-3">
                                             <button
                                                 onClick={() => { setEditingRecord({ ...person }); setIsEditModalOpen(true); }}
