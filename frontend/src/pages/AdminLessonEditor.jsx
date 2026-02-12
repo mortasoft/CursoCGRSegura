@@ -18,7 +18,9 @@ import {
     Save,
     Pencil,
     File,
-    Award
+    Award,
+    Shield,
+    Type
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 
@@ -39,7 +41,7 @@ export default function AdminLessonEditor() {
     // Modal Form State
     const [formData, setFormData] = useState({
         title: '',
-        content_type: 'text', // text, video, image, file, link, quiz, survey, assignment
+        content_type: 'text', // text, video, image, file, link, quiz, survey, assignment, note, heading
         data: '', // text content, url, or json string
         file: null,
         video_source: 'file', // 'file' or 'url'
@@ -134,9 +136,13 @@ export default function AdminLessonEditor() {
                 } else {
                     finalData = { file_url: editingItem?.data?.file_url };
                 }
-            } else if (['quiz', 'survey', 'assignment'].includes(formData.content_type)) {
+            } else if (['quiz', 'survey', 'assignment', 'note', 'heading'].includes(formData.content_type)) {
                 // For simplified version, data might be description or instructions
-                finalData = { description: formData.data };
+                if (['note', 'heading'].includes(formData.content_type)) {
+                    finalData = { text: formData.data };
+                } else {
+                    finalData = { description: formData.data };
+                }
             }
             // For files/images, data is handled by backend largely, but we can pass metadata
 
@@ -231,6 +237,8 @@ export default function AdminLessonEditor() {
             case 'quiz': return <HelpCircle className="w-5 h-5 text-red-400" />;
             case 'survey': return <ClipboardList className="w-5 h-5 text-yellow-400" />;
             case 'assignment': return <Upload className="w-5 h-5 text-pink-400" />;
+            case 'note': return <Shield className="w-5 h-5 text-primary-400" />;
+            case 'heading': return <Type className="w-5 h-5 text-white" />;
             default: return <FileText className="w-5 h-5 text-gray-400" />;
         }
     };
@@ -244,7 +252,9 @@ export default function AdminLessonEditor() {
             link: 'Enlace',
             quiz: 'Cuestionario',
             survey: 'Encuesta',
-            assignment: 'Tarea'
+            assignment: 'Tarea',
+            note: 'Nota de Aprendizaje',
+            heading: 'Título de Sección'
         };
         return labels[type] || type;
     };
@@ -299,6 +309,8 @@ export default function AdminLessonEditor() {
                     { type: 'quiz', label: 'Quiz', icon: HelpCircle, color: 'text-red-400' },
                     { type: 'survey', label: 'Encuesta', icon: ClipboardList, color: 'text-yellow-400' },
                     { type: 'assignment', label: 'Tarea', icon: Upload, color: 'text-pink-400' },
+                    { type: 'note', label: 'Nota', icon: Shield, color: 'text-primary-400' },
+                    { type: 'heading', label: 'Título', icon: Type, color: 'text-white' },
                 ].map((action) => (
                     <button
                         key={action.type}
@@ -521,13 +533,17 @@ export default function AdminLessonEditor() {
                                 </div>
                             )}
 
-                            {['quiz', 'survey', 'assignment'].includes(formData.content_type) && (
+                            {['quiz', 'survey', 'assignment', 'note', 'heading'].includes(formData.content_type) && (
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-gray-300">Instrucciones / Descripción</label>
+                                    <label className="text-sm font-medium text-gray-300">
+                                        {formData.content_type === 'note' ? 'Contenido de la Nota' :
+                                            formData.content_type === 'heading' ? 'Texto del Título' : 'Instrucciones / Descripción'}
+                                    </label>
                                     <textarea
-                                        rows="4"
+                                        rows={formData.content_type === 'heading' ? "2" : "4"}
                                         className="input-field bg-slate-950/50 border-white/10 focus:border-primary-500"
-                                        placeholder="Instrucciones para la actividad..."
+                                        placeholder={formData.content_type === 'note' ? 'Escribe los conceptos clave...' :
+                                            formData.content_type === 'heading' ? 'Ej: Introducción, Fase 1...' : 'Instrucciones para la actividad...'}
                                         value={formData.data}
                                         onChange={e => setFormData({ ...formData, data: e.target.value })}
                                     />

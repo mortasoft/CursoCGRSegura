@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
 import {
@@ -18,7 +18,8 @@ import {
     Star,
     Percent,
     Lock,
-    PlayCircle
+    PlayCircle,
+    ArrowLeft
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -26,9 +27,12 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export default function Profile() {
     const navigate = useNavigate();
-    const { token } = useAuthStore();
+    const { userId } = useParams();
+    const { token, user: authUser } = useAuthStore();
     const [profileData, setProfileData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const activitiesPerPage = 10;
 
     useEffect(() => {
         fetchProfile();
@@ -36,15 +40,27 @@ export default function Profile() {
 
     const fetchProfile = async () => {
         try {
+            // Protección Frontend: solo admin puede ver perfiles de otros
+            if (userId && authUser?.role !== 'admin') {
+                toast.error('No tienes permisos para ver el historial de otros usuarios');
+                navigate('/profile');
+                return;
+            }
+
             setLoading(true);
-            const response = await axios.get(`${API_URL}/users/profile`, {
+            const endpoint = userId ? `${API_URL}/users/${userId}/full-profile` : `${API_URL}/users/profile`;
+            const response = await axios.get(endpoint, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (response.data.success) {
                 setProfileData(response.data);
             }
         } catch (error) {
-            toast.error('Error al cargar el perfil');
+            const errorMsg = error.response?.data?.error || 'Error al cargar el perfil';
+            toast.error(errorMsg);
+            if (error.response?.status === 403 || error.response?.status === 404) {
+                navigate('/dashboard');
+            }
         } finally {
             setLoading(false);
         }
@@ -71,6 +87,16 @@ export default function Profile() {
 
     return (
         <div className="max-w-6xl mx-auto space-y-8 animate-fade-in pb-20">
+            {/* Admin Back Button */}
+            {userId && (
+                <button
+                    onClick={() => navigate('/admin/users')}
+                    className="flex items-center gap-2 text-gray-500 hover:text-white transition-colors text-[10px] font-black uppercase tracking-widest mb-2"
+                >
+                    <ArrowLeft className="w-4 h-4" /> Volver a Gestión de Usuarios
+                </button>
+            )}
+
             {/* Upper Section: Profile Hero */}
             <div className="relative rounded-[3rem] overflow-hidden bg-slate-800/40 border border-white/5 shadow-2xl">
                 {/* Background Decor */}
@@ -144,14 +170,14 @@ export default function Profile() {
                             <div className="flex justify-between items-center px-1">
                                 <div className="flex flex-col">
                                     <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
-                                        <span className="text-white text-sm">{stats.points}</span> XP TOTAL
+                                        <span className="text-white text-sm">{stats.points}</span> PUNTOS TOTALES
                                     </span>
                                 </div>
 
                                 {stats.next_level_min_points ? (
                                     <div className="text-right">
                                         <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
-                                            PRÓXIMO NIVEL: <span className="text-secondary-400 text-sm">{stats.next_level_min_points}</span> XP
+                                            PRÓXIMO NIVEL: <span className="text-secondary-400 text-sm">{stats.next_level_min_points}</span> PUNTOS
                                         </span>
                                     </div>
                                 ) : (
@@ -218,59 +244,114 @@ export default function Profile() {
                         Historial de Actividad
                     </h2>
 
-                    <div className="space-y-4">
+                    <div className="space-y-2">
                         {activities.length > 0 ? (
-                            activities.map((activity, index) => (
-                                <div
-                                    key={index}
-                                    onClick={() => {
-                                        if (activity.type === 'lesson_completed') navigate(`/lessons/${activity.reference_id}`);
-                                        if (activity.type === 'quiz_passed') navigate(`/quizzes/${activity.reference_id}`);
-                                        if (activity.type === 'module_completed') navigate(`/modules/${activity.reference_id}`);
-                                    }}
-                                    className={`group p-5 rounded-2xl bg-slate-800/20 border border-white/5 hover:border-primary-500/30 transition-all flex items-center gap-5 ${activity.reference_id ? 'cursor-pointer hover:bg-slate-800/40' : ''}`}
-                                >
-                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-lg transition-transform group-hover:scale-110 ${activity.type === 'lesson_completed' ? 'bg-blue-500/10 text-blue-400' :
-                                        activity.type === 'quiz_passed' ? 'bg-orange-500/10 text-orange-400' :
-                                            activity.type === 'phishing_reported' ? 'bg-green-500/10 text-green-400' :
-                                                'bg-purple-500/10 text-purple-400'
-                                        }`}>
-                                        {activity.type === 'lesson_completed' ? <PlayCircle className="w-6 h-6" /> :
-                                            activity.type === 'quiz_passed' ? <Trophy className="w-6 h-6" /> :
-                                                activity.type === 'phishing_reported' ? <Shield className="w-6 h-6" /> :
-                                                    <Star className="w-6 h-6" />}
-                                    </div>
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-2 mb-0.5">
-                                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-gray-500 px-2 py-0.5 bg-white/5 rounded-md">
-                                                {(activity.type || 'Actividad').replace('_', ' ')}
-                                            </span>
-                                            {activity.module_id && (
-                                                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-primary-500/70">
-                                                    Módulo {activity.module_id}
-                                                </span>
-                                            )}
+                            <>
+                                {activities.slice((currentPage - 1) * activitiesPerPage, currentPage * activitiesPerPage).map((activity, index) => (
+                                    <div
+                                        key={index}
+                                        onClick={() => {
+                                            const refId = activity.reference_id;
+                                            if (!refId) return;
+                                            if (activity.type === 'lesson_completed') navigate(`/lessons/${refId}`);
+                                            if (activity.type === 'quiz_passed') navigate(`/quizzes/${refId}`);
+                                            if (activity.type === 'module_completed') navigate(`/modules/${refId}`);
+                                        }}
+                                        className={`group p-3 rounded-[1.2rem] transition-all flex items-center gap-4 
+                                            ${activity.type === 'module_completed'
+                                                ? 'bg-amber-500/10 border-amber-500/40 shadow-[0_0_15px_rgba(245,158,11,0.1)]'
+                                                : 'bg-slate-800/20 border-white/5'} 
+                                            border ${activity.reference_id ? 'cursor-pointer hover:bg-slate-800/40 hover:border-primary-500/30' : ''}`}
+                                    >
+                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-105 ${activity.type === 'lesson_completed' ? 'bg-blue-500/10 text-blue-400' :
+                                            activity.type === 'quiz_passed' ? 'bg-orange-500/10 text-orange-400' :
+                                                activity.type === 'phishing_reported' ? 'bg-green-500/10 text-green-400' :
+                                                    activity.type === 'module_completed' ? 'bg-amber-500/20 text-amber-500' :
+                                                        'bg-purple-500/10 text-purple-400'
+                                            }`}>
+                                            {activity.type === 'lesson_completed' ? <PlayCircle className="w-5 h-5" /> :
+                                                activity.type === 'quiz_passed' ? <Trophy className="w-5 h-5" /> :
+                                                    activity.type === 'phishing_reported' ? <Shield className="w-5 h-5" /> :
+                                                        <Star className="w-5 h-5" />}
                                         </div>
-                                        <p className="text-white font-bold text-sm tracking-tight leading-tight">
-                                            {activity.type === 'lesson_completed' ? 'Finalizaste la lección:' :
-                                                activity.type === 'quiz_passed' ? 'Aprobaste la evaluación:' :
-                                                    activity.type === 'phishing_reported' ? 'Reportaste una simulación:' :
-                                                        'Completaste:'} {activity.reference_title}
-                                        </p>
-                                        <p className="text-[10px] text-gray-500 font-bold mt-1.5 flex items-center gap-2">
-                                            <Calendar className="w-3 h-3" />
-                                            {new Date(activity.created_at).toLocaleDateString()} • {new Date(activity.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                        </p>
-                                    </div>
-                                    <div className="text-right">
-                                        <div className="flex items-center gap-1 justify-end">
-                                            <span className="text-lg font-black text-secondary-500">+{activity.points}</span>
-                                            <Star className="w-3 h-3 text-secondary-500 fill-secondary-500" />
+
+                                        <div className="flex-1 flex flex-col md:flex-row md:items-center justify-between gap-2">
+                                            <div className="space-y-0.5">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-[8px] font-black uppercase tracking-widest text-gray-500 px-1.5 py-0.5 bg-white/5 rounded-md border border-white/5">
+                                                        {activity.type === 'lesson_completed' ? 'LECCIÓN' :
+                                                            activity.type === 'quiz_passed' ? 'EXAMEN' :
+                                                                activity.type === 'module_completed' ? 'MÓDULO' :
+                                                                    activity.type === 'phishing_reported' ? 'PHISHING' :
+                                                                        'ACTIVIDAD'}
+                                                    </span>
+                                                    {activity.module_id && (
+                                                        <span className="text-[8px] font-black uppercase tracking-widest text-primary-500/70">
+                                                            Módulo {activity.module_id}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-white font-bold text-sm tracking-tight truncate max-w-[250px] md:max-w-md">
+                                                    {activity.type === 'module_completed' ? `¡Completaste el módulo: ${activity.reference_title}!` :
+                                                        activity.type === 'lesson_completed' ? `¡Completaste la lección: ${activity.reference_title}!` :
+                                                            activity.type === 'quiz_passed' ? `¡Aprobaste la evaluación: ${activity.reference_title}!` :
+                                                                activity.reference_title}
+                                                </p>
+                                            </div>
+
+                                            <div className="flex items-center gap-6">
+                                                <div className="text-right flex flex-col items-end">
+                                                    <span className={`text-[10px] font-black italic tracking-tighter ${activity.type === 'module_completed' ? 'text-amber-500' : 'text-primary-400'}`}>
+                                                        +{activity.points_earned || 0} Puntos
+                                                    </span>
+                                                    <p className="text-[9px] text-gray-500 font-bold flex items-center gap-1.5 mt-0.5">
+                                                        <Calendar className="w-3 h-3" />
+                                                        {new Date(activity.created_at).toLocaleDateString()}
+                                                    </p>
+                                                    <p className="text-[8px] text-gray-600 font-black uppercase tracking-widest">
+                                                        {new Date(activity.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    </p>
+                                                </div>
+                                                <ChevronRight className="w-4 h-4 text-gray-800 group-hover:text-primary-400 transition-colors hidden md:block" />
+                                            </div>
                                         </div>
-                                        <p className="text-[8px] font-black text-gray-600 uppercase tracking-widest">Experiencia</p>
                                     </div>
-                                </div>
-                            ))
+                                ))}
+
+                                {/* Pagination Controls */}
+                                {activities.length > activitiesPerPage && (
+                                    <div className="flex items-center justify-center gap-2 pt-4">
+                                        <button
+                                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                            disabled={currentPage === 1}
+                                            className="px-4 py-2 rounded-xl bg-slate-800/40 text-gray-400 text-xs font-black uppercase tracking-widest disabled:opacity-20 hover:bg-slate-800 transition-colors border border-white/5"
+                                        >
+                                            Anterior
+                                        </button>
+                                        <div className="flex items-center gap-1">
+                                            {[...Array(Math.ceil(activities.length / activitiesPerPage))].map((_, i) => (
+                                                <button
+                                                    key={i}
+                                                    onClick={() => setCurrentPage(i + 1)}
+                                                    className={`w-8 h-8 rounded-lg text-[10px] font-black transition-all border ${currentPage === i + 1
+                                                        ? 'bg-primary-500 border-primary-500 text-white shadow-lg shadow-primary-500/20'
+                                                        : 'bg-slate-800/40 border-white/5 text-gray-500 hover:bg-slate-800'
+                                                        }`}
+                                                >
+                                                    {i + 1}
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <button
+                                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(activities.length / activitiesPerPage)))}
+                                            disabled={currentPage === Math.ceil(activities.length / activitiesPerPage)}
+                                            className="px-4 py-2 rounded-xl bg-slate-800/40 text-gray-400 text-xs font-black uppercase tracking-widest disabled:opacity-20 hover:bg-slate-800 transition-colors border border-white/5"
+                                        >
+                                            Siguiente
+                                        </button>
+                                    </div>
+                                )}
+                            </>
                         ) : (
                             <div className="py-20 text-center bg-slate-800/10 rounded-3xl border border-dashed border-white/5">
                                 <HistoryIcon className="w-16 h-16 text-gray-700 mx-auto mb-4 opacity-10" />

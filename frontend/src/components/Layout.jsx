@@ -152,7 +152,7 @@ export default function Layout() {
                             {/* Logout Button */}
                             <button
                                 onClick={handleLogout}
-                                className="hidden sm:flex items-center justify-center p-2 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all duration-200"
+                                className="hidden sm:flex items-center justify-center p-2 text-red-400 bg-red-500/10 rounded-xl transition-all duration-200"
                                 title="Cerrar Sesión"
                             >
                                 <LogOut className="w-5 h-5" />
@@ -202,13 +202,13 @@ export default function Layout() {
             </nav>
 
             {/* Main Content */}
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 md:py-4">
                 <Outlet />
             </main>
 
             {/* Footer */}
             <footer className="mt-auto border-t border-primary-500/10 bg-[#0d1127]/50 backdrop-blur-sm">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                     <div className="flex flex-col sm:flex-row justify-between items-center gap-6">
                         <div className="flex items-center gap-4 opacity-70">
                             <img src="/images/Logotipo-CGR-blanco-transp.png" alt="CGR Logo" className="h-8 object-contain" />

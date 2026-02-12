@@ -14,7 +14,9 @@ import {
     Briefcase,
     Download,
     Clock,
-    Calendar
+    Calendar,
+    RefreshCcw,
+    History
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
@@ -35,6 +37,9 @@ export default function AdminUsers() {
     // Confirm Modal State
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [userToDelete, setUserToDelete] = useState(null);
+
+    const [resetModalOpen, setResetModalOpen] = useState(false);
+    const [userToReset, setUserToReset] = useState(null);
 
     useEffect(() => {
         fetchUsers();
@@ -108,6 +113,28 @@ export default function AdminUsers() {
             }
         } catch (error) {
             const msg = error.response?.data?.error || 'Error al eliminar el usuario';
+            toast.error(msg);
+        }
+    };
+
+    const handleResetClick = (user) => {
+        setUserToReset(user);
+        setResetModalOpen(true);
+    };
+
+    const handleConfirmReset = async () => {
+        if (!userToReset) return;
+
+        try {
+            const response = await axios.post(`${API_URL}/users/${userToReset.id}/reset`, {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (response.data.success) {
+                toast.success('El progreso del funcionario ha sido reiniciado');
+                fetchUsers();
+            }
+        } catch (error) {
+            const msg = error.response?.data?.error || 'Error al reiniciar el usuario';
             toast.error(msg);
         }
     };
@@ -265,15 +292,29 @@ export default function AdminUsers() {
                                 <td className="px-6 py-5 text-right">
                                     <div className="flex items-center justify-end gap-2">
                                         <button
+                                            onClick={() => navigate(`/admin/users/${u.id}/profile`)}
+                                            className="p-2 text-indigo-400 bg-indigo-500/5 hover:bg-indigo-500/10 rounded-lg transition-all"
+                                            title="Ver Historial Completo"
+                                        >
+                                            <History className="w-4 h-4" />
+                                        </button>
+                                        <button
                                             onClick={() => handleEditUser(u)}
-                                            className="p-2 text-gray-500 hover:text-white hover:bg-white/10 rounded-lg transition-all"
+                                            className="p-2 text-primary-400 bg-primary-500/5 hover:bg-primary-500/10 rounded-lg transition-all"
                                             title="Editar Usuario"
                                         >
                                             <Edit2 className="w-4 h-4" />
                                         </button>
                                         <button
+                                            onClick={() => handleResetClick(u)}
+                                            className="p-2 text-orange-500 bg-orange-500/5 hover:bg-orange-500/10 rounded-lg transition-all"
+                                            title="Reiniciar Progreso"
+                                        >
+                                            <RefreshCcw className="w-4 h-4" />
+                                        </button>
+                                        <button
                                             onClick={() => handleDeleteClick(u)}
-                                            className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+                                            className="p-2 text-red-500 bg-red-500/5 hover:bg-red-500/10 rounded-lg transition-all"
                                             title="Eliminar Usuario"
                                         >
                                             <Trash2 className="w-4 h-4" />
@@ -379,6 +420,18 @@ export default function AdminUsers() {
                     </div>
                 </div>
             )}
+
+            {/* Confirm Reset Modal */}
+            <ConfirmModal
+                isOpen={resetModalOpen}
+                onClose={() => setResetModalOpen(false)}
+                onConfirm={handleConfirmReset}
+                title="Reiniciar Progreso"
+                message={`¿Estás seguro de que deseas reiniciar todo el progreso de ${userToReset?.first_name} ${userToReset?.last_name}? Esto pondrá sus puntos en 0, borrará sus certificados, lecciones completadas e historial de actividad.`}
+                confirmText="Reiniciar Todo"
+                cancelText="Cancelar"
+                isDestructive={true}
+            />
 
             {/* Confirm Delete Modal */}
             <ConfirmModal

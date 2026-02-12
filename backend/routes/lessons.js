@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
-const { syncUserLevel, getSystemSettings } = require('../utils/gamification');
+const { syncUserLevel, getSystemSettings, checkAndRecordModuleCompletion } = require('../utils/gamification');
 
 /**
  * @route   GET /api/lessons/:id
@@ -166,6 +166,9 @@ router.post('/:id/complete', authMiddleware, async (req, res) => {
 
         // Sincronizar nivel
         const levelSync = await syncUserLevel(userId);
+
+        // Verificar si completó el módulo
+        const moduleSync = await checkAndRecordModuleCompletion(userId, lesson.module_id);
 
         // Obtener balance actualizado
         const [updatedStats] = await db.query(

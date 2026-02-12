@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
 const { authMiddleware } = require('../middleware/auth');
-const { syncUserLevel, getSystemSettings } = require('../utils/gamification');
+const { syncUserLevel, getSystemSettings, checkAndRecordModuleCompletion } = require('../utils/gamification');
 
 /**
  * @route   GET /api/quizzes/:id
@@ -169,6 +169,9 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
 
         // Sincronizar nivel
         const levelSync = await syncUserLevel(userId);
+
+        // Verificar si completó el módulo
+        const moduleSync = await checkAndRecordModuleCompletion(userId, quiz.module_id);
 
         // Obtener balance actualizado (siempre para asegurar que el navbar esté sincronizado)
         const [updatedStats] = await db.query(

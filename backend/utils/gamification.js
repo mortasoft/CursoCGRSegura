@@ -117,9 +117,71 @@ const syncUserLevel = async (userId) => {
     }
 };
 
+/**
+ * Verifica si un usuario ha completado todo el contenido de un módulo
+ * y registra la actividad si es necesario.
+ */
+const checkAndRecordModuleCompletion = async (userId, moduleId) => {
+    try {
+        // 1. Verificar si ya se registró la completitud de este módulo
+        const [existing] = await db.query(
+            "SELECT id FROM gamification_activities WHERE user_id = ? AND activity_type = 'module_completed' AND reference_id = ?",
+            [userId, moduleId]
+        );
+        if (existing) return { completed: true, alreadyRecorded: true };
+
+        // 2. Obtener lecciones obligatorias no completadas
+        const [incompleteLessons] = await db.query(
+            `SELECT COUNT(*) as count FROM lessons l
+             LEFT JOIN user_progress up ON l.id = up.lesson_id AND up.user_id = ?
+             WHERE l.module_id = ? AND l.is_published = TRUE AND l.is_optional = FALSE
+             AND (up.status IS NULL OR up.status != 'completed')`,
+            [userId, moduleId]
+        );
+
+        if (incompleteLessons.count > 0) return { completed: false };
+
+        // 3. Obtener quizzes obligatorios no aprobados
+        const [incompleteQuizzes] = await db.query(
+            `SELECT COUNT(*) as count FROM quizzes q
+             WHERE q.module_id = ? AND q.is_published = TRUE
+             AND q.id NOT IN (
+                SELECT quiz_id FROM quiz_attempts WHERE user_id = ? AND passed = TRUE
+             )`,
+            [userId, moduleId, userId]
+        );
+
+        if (incompleteQuizzes.count > 0) return { completed: false };
+
+        // 4. Si llegamos aquí, el módulo está completo. Registrar actividad.
+        // Podríamos dar un bonus por completar el módulo si quisiéramos.
+        const settings = await getSystemSettings();
+        const bonusPoints = 50; // Bonus fijo por ahora o podrías sumarlo a settings
+
+        await db.query(
+            `INSERT INTO gamification_activities (user_id, activity_type, points_earned, reference_id) 
+             VALUES (?, 'module_completed', ?, ?)`,
+            [userId, bonusPoints, moduleId]
+        );
+
+        // Sumar puntos al balance
+        await db.query(
+            `INSERT INTO user_points (user_id, points) VALUES (?, ?) 
+             ON DUPLICATE KEY UPDATE points = points + ?`,
+            [userId, bonusPoints, bonusPoints]
+        );
+
+        return { completed: true, newlyRecorded: true, bonusPoints };
+    } catch (error) {
+        console.error('Error checking module completion:', error);
+        return { error: true };
+    }
+};
+
 module.exports = {
     getLevels,
     calculateLevel,
     syncUserLevel,
-    getSystemSettings
+    getSystemSettings,
+    checkAndRecordModuleCompletion
 };

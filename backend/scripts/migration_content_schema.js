@@ -26,7 +26,7 @@ const runMigration = async () => {
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 lesson_id INT NOT NULL,
                 title VARCHAR(255),
-                content_type ENUM('text', 'video', 'image', 'file', 'link', 'quiz', 'survey', 'assignment') NOT NULL,
+                content_type ENUM('text', 'video', 'image', 'file', 'link', 'quiz', 'survey', 'assignment', 'note', 'heading') NOT NULL,
                 data JSON COMMENT 'Almacena contenido HTML, URLs, ID de quiz, config de archivo, etc.',
                 order_index INT NOT NULL,
                 is_required BOOLEAN DEFAULT FALSE,

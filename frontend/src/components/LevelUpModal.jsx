@@ -31,7 +31,7 @@ const LevelUpModal = ({ isOpen, onClose, levelData }) => {
     const info = extractLevelInfo(newLevel, levelNumber);
 
     return (
-        <div className={`fixed inset-0 z-[100] flex items-center justify-center p-4 transition-all duration-500 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
+        <div className={`fixed inset-0 z-[200] flex items-center justify-center p-4 transition-all duration-500 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
             {/* Backdrop */}
             <div
                 className={`absolute inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity duration-500 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
@@ -106,7 +106,7 @@ const LevelUpModal = ({ isOpen, onClose, levelData }) => {
                         onClick={onClose}
                         className="group w-full bg-primary-500 hover:bg-primary-600 text-white rounded-[2rem] py-5 px-8 flex items-center justify-center gap-3 transition-all transform hover:scale-[1.02] shadow-xl shadow-primary-500/20"
                     >
-                        <span className="text-lg font-black tracking-tight">Continuar Viaje</span>
+                        <span className="text-lg font-black tracking-tight">Continuar</span>
                         <ChevronRight className="w-6 h-6 transform group-hover:translate-x-1 transition-transform" />
                     </button>
 

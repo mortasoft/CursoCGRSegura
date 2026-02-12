@@ -133,6 +133,12 @@ axios.interceptors.response.use(
         if (error.response?.status === 401) {
             useAuthStore.getState().logout();
         }
+
+        // Manejo de modo mantenimiento (503 Service Unavailable)
+        if (error.response?.status === 503 && error.response?.data?.maintenance) {
+            window.location.href = '/maintenance';
+        }
+
         return Promise.reject(error);
     }
 );

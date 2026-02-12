@@ -10,7 +10,8 @@ import {
     Lock,
     Search,
     Calendar,
-    BarChart3
+    BarChart3,
+    Shield
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -38,25 +39,32 @@ export default function Modules() {
     }
 
     return (
-        <div className="space-y-10 animate-fade-in">
-            {/* Header section con buscador integrado */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-                <div className="space-y-2">
-                    <h1 className="text-4xl font-black text-white tracking-tighter uppercase">Ruta de Aprendizaje</h1>
-
+        <div className="space-y-6 animate-fade-in">
+            {/* Master Hero Banner */}
+            <div className="relative rounded-[2rem] overflow-hidden bg-slate-800/20 border border-white/5 shadow-2xl">
+                {/* Background Image with Overlay */}
+                <div className="absolute inset-0 z-0">
+                    <img
+                        src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1600&q=80"
+                        alt="Hero Background"
+                        className="w-full h-full object-cover opacity-20"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#0d1127] via-[#0d1127]/80 to-transparent"></div>
                 </div>
 
-                <div className="relative w-full md:w-80 group">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <Search className="h-5 w-5 text-gray-500 group-focus-within:text-secondary-500 transition-colors" />
+                <div className="relative z-10 p-6 md:p-8 flex flex-col lg:flex-row justify-between items-center gap-6">
+                    <div className="space-y-4 max-w-2xl text-center lg:text-left">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary-500/20 border border-primary-500/30 rounded-full text-primary-400 text-[10px] font-black uppercase tracking-widest animate-pulse">
+                            <Shield className="w-3.5 h-3.5" /> Programa de Capacitación 2026
+                        </div>
+                        <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white tracking-tighter uppercase leading-none">
+                            Ruta de <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-secondary-500">Aprendizaje</span>
+                        </h1>
+                        <p className="text-gray-400 text-lg font-medium leading-relaxed">
+                            Domina la ciberseguridad y protege la información institucional a través de módulos interactivos diseñados para tu crecimiento profesional.
+                        </p>
                     </div>
-                    <input
-                        type="text"
-                        placeholder="Buscar módulo..."
-                        className="w-full pl-11 pr-4 py-3 bg-slate-800/40 border border-white/10 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-secondary-500/50 focus:border-secondary-500/50 transition-all shadow-inner"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
+
                 </div>
             </div>
 
@@ -76,15 +84,31 @@ export default function Modules() {
                                 <Link
                                     to={isLocked ? '#' : `/modules/${module.id}`}
                                     onClick={(e) => isLocked && e.preventDefault()}
-                                    className={`group relative flex flex-col bg-slate-800/20 border border-white/5 rounded-[2rem] overflow-hidden transition-all duration-500 ${isLocked
+                                    className={`group relative flex flex-col bg-slate-800/20 border border-white/5 rounded-[1.5rem] overflow-hidden transition-all duration-500 ${isLocked
                                         ? 'cursor-not-allowed grayscale-[0.5] opacity-80'
                                         : 'hover:bg-slate-800/40 hover:border-primary-500/30 hover:shadow-[0_20px_50px_rgba(0,0,0,0.3)] hover:-translate-y-2'
                                         }`}
                                 >
-                                    {/* Accent line top */}
-                                    <div className={`absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r ${isLocked ? 'from-gray-600 to-gray-400' : 'from-primary-500 to-secondary-500'} opacity-60`}></div>
+                                    {/* Imagen del Banner */}
+                                    <div className="h-32 w-full relative overflow-hidden">
+                                        {module.image_url ? (
+                                            <img
+                                                src={module.image_url}
+                                                alt={module.title}
+                                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full bg-gradient-to-br from-slate-800/40 to-slate-900/40 flex items-center justify-center">
+                                                <BookOpen className="w-12 h-12 text-slate-700/50" />
+                                            </div>
+                                        )}
+                                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent"></div>
+                                    </div>
 
-                                    <div className="p-8 space-y-6">
+                                    {/* Accent line top */}
+                                    <div className={`absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r ${isLocked ? 'from-gray-600 to-gray-400' : 'from-primary-500 to-secondary-500'} opacity-60 z-20`}></div>
+
+                                    <div className="p-6 space-y-4">
                                         {/* Badge and Number */}
                                         <div className="flex justify-between items-start">
                                             <div className={`w-14 h-14 bg-slate-900 rounded-2xl border border-white/10 flex items-center justify-center text-2xl font-black text-white ${!isLocked && 'group-hover:text-secondary-500'} transition-colors shadow-2xl`}>

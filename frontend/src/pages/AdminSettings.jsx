@@ -32,7 +32,8 @@ export default function AdminSettings() {
 
     // Estado real de configuraciones
     const [settings, setSettings] = useState({
-        levels: []
+        levels: [],
+        maintenanceMode: false
     });
 
     // Carga de configuraciones desde el servidor
@@ -46,6 +47,12 @@ export default function AdminSettings() {
 
                 if (response.data.success) {
                     const { levels } = response.data;
+
+                    // Fetch global system settings (including maintenance)
+                    const sysResponse = await axios.get(`${API_URL}/system/settings`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+
                     setSettings({
                         levels: levels.map(l => ({
                             ...l,
@@ -74,7 +81,8 @@ export default function AdminSettings() {
                                 l.icon === 'Shield' ? 'bg-blue-400/10' :
                                     l.icon === 'ShieldAlert' ? 'bg-purple-400/10' :
                                         l.icon === 'Crown' ? 'bg-yellow-200/10' : 'bg-primary-500/10'
-                        }))
+                        })),
+                        maintenanceMode: sysResponse.data.settings?.maintenance_mode === 'true'
                     });
                 }
                 setLoading(false);
@@ -90,7 +98,7 @@ export default function AdminSettings() {
 
     const handleSave = async () => {
         try {
-            setSaving(true);
+            // 1. Save Levels
             const payload = {
                 levels: settings.levels.map(l => ({
                     name: l.name,
@@ -99,13 +107,18 @@ export default function AdminSettings() {
                 }))
             };
 
-            const response = await axios.put(`${API_URL}/gamification/settings`, payload, {
+            await axios.put(`${API_URL}/gamification/settings`, payload, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
-            if (response.data.success) {
-                toast.success('Configuraciones guardadas permanentemente');
-            }
+            // 2. Save Maintenance Mode
+            await axios.put(`${API_URL}/system/settings`, {
+                maintenance_mode: settings.maintenanceMode
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            toast.success('Configuraciones guardadas permanentemente');
             setSaving(false);
         } catch (error) {
             console.error('Error saving settings:', error);
@@ -254,10 +267,35 @@ export default function AdminSettings() {
                 )}
 
                 {activeTab === 'general' && (
-                    <div className="flex flex-col items-center justify-center py-20 bg-slate-900/20 rounded-3xl border border-dashed border-white/5 animate-fade-in text-center">
-                        <Settings className="w-10 h-10 text-gray-700 mb-3" />
-                        <h3 className="text-sm font-black text-gray-500 uppercase tracking-widest text-gray-400">Panel en Desarrollo</h3>
-                        <p className="text-[10px] text-gray-600 italic">Aquí se agregarán opciones de personalización visual global.</p>
+                    <div className="space-y-6 animate-fade-in">
+                        <div className="bg-slate-900/40 border border-white/5 rounded-3xl p-8 shadow-2xl">
+                            <h3 className="text-sm font-black text-white uppercase tracking-widest mb-6 flex items-center gap-3">
+                                <ShieldAlert className="w-5 h-5 text-yellow-500" />
+                                Control de Disponibilidad
+                            </h3>
+
+                            <div className="bg-white/5 p-6 rounded-2xl border border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
+                                <div className="space-y-1 text-center md:text-left">
+                                    <h4 className="text-xs font-black text-white uppercase tracking-widest">Modo Mantenimiento</h4>
+                                    <p className="text-[10px] text-gray-500 font-medium">Si se activa, solo los administradores podrán acceder al sistema. Otros usuarios verán una pantalla de mantenimiento.</p>
+                                </div>
+
+                                <button
+                                    onClick={() => setSettings(prev => ({ ...prev, maintenanceMode: !prev.maintenanceMode }))}
+                                    className={`relative inline-flex h-8 w-16 items-center rounded-full transition-all duration-300 focus:outline-none ${settings.maintenanceMode ? 'bg-yellow-500' : 'bg-gray-700'}`}
+                                >
+                                    <span className={`inline-block h-6 w-6 transform rounded-full bg-white transition-all duration-300 ${settings.maintenanceMode ? 'translate-x-9' : 'translate-x-1'}`} />
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="p-4 bg-yellow-500/5 rounded-2xl border border-yellow-500/10 flex gap-4 items-center">
+                            <Info className="w-4 h-4 text-yellow-500 shrink-0" />
+                            <p className="text-[10px] text-gray-500 font-medium leading-relaxed">
+                                <span className="text-yellow-500 font-black uppercase mr-1">Toma en cuenta:</span>
+                                Activar el mantenimiento no cerrará sesiones activas de usuarios, pero impedirá que realicen nuevas acciones o carguen contenido del servidor.
+                            </p>
+                        </div>
                     </div>
                 )}
 

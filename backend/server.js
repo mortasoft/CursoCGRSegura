@@ -28,6 +28,8 @@ const directoryRoutes = require('./routes/directory');
 const departmentRoutes = require('./routes/departments');
 const badgeRoutes = require('./routes/badges');
 const contentRoutes = require('./routes/lesson_content');
+const { authMiddleware, adminMiddleware } = require('./middleware/auth');
+const maintenanceMiddleware = require('./middleware/maintenance');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -136,14 +138,42 @@ app.use('/api/modules', moduleRoutes);
 app.use('/api/lessons', lessonRoutes);
 app.use('/api/quizzes', quizRoutes);
 app.use('/api/progress', progressRoutes);
-app.use('/api/gamification', gamificationRoutes);
-app.use('/api/phishing', phishingRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/reports', reportRoutes);
-app.use('/api/directory', directoryRoutes);
-app.use('/api/departments', departmentRoutes);
+app.use('/api/gamification', authMiddleware, maintenanceMiddleware, gamificationRoutes);
+app.use('/api/phishing', authMiddleware, maintenanceMiddleware, phishingRoutes);
+app.use('/api/dashboard', authMiddleware, maintenanceMiddleware, dashboardRoutes);
+app.use('/api/reports', authMiddleware, maintenanceMiddleware, reportRoutes);
+app.use('/api/directory', authMiddleware, maintenanceMiddleware, directoryRoutes);
+app.use('/api/departments', authMiddleware, maintenanceMiddleware, departmentRoutes);
 app.use('/api/badges', badgeRoutes);
 app.use('/api/content', contentRoutes);
+
+// Ruta para obtener configuraciones globales del sistema (Admin)
+app.get('/api/system/settings', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const settingsRaw = await db.query('SELECT setting_key, setting_value FROM system_settings');
+        const settings = {};
+        settingsRaw.forEach(s => settings[s.setting_key] = s.setting_value);
+        res.json({ success: true, settings });
+    } catch (error) {
+        res.status(500).json({ error: 'Error al obtener configuraciones' });
+    }
+});
+
+// Ruta para actualizar configuraciones globales del sistema (Admin)
+app.put('/api/system/settings', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const { maintenance_mode } = req.body;
+        if (maintenance_mode !== undefined) {
+            await db.query(
+                "UPDATE system_settings SET setting_value = ? WHERE setting_key = 'maintenance_mode'",
+                [String(maintenance_mode)]
+            );
+        }
+        res.json({ success: true, message: 'Configuración actualizada' });
+    } catch (error) {
+        res.status(500).json({ error: 'Error al guardar configuración' });
+    }
+});
 
 // Ruta raíz
 app.get('/', (req, res) => {

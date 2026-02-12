@@ -36,7 +36,8 @@ export default function AdminModules() {
         is_published: false,
         release_date: new Date().toISOString().split('T')[0],
         order_index: '',
-        month: ''
+        month: '',
+        image_url: ''
     });
 
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -73,7 +74,8 @@ export default function AdminModules() {
                 is_published: !!module.is_published,
                 release_date: module.release_date ? module.release_date.split('T')[0] : '',
                 order_index: module.order_index,
-                month: module.month || ''
+                month: module.month || '',
+                image_url: module.image_url || ''
             });
         } else {
             setEditingModule(null);
@@ -84,7 +86,8 @@ export default function AdminModules() {
                 is_published: false,
                 release_date: new Date().toISOString().split('T')[0],
                 order_index: modules.length + 1,
-                month: new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(new Date())
+                month: new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(new Date()),
+                image_url: ''
             });
         }
         setIsModalOpen(true);
@@ -352,8 +355,17 @@ export default function AdminModules() {
                         <div key={module.id} className="card group hover:border-primary-500/50 transition-all duration-300">
                             <div className="flex justify-between items-start mb-4">
                                 <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center text-xl font-bold text-primary-400 border border-slate-700">
-                                        {module.module_number}
+                                    <div className="relative w-16 h-16 bg-slate-900 rounded-xl flex items-center justify-center text-xl font-bold text-primary-400 border border-white/5 overflow-hidden flex-shrink-0">
+                                        {module.image_url ? (
+                                            <>
+                                                <img src={module.image_url} alt="" className="w-full h-full object-cover opacity-40" />
+                                                <div className="absolute inset-0 flex items-center justify-center text-white font-black drop-shadow-lg">
+                                                    {module.module_number}
+                                                </div>
+                                            </>
+                                        ) : (
+                                            module.module_number
+                                        )}
                                     </div>
                                     <div>
                                         <h3 className="text-lg font-bold text-white group-hover:text-primary-400 transition-colors">
@@ -569,6 +581,18 @@ export default function AdminModules() {
                                         value={formData.release_date}
                                         onChange={(e) => setFormData({ ...formData, release_date: e.target.value })}
                                     />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-gray-400">URL del Banner (Imagen)</label>
+                                    <input
+                                        type="text"
+                                        placeholder="https://ejemplo.com/imagen.jpg"
+                                        className="input-field"
+                                        value={formData.image_url}
+                                        onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                                    />
+                                    <p className="text-[10px] text-gray-500 italic">Recomendado: 600x200 para tarjetas, 1200x300 para Banner Principal.</p>
                                 </div>
 
                                 <div className="flex items-center gap-2 pt-2">

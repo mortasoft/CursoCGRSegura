@@ -76,29 +76,76 @@ export default function Dashboard() {
     }
 
     return (
-        <div className="space-y-10 animate-fade-in">
+        <div className="space-y-2 md:space-y-3 animate-fade-in">
+            {/* Banner Principal del Curso */}
+            <div className="relative w-full h-24 md:h-36 rounded-[1.5rem] overflow-hidden bg-slate-800/20 border border-white/5 shadow-2xl">
+                <img
+                    src="/images/banner-principal-curso.png"
+                    alt="Banner Principal del Curso"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                        // Fallback por si la imagen aún no existe en la carpeta public
+                        e.target.src = 'https://images.unsplash.com/photo-1639322537228-f710d846310a?auto=format&fit=crop&w=1600&q=80';
+                    }}
+                />
+                {/* Overlay sutil para mantener el estilo glassmorphism en los bordes */}
+                <div className="absolute inset-0 ring-1 ring-inset ring-white/10 rounded-[2.5rem]"></div>
+            </div>
+
+            {/* Master Welcome Banner */}
+            <div className="relative rounded-[1.5rem] overflow-hidden bg-slate-800/20 border border-white/5 shadow-2xl">
+                <div className="absolute inset-0 z-0">
+                    <img
+                        src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1600&q=80"
+                        alt="Dashboard Hero"
+                        className="w-full h-full object-cover opacity-20"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#0d1127] via-[#0d1127]/60 to-transparent"></div>
+                </div>
+
+                <div className="relative z-10 p-4 md:p-6 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div className="space-y-2 text-center md:text-left">
+
+                        <h1 className="text-3xl md:text-4xl font-black text-white tracking-tighter leading-none">
+                            ¡Hola de nuevo, <span className="text-primary-400">{user?.firstName}</span>!
+                        </h1>
 
 
+                    </div>
+
+                    {/* Quick Stats Floating in Banner */}
+                    <div className="hidden lg:flex gap-6">
+                        <div className="glass-card p-6 bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl text-center min-w-[120px]">
+                            <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Puntos</p>
+                            <p className="text-3xl font-black text-white">{stats?.points || 0}</p>
+                        </div>
+                        <div className="glass-card p-6 bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl text-center min-w-[120px]">
+                            <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">Nivel</p>
+                            <p className="text-3xl font-black text-secondary-500">{user?.level || '1'}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
             {/* Main Content Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-4">
                 {/* Left Column: Progress and Modules */}
-                <div className="lg:col-span-3 space-y-8">
-                    <div className="card bg-slate-800/30 p-8">
-                        <div className="flex items-center justify-between mb-8">
+                <div className="lg:col-span-3 space-y-3 md:space-y-4">
+                    <div className="card bg-slate-800/30 p-4 md:p-5">
+                        <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-primary-500/20 rounded-lg text-primary-400">
                                     <BookOpen className="w-6 h-6" />
                                 </div>
-                                <h2 className="text-2xl font-black text-white tracking-tight uppercase">Mi Ruta de Aprendizaje</h2>
+                                <h2 className="text-xl font-black text-white tracking-tight uppercase">Mi Ruta de Aprendizaje</h2>
                             </div>
                             <button
                                 onClick={() => setFilterCompleted(!filterCompleted)}
-                                className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all border ${filterCompleted
+                                className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${filterCompleted
                                     ? 'bg-green-500/20 border-green-500 text-green-500'
                                     : 'bg-slate-800 border-white/10 text-gray-400 hover:text-white'
                                     }`}
                             >
-                                {filterCompleted ? 'Viendo Completados' : 'Ver Completados'}
+                                {filterCompleted ? 'Ocultar' : 'Ver Completados'}
                             </button>
                         </div>
 

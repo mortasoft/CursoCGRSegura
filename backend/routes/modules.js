@@ -17,7 +17,12 @@ router.get('/', authMiddleware, async (req, res) => {
                 m.*,
                 COUNT(DISTINCT l.id) as total_lessons,
                 (SELECT COUNT(*) FROM quizzes q WHERE q.module_id = m.id AND q.is_published = TRUE) as total_quizzes,
-                SUM(l.duration_minutes) as total_duration
+                SUM(l.duration_minutes) as total_duration,
+                (SELECT IFNULL(SUM(lc.points), 0) 
+                 FROM lesson_contents lc 
+                 JOIN lessons l2 ON lc.lesson_id = l2.id 
+                 WHERE l2.module_id = m.id AND l2.is_optional = FALSE 
+                 ${isAdmin ? '' : 'AND l2.is_published = TRUE'}) as points_to_earn
             FROM modules m
             LEFT JOIN lessons l ON m.id = l.module_id 
                 AND l.is_optional = FALSE
@@ -114,7 +119,13 @@ router.get('/:id', authMiddleware, async (req, res) => {
 
         // Si es admin, puede ver módulos no publicados
         const [module] = await db.query(
-            `SELECT * FROM modules WHERE id = ? ${isAdmin ? '' : 'AND is_published = TRUE'}`,
+            `SELECT m.*,
+                (SELECT IFNULL(SUM(lc.points), 0) 
+                 FROM lesson_contents lc 
+                 JOIN lessons l2 ON lc.lesson_id = l2.id 
+                 WHERE l2.module_id = m.id AND l2.is_optional = FALSE 
+                 ${isAdmin ? '' : 'AND l2.is_published = TRUE'}) as points_to_earn
+             FROM modules m WHERE m.id = ? ${isAdmin ? '' : 'AND m.is_published = TRUE'}`,
             [moduleId]
         );
 
@@ -201,12 +212,13 @@ router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
             duration_minutes = 0,
             is_published = false,
             release_date = null,
-            order_index
+            order_index,
+            image_url = null
         } = req.body;
 
         const result = await db.query(
-            `INSERT INTO modules (module_number, title, description, month, duration_minutes, is_published, release_date, order_index)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            `INSERT INTO modules (module_number, title, description, month, duration_minutes, is_published, release_date, order_index, image_url)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 module_number,
                 title,
@@ -215,7 +227,8 @@ router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
                 duration_minutes ?? 0,
                 is_published ?? false,
                 release_date ?? null,
-                order_index ?? module_number
+                order_index ?? module_number,
+                image_url ?? null
             ]
         );
 
@@ -245,14 +258,15 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
             duration_minutes = 0,
             is_published = false,
             release_date = null,
-            order_index
+            order_index,
+            image_url = null
         } = req.body;
         const moduleId = req.params.id;
 
         await db.query(
             `UPDATE modules 
              SET module_number = ?, title = ?, description = ?, month = ?, 
-                 duration_minutes = ?, is_published = ?, release_date = ?, order_index = ?
+                 duration_minutes = ?, is_published = ?, release_date = ?, order_index = ?, image_url = ?
              WHERE id = ?`,
             [
                 module_number,
@@ -263,6 +277,7 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
                 is_published ?? false,
                 release_date ?? null,
                 order_index ?? module_number,
+                image_url ?? null,
                 moduleId
             ]
         );

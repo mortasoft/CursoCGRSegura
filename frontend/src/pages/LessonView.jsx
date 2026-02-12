@@ -40,7 +40,9 @@ export default function LessonView() {
     const [loading, setLoading] = useState(true);
     const [completing, setCompleting] = useState(false);
     const [watchedVideos, setWatchedVideos] = useState(new Set());
+    const [visitedLinks, setVisitedLinks] = useState(new Set());
     const [ytApiLoaded, setYtApiLoaded] = useState(!!window.YT);
+    const [showCompletionModal, setShowCompletionModal] = useState(false);
 
     useEffect(() => {
         fetchLessonData();
@@ -121,6 +123,14 @@ export default function LessonView() {
         toast.success("¡Video completado!");
     };
 
+    const markLinkAsVisited = (linkId) => {
+        setVisitedLinks(prev => {
+            const next = new Set(prev);
+            next.add(linkId);
+            return next;
+        });
+    };
+
     // Helper to init YouTube player for a specific element
     const initYTPlayer = (elementId, videoId, contentItemId) => {
         if (!window.YT || !window.YT.Player) return;
@@ -190,7 +200,8 @@ export default function LessonView() {
                     useNotificationStore.getState().setPendingLevelUp(response.data.levelData);
                 }
 
-                fetchLessonData(); // Refresh to show completion status
+                await fetchLessonData(); // Refresh to show completion status
+                setShowCompletionModal(true); // Show the options modal
             }
         } catch (error) {
             toast.error('Error al marcar como completada');
@@ -222,19 +233,8 @@ export default function LessonView() {
         switch (item.content_type) {
             case 'text':
                 return (
-                    <div className="card p-8 md:p-10 prose prose-invert prose-slate max-w-none bg-slate-800/30 border-white/5 shadow-inner">
+                    <div className="card p-5 md:p-7 prose prose-invert prose-slate max-w-none bg-slate-800/30 border-white/5 shadow-inner">
                         <div dangerouslySetInnerHTML={{ __html: data.text }} />
-
-                        {/* Static Tip for aesthetics if text is long */}
-                        {data.text && data.text.length > 500 && (
-                            <div className="mt-8 p-4 rounded-xl bg-primary-500/10 border border-primary-500/20 flex gap-4 items-start not-prose">
-                                <Shield className="w-6 h-6 text-primary-400 flex-shrink-0" />
-                                <div>
-                                    <h5 className="text-primary-400 font-bold text-xs uppercase tracking-wider mb-1">Nota de Aprendizaje</h5>
-                                    <p className="text-gray-400 text-sm">Recuerda tomar apuntes de los conceptos clave de esta sección.</p>
-                                </div>
-                            </div>
-                        )}
                     </div>
                 );
 
@@ -333,21 +333,68 @@ export default function LessonView() {
                 );
 
             case 'link':
+                const isVisited = visitedLinks.has(item.id);
                 return (
-                    <a href={data.url} target="_blank" rel="noopener noreferrer" className="block group">
-                        <div className="flex items-center gap-4 p-5 rounded-2xl bg-green-500/5 border border-green-500/20 hover:bg-green-500/10 transition-all">
-                            <div className="p-3 bg-green-500/20 rounded-lg text-green-400">
+                    <a
+                        href={data.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block group"
+                        onClick={() => markLinkAsVisited(item.id)}
+                    >
+                        <div className={`flex items-center gap-4 p-5 rounded-2xl transition-all ${isVisited
+                            ? 'bg-green-500/10 border-green-500/30 shadow-inner'
+                            : 'bg-green-500/5 border-green-500/10'
+                            } hover:bg-green-500/10 hover:border-green-500/30`}>
+                            <div className={`p-3 rounded-lg transition-colors ${isVisited ? 'bg-green-500/30 text-green-400' : 'bg-green-500/20 text-green-400'}`}>
                                 <LinkIcon className="w-6 h-6" />
                             </div>
-                            <div className="flex-1">
-                                <h4 className="text-white font-bold">{item.title}</h4>
+                            <div className="flex-1 min-w-0">
+                                <h4 className="text-white font-bold flex items-center gap-2 truncate">
+                                    {item.title}
+                                    {isVisited && <CheckCircle className="w-3.5 h-3.5 text-green-500" />}
+                                </h4>
                                 <p className="text-sm text-green-400/70 truncate">{data.url}</p>
+                                {item.is_required && !isVisited && (
+                                    <p className="text-[10px] text-orange-400 font-black uppercase tracking-widest mt-1">
+                                        Debes visitar este enlace para finalizar
+                                    </p>
+                                )}
                             </div>
-                            <div className="px-4 py-2 bg-green-500/20 text-green-400 rounded-lg text-xs font-bold uppercase tracking-wider group-hover:bg-green-500 group-hover:text-white transition-colors">
-                                Visitar
+                            <div className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isVisited
+                                ? 'bg-green-500 text-white shadow-lg shadow-green-500/20'
+                                : 'bg-green-500/20 text-green-400 group-hover:bg-green-500 group-hover:text-white'
+                                }`}>
+                                {isVisited ? 'Visitado' : 'Visitar'}
                             </div>
                         </div>
                     </a>
+                );
+
+            case 'heading':
+                return (
+                    <div className="py-8 border-b border-white/5 mb-6">
+                        <h2 className="text-2xl font-black text-white tracking-tight uppercase flex items-center gap-4">
+                            <span className="w-8 h-1 bg-primary-500 rounded-full"></span>
+                            {data.text || 'Sin Título'}
+                            <span className="flex-1 h-px bg-white/5"></span>
+                        </h2>
+                    </div>
+                );
+
+            case 'note':
+                return (
+                    <div className="p-6 rounded-2xl bg-primary-500/5 border border-primary-500/10 flex gap-5 items-start animate-fade-in shadow-[inset_0_0_20px_rgba(59,130,246,0.02)]">
+                        <div className="p-3 bg-primary-500/10 rounded-xl text-primary-400 flex-shrink-0 shadow-lg border border-primary-500/20">
+                            <Shield className="w-6 h-6" />
+                        </div>
+                        <div>
+                            <h4 className="text-primary-400 font-black text-[10px] uppercase tracking-[0.2em] mb-1.5">{item.title || 'Nota de Aprendizaje'}</h4>
+                            <p className="text-gray-400 text-sm leading-relaxed font-medium">
+                                {data.text || 'Recuerda tomar apuntes de los conceptos clave de esta sección.'}
+                            </p>
+                        </div>
+                    </div>
                 );
 
             case 'quiz':
@@ -497,7 +544,7 @@ export default function LessonView() {
                 </aside>
 
                 {/* Main Content Area */}
-                <main className="lg:col-span-9 xl:col-span-9 space-y-10 animate-fade-in-up">
+                <main className="lg:col-span-9 xl:col-span-9 space-y-6 animate-fade-in-up">
                     {/* Compact Breadcrumbs / Header Mobile Only */}
                     <div className="flex lg:hidden flex-col gap-4 mb-2">
                         <div className="flex items-center justify-between">
@@ -550,7 +597,7 @@ export default function LessonView() {
                     </div>
 
                     {/* Dynamic Content List */}
-                    <div className="space-y-8">
+                    <div className="space-y-4">
                         {contents.length > 0 ? (
                             contents.map((item, index) => (
                                 <div key={item.id} className="animate-fade-in-up" style={{ animationDelay: `${index * 100}ms` }}>
@@ -569,11 +616,36 @@ export default function LessonView() {
                     </div>
 
                     {/* Completion Section */}
-                    <div className="flex flex-col items-center gap-6 py-12 border-y border-white/5 my-10 bg-slate-900/20 rounded-3xl p-8">
+                    <div className="flex flex-col items-center gap-6 py-8 border-y border-white/5 my-6 bg-slate-900/20 rounded-3xl p-8">
                         {progress?.status === 'completed' ? (
                             <div className="flex flex-col items-center gap-4 animate-scale-in">
-                                <div className="w-24 h-24 bg-green-500/20 rounded-full flex items-center justify-center border-4 border-green-500/30 shadow-[0_0_30px_rgba(34,197,94,0.3)]">
-                                    <CheckCircle className="w-12 h-12 text-green-500" />
+                                <div className="relative inline-block">
+                                    <div className="absolute inset-0 bg-green-500/10 blur-[40px] rounded-full scale-110"></div>
+                                    <svg viewBox="0 0 200 200" className="w-24 h-24 drop-shadow-[0_0_20px_rgba(34,197,94,0.3)] animate-float">
+                                        <path d="M50 60 L30 10 L80 40 Z" fill="#ffffff" />
+                                        <path d="M150 60 L170 10 L120 40 Z" fill="#ffffff" />
+                                        <path d="M55 55 L40 25 L75 42 Z" fill="#ffccd5" />
+                                        <path d="M145 55 L160 25 L125 42 Z" fill="#ffccd5" />
+                                        <circle cx="100" cy="100" r="70" fill="#ffffff" />
+                                        <rect x="40" y="80" width="120" height="35" rx="10" fill="#1a2245" />
+                                        <rect x="45" y="85" width="50" height="25" rx="5" fill="#22c55e" opacity="0.8">
+                                            <animate attributeName="opacity" values="0.8;0.4;0.8" dur="2s" repeatCount="indefinite" />
+                                        </rect>
+                                        <rect x="105" y="85" width="50" height="25" rx="5" fill="#22c55e" opacity="0.8">
+                                            <animate attributeName="opacity" values="0.8;0.4;0.8" dur="2s" repeatCount="indefinite" begin="0.5s" />
+                                        </rect>
+                                        <path d="M40 97.5 Q20 97.5 30 97.5" stroke="#1a2245" strokeWidth="10" />
+                                        <path d="M160 97.5 Q180 97.5 170 97.5" stroke="#1a2245" strokeWidth="10" />
+                                        <path d="M90 125 Q100 135 110 125" stroke="#ffccd5" strokeWidth="3" fill="none" />
+                                        <path d="M100 120 L100 115" stroke="#ffccd5" strokeWidth="2" />
+                                        <circle cx="100" cy="118" r="4" fill="#ffccd5" />
+                                        <line x1="30" y1="120" x2="60" y2="115" stroke="#f0f0f0" strokeWidth="1" />
+                                        <line x1="30" y1="130" x2="60" y2="125" stroke="#f0f0f0" strokeWidth="1" />
+                                        <line x1="170" y1="120" x2="140" y2="115" stroke="#f0f0f0" strokeWidth="1" />
+                                        <line x1="170" y1="130" x2="140" y2="125" stroke="#f0f0f0" strokeWidth="1" />
+                                        <path d="M40 155 Q100 140 160 155 L160 200 L40 200 Z" fill="#1a2245" />
+                                        <path d="M100 150 L80 180 L120 180 Z" fill="#22c55e" opacity="0.2" />
+                                    </svg>
                                 </div>
                                 <div className="text-center space-y-4">
                                     <div>
@@ -589,13 +661,16 @@ export default function LessonView() {
                             </div>
                         ) : (
                             <div className="w-full max-w-md text-center space-y-6">
-                                {contents.filter(c => c.content_type === 'video' && c.is_required && !watchedVideos.has(c.id)).length > 0 ? (
-                                    <div className="p-5 bg-orange-500/10 border border-orange-500/20 rounded-2xl flex items-center gap-4">
-                                        <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center flex-shrink-0 animate-pulse">
+                                {contents.filter(c =>
+                                    (c.content_type === 'video' && c.is_required && !watchedVideos.has(c.id)) ||
+                                    (c.content_type === 'link' && c.is_required && !visitedLinks.has(c.id))
+                                ).length > 0 ? (
+                                    <div className="p-5 bg-orange-500/10 border border-orange-500/20 rounded-2xl flex items-center gap-4 animate-pulse">
+                                        <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center flex-shrink-0">
                                             <Clock className="w-5 h-5 text-orange-400" />
                                         </div>
-                                        <p className="text-orange-400 text-sm font-bold text-left">
-                                            Debes ver los videos obligatorios por completo antes de finalizar la lección.
+                                        <p className="text-orange-400 text-xs font-bold text-left">
+                                            Debes revisar todo el contenido obligatorio (videos y enlaces) antes de poder finalizar esta lección.
                                         </p>
                                     </div>
                                 ) : (
@@ -605,7 +680,10 @@ export default function LessonView() {
                                 )}
                                 <button
                                     onClick={handleComplete}
-                                    disabled={completing || contents.filter(c => c.content_type === 'video' && c.is_required && !watchedVideos.has(c.id)).length > 0}
+                                    disabled={completing || contents.filter(c =>
+                                        (c.content_type === 'video' && c.is_required && !watchedVideos.has(c.id)) ||
+                                        (c.content_type === 'link' && c.is_required && !visitedLinks.has(c.id))
+                                    ).length > 0}
                                     className="w-full group relative px-12 py-5 bg-white text-slate-900 rounded-2xl font-black uppercase tracking-[0.2em] text-sm overflow-hidden transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:grayscale disabled:scale-100 shadow-xl"
                                 >
                                     <span className="relative z-10 flex items-center justify-center gap-3">
@@ -649,6 +727,133 @@ export default function LessonView() {
                     </div>
                 </main>
             </div>
+            {/* Completion Modal */}
+            {showCompletionModal && (
+                <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-xl animate-fade-in">
+                    <div className="card max-w-lg w-full p-0 overflow-hidden border-white/10 shadow-[0_0_100px_rgba(0,0,0,0.8)] animate-scale-in">
+                        <div className="p-8 text-center bg-gradient-to-b from-primary-500/10 to-transparent">
+                            <div className="relative inline-block mb-6">
+                                <div className="absolute inset-0 bg-green-500/20 blur-[40px] rounded-full scale-110"></div>
+                                <svg viewBox="0 0 200 200" className="w-24 h-24 md:w-32 md:h-32 drop-shadow-[0_0_30px_rgba(34,197,94,0.3)] animate-float">
+                                    <path d="M50 60 L30 10 L80 40 Z" fill="#ffffff" />
+                                    <path d="M150 60 L170 10 L120 40 Z" fill="#ffffff" />
+                                    <path d="M55 55 L40 25 L75 42 Z" fill="#ffccd5" />
+                                    <path d="M145 55 L160 25 L125 42 Z" fill="#ffccd5" />
+                                    <circle cx="100" cy="100" r="70" fill="#ffffff" />
+                                    <rect x="40" y="80" width="120" height="35" rx="10" fill="#1a2245" />
+                                    <rect x="45" y="85" width="50" height="25" rx="5" fill="#22c55e" opacity="0.8">
+                                        <animate attributeName="opacity" values="0.8;0.4;0.8" dur="2s" repeatCount="indefinite" />
+                                    </rect>
+                                    <rect x="105" y="85" width="50" height="25" rx="5" fill="#22c55e" opacity="0.8">
+                                        <animate attributeName="opacity" values="0.8;0.4;0.8" dur="2s" repeatCount="indefinite" begin="0.5s" />
+                                    </rect>
+                                    <path d="M40 97.5 Q20 97.5 30 97.5" stroke="#1a2245" strokeWidth="10" />
+                                    <path d="M160 97.5 Q180 97.5 170 97.5" stroke="#1a2245" strokeWidth="10" />
+                                    <path d="M90 125 Q100 135 110 125" stroke="#ffccd5" strokeWidth="3" fill="none" />
+                                    <path d="M100 120 L100 115" stroke="#ffccd5" strokeWidth="2" />
+                                    <circle cx="100" cy="118" r="4" fill="#ffccd5" />
+                                    <line x1="30" y1="120" x2="60" y2="115" stroke="#f0f0f0" strokeWidth="1" />
+                                    <line x1="30" y1="130" x2="60" y2="125" stroke="#f0f0f0" strokeWidth="1" />
+                                    <line x1="170" y1="120" x2="140" y2="115" stroke="#f0f0f0" strokeWidth="1" />
+                                    <line x1="170" y1="130" x2="140" y2="125" stroke="#f0f0f0" strokeWidth="1" />
+                                    <path d="M40 155 Q100 140 160 155 L160 200 L40 200 Z" fill="#1a2245" />
+                                    <path d="M100 150 L80 180 L120 180 Z" fill="#22c55e" opacity="0.2" />
+                                </svg>
+                            </div>
+                            <h2 className="text-3xl font-black text-white uppercase tracking-tight mb-2">¡Misión Cumplida!</h2>
+                            <p className="text-gray-400 font-medium">Has completado todos los requisitos de esta lección con éxito.</p>
+                            <div className="flex items-center justify-center gap-2 mt-4">
+                                <span className="px-3 py-1 bg-secondary-900/40 text-secondary-400 rounded-full text-[10px] font-black uppercase border border-secondary-500/20">
+                                    +{lesson.total_points || 0} PUNTOS
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="p-8 space-y-4">
+                            <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest text-center mb-6">¿Qué deseas hacer ahora?</p>
+
+                            <div className="grid grid-cols-1 gap-3">
+                                {navigation.next && (
+                                    <button
+                                        onClick={() => {
+                                            setShowCompletionModal(false);
+                                            navigate(`/lessons/${navigation.next}`);
+                                        }}
+                                        className="flex items-center justify-between p-5 rounded-2xl bg-primary-500 text-white shadow-xl shadow-primary-500/20 hover:scale-[1.02] active:scale-95 transition-all group"
+                                    >
+                                        <div className="flex items-center gap-4 text-left">
+                                            <div className="p-2 bg-white/20 rounded-lg">
+                                                <ChevronRight className="w-5 h-5" />
+                                            </div>
+                                            <div>
+                                                <p className="text-[9px] font-black uppercase opacity-60">Siguiente actividad</p>
+                                                <p className="text-sm font-bold">Continuar aprendizaje</p>
+                                            </div>
+                                        </div>
+                                        <ArrowLeft className="w-5 h-5 -rotate-180 opacity-40 group-hover:translate-x-1 transition-transform" />
+                                    </button>
+                                )}
+
+                                <button
+                                    onClick={() => navigate(`/modules/${lesson.module_id}`)}
+                                    className="flex items-center justify-between p-5 rounded-2xl bg-slate-800/40 border border-white/5 text-white hover:bg-slate-800 hover:border-white/10 transition-all group"
+                                >
+                                    <div className="flex items-center gap-4 text-left">
+                                        <div className="p-2 bg-white/5 rounded-lg">
+                                            <BookOpen className="w-5 h-5 text-primary-400" />
+                                        </div>
+                                        <div>
+                                            <p className="text-[9px] font-black uppercase opacity-60">Volver al índice</p>
+                                            <p className="text-sm font-bold">Menú del Módulo</p>
+                                        </div>
+                                    </div>
+                                    <ChevronRight className="w-5 h-5 opacity-40 group-hover:translate-x-1 transition-transform" />
+                                </button>
+
+                                {navigation.prev && (
+                                    <button
+                                        onClick={() => {
+                                            setShowCompletionModal(false);
+                                            navigate(`/lessons/${navigation.prev}`);
+                                        }}
+                                        className="flex items-center justify-between p-5 rounded-2xl bg-white/5 border border-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-all group"
+                                    >
+                                        <div className="flex items-center gap-4 text-left">
+                                            <div className="p-2 bg-white/5 rounded-lg">
+                                                <ChevronLeft className="w-5 h-5" />
+                                            </div>
+                                            <div>
+                                                <p className="text-[9px] font-black uppercase opacity-60">Repasar contenido</p>
+                                                <p className="text-sm font-bold">Lección Anterior</p>
+                                            </div>
+                                        </div>
+                                        <ChevronRight className="w-5 h-5 opacity-40 group-hover:translate-x-1 transition-transform" />
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="p-4 bg-white/5 border-t border-white/5 text-center">
+                            <button
+                                onClick={() => setShowCompletionModal(false)}
+                                className="text-[10px] font-black text-gray-500 uppercase tracking-widest hover:text-white transition-colors py-2"
+                            >
+                                Cerrar Ventana
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Custom Styles for animations */}
+            <style>{`
+                @keyframes float {
+                    0%, 100% { transform: translateY(0); }
+                    50% { transform: translateY(-20px); }
+                }
+                .animate-float {
+                    animation: float 4s ease-in-out infinite;
+                }
+            `}</style>
         </div>
     );
 }

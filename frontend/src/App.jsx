@@ -21,6 +21,9 @@ import AdminDepartments from './pages/AdminDepartments';
 import AdminBadges from './pages/AdminBadges';
 import AdminLessonEditor from './pages/AdminLessonEditor';
 import AdminSettings from './pages/AdminSettings';
+import NotFound from './pages/NotFound';
+import ServerError from './pages/ServerError';
+import Maintenance from './pages/Maintenance';
 
 // Components
 import ProtectedRoute from './components/ProtectedRoute';
@@ -87,6 +90,7 @@ function App() {
               <Route path="/admin/modules" element={<AdminModules />} />
               <Route path="/admin/reports" element={<Reports />} />
               <Route path="/admin/users" element={<AdminUsers />} />
+              <Route path="/admin/users/:userId/profile" element={<Profile />} />
               <Route path="/admin/directory" element={<AdminDirectory />} />
               <Route path="/admin/areas" element={<AdminDepartments />} />
               <Route path="/admin/badges" element={<AdminBadges />} />
@@ -97,7 +101,11 @@ function App() {
 
           {/* Redirección por defecto */}
           <Route path="/" element={<Navigate to="/dashboard" />} />
-          <Route path="*" element={<Navigate to="/dashboard" />} />
+
+          {/* Página 404, 500 y Mantenimiento - Fuera del Layout para pantalla completa */}
+          <Route path="/maintenance" element={<Maintenance />} />
+          <Route path="/500" element={<ServerError />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>
     </GoogleOAuthProvider>
