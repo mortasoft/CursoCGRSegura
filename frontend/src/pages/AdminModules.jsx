@@ -37,7 +37,9 @@ export default function AdminModules() {
         release_date: new Date().toISOString().split('T')[0],
         order_index: '',
         month: '',
-        image_url: ''
+        image_url: '',
+        generates_certificate: true,
+        requires_previous: false
     });
 
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -75,7 +77,9 @@ export default function AdminModules() {
                 release_date: module.release_date ? module.release_date.split('T')[0] : '',
                 order_index: module.order_index,
                 month: module.month || '',
-                image_url: module.image_url || ''
+                image_url: module.image_url || '',
+                generates_certificate: module.generates_certificate !== undefined ? !!module.generates_certificate : true,
+                requires_previous: !!module.requires_previous
             });
         } else {
             setEditingModule(null);
@@ -87,7 +91,9 @@ export default function AdminModules() {
                 release_date: new Date().toISOString().split('T')[0],
                 order_index: modules.length + 1,
                 month: new Intl.DateTimeFormat('es-ES', { month: 'long' }).format(new Date()),
-                image_url: ''
+                image_url: '',
+                generates_certificate: true,
+                requires_previous: false
             });
         }
         setIsModalOpen(true);
@@ -595,17 +601,45 @@ export default function AdminModules() {
                                     <p className="text-[10px] text-gray-500 italic">Recomendado: 600x200 para tarjetas, 1200x300 para Banner Principal.</p>
                                 </div>
 
-                                <div className="flex items-center gap-2 pt-2">
-                                    <input
-                                        type="checkbox"
-                                        id="is_published"
-                                        className="w-5 h-5 rounded border-white/10 bg-black/20 text-primary-500 focus:ring-primary-500"
-                                        checked={formData.is_published}
-                                        onChange={(e) => setFormData({ ...formData, is_published: e.target.checked })}
-                                    />
-                                    <label htmlFor="is_published" className="text-sm font-medium text-gray-300">
-                                        Publicar módulo
-                                    </label>
+                                <div className="flex flex-wrap items-center gap-6 pt-2">
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="checkbox"
+                                            id="is_published"
+                                            className="w-5 h-5 rounded border-white/10 bg-black/20 text-primary-500 focus:ring-primary-500"
+                                            checked={formData.is_published}
+                                            onChange={(e) => setFormData({ ...formData, is_published: e.target.checked })}
+                                        />
+                                        <label htmlFor="is_published" className="text-sm font-medium text-gray-300">
+                                            Publicar módulo
+                                        </label>
+                                    </div>
+
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="checkbox"
+                                            id="generates_certificate"
+                                            className="w-5 h-5 rounded border-white/10 bg-black/20 text-secondary-500 focus:ring-secondary-500"
+                                            checked={formData.generates_certificate}
+                                            onChange={(e) => setFormData({ ...formData, generates_certificate: e.target.checked })}
+                                        />
+                                        <label htmlFor="generates_certificate" className="text-sm font-medium text-gray-300">
+                                            Genera Certificado
+                                        </label>
+                                    </div>
+
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="checkbox"
+                                            id="requires_previous"
+                                            className="w-5 h-5 rounded border-white/10 bg-black/20 text-orange-500 focus:ring-orange-500"
+                                            checked={formData.requires_previous}
+                                            onChange={(e) => setFormData({ ...formData, requires_previous: e.target.checked })}
+                                        />
+                                        <label htmlFor="requires_previous" className="text-sm font-medium text-gray-300">
+                                            Requiere Completar Anterior
+                                        </label>
+                                    </div>
                                 </div>
 
                                 <div className="flex justify-end gap-3 pt-6 border-t border-white/5">

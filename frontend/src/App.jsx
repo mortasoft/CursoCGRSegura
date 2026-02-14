@@ -10,6 +10,7 @@ import Modules from './pages/Modules';
 import ModuleDetail from './pages/ModuleDetail';
 import LessonView from './pages/LessonView';
 import QuizView from './pages/QuizView';
+import CertificateView from './pages/CertificateView';
 import Profile from './pages/Profile';
 import Leaderboard from './pages/Leaderboard';
 import AdminPanel from './pages/AdminPanel';
@@ -97,6 +98,9 @@ function App() {
               <Route path="/admin/settings" element={<AdminSettings />} />
               <Route path="/admin/lessons/:id/editor" element={<AdminLessonEditor />} />
             </Route>
+
+            {/* Rutas protegidas a pantalla completa (sin Layout) */}
+            <Route path="/certificates/module/:moduleId" element={<CertificateView />} />
           </Route>
 
           {/* Redirección por defecto */}

@@ -370,7 +370,11 @@ export default function Profile() {
                         {certificates.length > 0 ? (
                             <div className="space-y-3">
                                 {certificates.map((cert) => (
-                                    <div key={cert.id} className="p-4 rounded-xl bg-slate-900 border border-white/5 hover:border-secondary-500/30 transition-all cursor-pointer group">
+                                    <div
+                                        key={cert.id}
+                                        className="p-4 rounded-xl bg-slate-900 border border-white/5 hover:border-secondary-500/30 transition-all cursor-pointer group"
+                                        onClick={() => navigate(`/certificates/module/${cert.module_id}`)}
+                                    >
                                         <div className="flex items-center gap-4">
                                             <div className="p-2 bg-secondary-500/20 rounded-lg text-secondary-500">
                                                 <FileText className="w-6 h-6" />

@@ -21,7 +21,9 @@ import {
     Volume2,
     Settings,
     Award,
-    BookOpen
+    BookOpen,
+    Zap,
+    Lock
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNotificationStore } from '../store/notificationStore';
@@ -31,7 +33,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 export default function LessonView() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { token, updateUser } = useAuthStore();
+    const { token, user, updateUser, viewAsStudent } = useAuthStore();
     const [lesson, setLesson] = useState(null);
     const [contents, setContents] = useState([]);
     const [progress, setProgress] = useState(null);
@@ -45,6 +47,8 @@ export default function LessonView() {
     const [showCompletionModal, setShowCompletionModal] = useState(false);
 
     useEffect(() => {
+        setWatchedVideos(new Set());
+        setVisitedLinks(new Set());
         fetchLessonData();
         window.scrollTo(0, 0);
 
@@ -61,6 +65,10 @@ export default function LessonView() {
         } else {
             setYtApiLoaded(true);
         }
+
+        return () => {
+            // Optional cleanup if needed
+        };
     }, [id]);
 
     // YouTube Player Component
@@ -114,12 +122,18 @@ export default function LessonView() {
         );
     };
 
+    const playAlert = () => {
+        const audio = new Audio('/alert.mp3');
+        audio.play().catch(e => console.log('Audio play blocked:', e));
+    };
+
     const markVideoAsWatched = (videoId) => {
         setWatchedVideos(prev => {
             const next = new Set(prev);
             next.add(videoId);
             return next;
         });
+        playAlert();
         toast.success("¡Video completado!");
     };
 
@@ -147,9 +161,9 @@ export default function LessonView() {
         });
     };
 
-    const fetchLessonData = async () => {
+    const fetchLessonData = async (silent = false) => {
         try {
-            setLoading(true);
+            if (!silent) setLoading(true);
             const [lessonRes, contentRes] = await Promise.all([
                 axios.get(`${API_URL}/lessons/${id}`, { headers: { Authorization: `Bearer ${token}` } }),
                 axios.get(`${API_URL}/content/lesson/${id}`, { headers: { Authorization: `Bearer ${token}` } })
@@ -168,14 +182,15 @@ export default function LessonView() {
         } catch (error) {
             const errorData = error.response?.data;
             if (error.response?.status === 403) {
-                toast.error(errorData.message || 'Esta lección está bloqueada');
-                navigate(`/modules/${errorData.moduleId || ''}`);
+                playAlert();
+                navigate(`/modules/${errorData.moduleId || ''}`, { state: { error: 'Módulo bloqueado' } });
             } else {
+                playAlert();
                 toast.error('Error al cargar la lección');
                 navigate('/modules');
             }
         } finally {
-            setLoading(false);
+            if (!silent) setLoading(false);
         }
     };
 
@@ -186,7 +201,8 @@ export default function LessonView() {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (response.data.success) {
-                toast.success(`¡Lección completada! +${response.data.pointsAwarded || 0} puntos`);
+                playAlert();
+                toast.success(`Lección completada! +${response.data.pointsAwarded || 0} puntos`);
 
                 // Actualizar stats globales en el store
                 if (response.data.newBalance !== undefined) {
@@ -200,11 +216,20 @@ export default function LessonView() {
                     useNotificationStore.getState().setPendingLevelUp(response.data.levelData);
                 }
 
-                await fetchLessonData(); // Refresh to show completion status
-                setShowCompletionModal(true); // Show the options modal
+                if (response.data.moduleCompleted) {
+                    useNotificationStore.getState().setPendingModuleCompletion({
+                        moduleId: response.data.moduleData.id,
+                        bonusPoints: response.data.moduleData.bonusPoints,
+                        generatesCertificate: response.data.moduleData.generatesCertificate
+                    });
+                }
+
+                await fetchLessonData(true); // Silent refresh
             }
         } catch (error) {
-            toast.error('Error al marcar como completada');
+            console.error('Completion error:', error);
+            playAlert();
+            toast.error(error.response?.data?.message || 'Error al marcar como completada');
         } finally {
             setCompleting(false);
         }
@@ -449,16 +474,16 @@ export default function LessonView() {
     if (!lesson) return null;
 
     return (
-        <div className="max-w-[1400px] mx-auto px-4 md:px-8 py-10 min-h-screen animate-fade-in pb-20">
+        <div className="max-w-[1400px] mx-auto px-4 md:px-8 py-4 min-h-screen animate-fade-in pb-20">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 xl:gap-12">
                 {/* Sidebar Menu */}
                 <aside className="lg:col-span-3 xl:col-span-3">
-                    <div className="lg:sticky lg:top-24 space-y-6">
+                    <div className="lg:sticky lg:top-20 space-y-4">
                         {/* Module Header / Back Link */}
-                        <div className="card bg-slate-800/20 border-white/5 p-4 md:p-6 mb-4">
+                        <div className="card bg-slate-800/20 border-white/5 p-3 md:p-4 mb-3">
                             <Link
                                 to={`/modules/${lesson.module_id}`}
-                                className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-xs font-black uppercase tracking-widest group mb-4"
+                                className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-xs font-black uppercase tracking-widest group mb-2"
                             >
                                 <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Volver al Módulo
                             </Link>
@@ -472,67 +497,110 @@ export default function LessonView() {
                                 </span>
                                 <div className="flex-1 h-1 bg-slate-800 rounded-full overflow-hidden">
                                     <div
-                                        className="h-full bg-primary-500"
-                                        style={{ width: `${Math.round((moduleLessons.filter(l => l.status === 'completed').length / moduleLessons.length) * 100)}%` }}
+                                        className="h-full bg-primary-500 transition-all duration-500"
+                                        style={{ width: `${moduleLessons.length > 0 ? Math.round((moduleLessons.filter(l => l.status === 'completed').length / moduleLessons.length) * 100) : 0}%` }}
                                     ></div>
                                 </div>
                                 <span className="text-[10px] font-bold text-primary-400">
-                                    {Math.round((moduleLessons.filter(l => l.status === 'completed').length / moduleLessons.length) * 100)}%
+                                    {moduleLessons.length > 0 ? Math.round((moduleLessons.filter(l => l.status === 'completed').length / moduleLessons.length) * 100) : 0}%
                                 </span>
                             </div>
                         </div>
 
                         {/* Lessons List Navigation */}
                         <nav className="card bg-slate-900/40 p-2 border-white/5 shadow-2xl border-dashed">
-                            <div className="p-3 border-b border-white/5 mb-2">
-                                <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Ruta de Aprendizaje</p>
+                            <div className="p-2 border-b border-white/5 mb-1">
+                                <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest text-center">Ruta de Aprendizaje</p>
                             </div>
                             <div className="max-h-[60vh] overflow-y-auto space-y-1 pr-1 custom-scrollbar">
-                                {moduleLessons.map((ml) => {
+                                {moduleLessons.map((ml, index) => {
                                     const isCurrent = parseInt(ml.id) === parseInt(id);
                                     const isCompleted = ml.status === 'completed';
+                                    const previousMandatoryLessons = moduleLessons.slice(0, index).filter(l => !l.is_optional);
+                                    const isLocked = previousMandatoryLessons.some(l => l.status !== 'completed') && (user?.role !== 'admin' || viewAsStudent);
 
                                     return (
                                         <button
                                             key={ml.id}
-                                            onClick={() => navigate(`/lessons/${ml.id}`)}
-                                            className={`w-full flex items-start gap-4 p-4 rounded-xl transition-all duration-300 group
+                                            onClick={() => !isLocked && navigate(`/lessons/${ml.id}`)}
+                                            disabled={isLocked}
+                                            className={`w-full flex items-start gap-3 p-2.5 rounded-xl transition-all duration-300 group
                                                 ${isCurrent
                                                     ? 'bg-primary-500/10 border border-primary-500/20 shadow-lg'
-                                                    : 'hover:bg-white/5 border border-transparent hover:border-white/5 text-gray-400 hover:text-white'
+                                                    : isLocked
+                                                        ? 'opacity-40 cursor-not-allowed border border-transparent'
+                                                        : 'hover:bg-white/5 border border-transparent hover:border-white/5 text-gray-400 hover:text-white'
                                                 }`}
                                         >
-                                            <div className="relative mt-1">
-                                                <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black border transition-all
+                                            <div className="relative mt-0.5 flex-shrink-0">
+                                                <div className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all border
                                                     ${isCompleted
-                                                        ? 'bg-green-500/20 border-green-500 text-green-500'
+                                                        ? 'bg-green-500/10 border-green-500/30 text-green-500 shadow-sm shadow-green-500/10'
                                                         : isCurrent
-                                                            ? 'bg-primary-500 border-primary-400 text-white'
-                                                            : 'bg-slate-800 border-white/10 text-gray-500 group-hover:border-white/20'
+                                                            ? 'bg-primary-500 border-primary-400 text-white shadow-lg shadow-primary-500/20'
+                                                            : isLocked
+                                                                ? 'bg-slate-900 border-white/5 text-gray-700'
+                                                                : 'bg-slate-800 border-white/10 text-gray-400 group-hover:border-primary-500/30 group-hover:text-primary-400'
                                                     }`}
                                                 >
-                                                    {isCompleted ? <CheckCircle className="w-3.5 h-3.5" /> : ml.order_index}
+                                                    {isCompleted ? (
+                                                        <CheckCircle className="w-4 h-4" />
+                                                    ) : isLocked ? (
+                                                        <Lock className="w-3.5 h-3.5" />
+                                                    ) : (
+                                                        ml.lesson_type === 'video' ? <PlayCircle className="w-4 h-4" /> :
+                                                            (ml.lesson_type === 'interactive' || ml.lesson_type === 'h5p') ? <Zap className="w-4 h-4" /> :
+                                                                <FileText className="w-4 h-4" />
+                                                    )}
                                                 </div>
                                                 {!isCompleted && isCurrent && (
-                                                    <div className="absolute top-0 right-0 w-2 h-2 bg-primary-500 rounded-full animate-ping opacity-75"></div>
+                                                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary-500 rounded-full border-2 border-[#0f172a] animate-pulse"></div>
                                                 )}
                                             </div>
 
                                             <div className="text-left flex-1 min-w-0">
-                                                <p className={`text-sm font-bold leading-tight transition-colors 
-                                                    ${isCurrent ? 'text-white' : 'group-hover:text-white'}
-                                                    ${isCompleted ? 'text-gray-400' : ''}`}>
+                                                <div className="flex flex-wrap items-center gap-2 mb-0">
+                                                    <p className={`text-[9px] font-black uppercase tracking-widest
+                                                        ${isCurrent ? 'text-primary-400' : 'text-gray-500'}`}>
+                                                        L{index + 1}
+                                                    </p>
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {isCompleted && (
+                                                            <span className="flex items-center gap-1 text-green-500 text-[8px] font-black uppercase tracking-tighter bg-green-500/10 px-1.5 py-0.5 rounded-full">
+                                                                Completada
+                                                            </span>
+                                                        )}
+                                                        {!ml.is_published && user?.role === 'admin' && (
+                                                            <span className="flex items-center gap-1 text-orange-500 text-[8px] font-black uppercase tracking-tighter bg-orange-500/10 px-1.5 py-0.5 rounded-full border border-orange-500/20">
+                                                                <ImageIcon className="w-2.5 h-2.5" /> Borrador
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <p className={`text-xs font-bold leading-tight transition-colors line-clamp-2
+                                                    ${isCurrent ? 'text-white' : isLocked ? 'text-gray-600' : 'text-gray-400 group-hover:text-white'}
+                                                     ${isCompleted ? 'text-gray-300' : ''}`}>
                                                     {ml.title}
                                                 </p>
-                                                <div className="flex items-center gap-2 mt-1.5">
+                                                <div className="flex flex-wrap items-center gap-2 mt-1.5">
                                                     {ml.is_optional ? (
-                                                        <span className="text-[8px] font-black uppercase text-secondary-400 px-1.5 py-0.5 rounded bg-secondary-500/10 border border-secondary-500/20">Opcional</span>
+                                                        <span className="text-[7px] font-black uppercase text-indigo-400 px-1.5 py-0 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center gap-0.5">
+                                                            Opcional
+                                                        </span>
                                                     ) : (
-                                                        <span className="text-[8px] font-black uppercase text-gray-600">Requerido</span>
+                                                        <span className={`text-[7px] font-black uppercase px-1.5 py-0 rounded-full border flex items-center gap-0.5
+                                                            ${isLocked ? 'bg-slate-900 border-white/5 text-gray-700' : 'bg-white/5 border-white/5 text-gray-500'}`}>
+                                                            {isLocked && <Lock className="w-2 h-2" />} REQ
+                                                        </span>
                                                     )}
-                                                    <span className="text-[9px] font-bold text-gray-600 flex items-center gap-1">
-                                                        <Award className="w-2.5 h-2.5" /> {ml.total_points || 0} PTS
+                                                    <span className="text-[9px] font-bold text-gray-400 flex items-center gap-1 whitespace-nowrap">
+                                                        <Award className="w-2.5 h-2.5 text-secondary-500" /> {ml.total_points || 0}
                                                     </span>
+                                                    {ml.duration_minutes > 0 && (
+                                                        <span className="text-[9px] font-bold text-gray-500 flex items-center gap-1 whitespace-nowrap">
+                                                            <Clock className="w-2.5 h-2.5" /> {ml.duration_minutes}m
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </div>
                                         </button>
@@ -597,6 +665,19 @@ export default function LessonView() {
                     </div>
 
                     {/* Dynamic Content List */}
+                    {!!lesson.is_optional && (
+                        <div className="p-5 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex gap-4 items-center animate-fade-in mb-6 shadow-lg shadow-indigo-500/5">
+                            <div className="w-12 h-12 rounded-xl bg-indigo-500/20 flex items-center justify-center flex-shrink-0 border border-indigo-500/30">
+                                <Zap className="w-6 h-6 text-indigo-400 fill-indigo-400/20" />
+                            </div>
+                            <div>
+                                <h4 className="text-indigo-400 font-black text-xs uppercase tracking-widest mb-1">Lección Opcional</h4>
+                                <p className="text-indigo-300/70 text-sm font-medium">
+                                    Esta actividad es complementaria. Puedes completarla para ganar puntos extra, pero <span className="text-indigo-300 font-bold underline decoration-indigo-500/40">no es obligatoria</span> para finalizar el módulo o recibir tu certificado.
+                                </p>
+                            </div>
+                        </div>
+                    )}
                     <div className="space-y-4">
                         {contents.length > 0 ? (
                             contents.map((item, index) => (
@@ -653,7 +734,7 @@ export default function LessonView() {
                                         <div className="inline-flex items-center gap-2 px-6 py-2 bg-green-500/10 rounded-full border border-green-500/20 mt-2">
                                             <Award className="w-5 h-5 text-green-500" />
                                             <span className="text-green-400 text-xs font-black uppercase tracking-widest">
-                                                Recompensa obtenida: {progress?.points_earned || 0} PTS
+                                                Recompensa obtenida: +{progress?.points_earned || 0} PTS
                                             </span>
                                         </div>
                                     </div>
@@ -684,16 +765,16 @@ export default function LessonView() {
                                         (c.content_type === 'video' && c.is_required && !watchedVideos.has(c.id)) ||
                                         (c.content_type === 'link' && c.is_required && !visitedLinks.has(c.id))
                                     ).length > 0}
-                                    className="w-full group relative px-12 py-5 bg-white text-slate-900 rounded-2xl font-black uppercase tracking-[0.2em] text-sm overflow-hidden transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:grayscale disabled:scale-100 shadow-xl"
+                                    className="w-full group relative px-12 py-5 bg-secondary-600 text-white rounded-2xl font-black uppercase tracking-[0.2em] text-sm overflow-hidden transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:grayscale disabled:scale-100 shadow-[0_15px_30px_rgba(249,115,22,0.3)] hover:shadow-[0_20px_40px_rgba(249,115,22,0.4)]"
                                 >
                                     <span className="relative z-10 flex items-center justify-center gap-3">
                                         {completing ? (
-                                            <div className="w-6 h-6 border-3 border-slate-900 border-t-transparent rounded-full animate-spin"></div>
+                                            <div className="w-6 h-6 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
                                         ) : (
                                             <>Finalizar Lección <CheckCircle className="w-5 h-5" /></>
                                         )}
                                     </span>
-                                    <div className="absolute inset-0 bg-gradient-to-r from-secondary-500 to-primary-500 opacity-0 group-hover:opacity-20 transition-opacity"></div>
+                                    <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                                 </button>
                             </div>
                         )}
@@ -727,123 +808,6 @@ export default function LessonView() {
                     </div>
                 </main>
             </div>
-            {/* Completion Modal */}
-            {showCompletionModal && (
-                <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-xl animate-fade-in">
-                    <div className="card max-w-lg w-full p-0 overflow-hidden border-white/10 shadow-[0_0_100px_rgba(0,0,0,0.8)] animate-scale-in">
-                        <div className="p-8 text-center bg-gradient-to-b from-primary-500/10 to-transparent">
-                            <div className="relative inline-block mb-6">
-                                <div className="absolute inset-0 bg-green-500/20 blur-[40px] rounded-full scale-110"></div>
-                                <svg viewBox="0 0 200 200" className="w-24 h-24 md:w-32 md:h-32 drop-shadow-[0_0_30px_rgba(34,197,94,0.3)] animate-float">
-                                    <path d="M50 60 L30 10 L80 40 Z" fill="#ffffff" />
-                                    <path d="M150 60 L170 10 L120 40 Z" fill="#ffffff" />
-                                    <path d="M55 55 L40 25 L75 42 Z" fill="#ffccd5" />
-                                    <path d="M145 55 L160 25 L125 42 Z" fill="#ffccd5" />
-                                    <circle cx="100" cy="100" r="70" fill="#ffffff" />
-                                    <rect x="40" y="80" width="120" height="35" rx="10" fill="#1a2245" />
-                                    <rect x="45" y="85" width="50" height="25" rx="5" fill="#22c55e" opacity="0.8">
-                                        <animate attributeName="opacity" values="0.8;0.4;0.8" dur="2s" repeatCount="indefinite" />
-                                    </rect>
-                                    <rect x="105" y="85" width="50" height="25" rx="5" fill="#22c55e" opacity="0.8">
-                                        <animate attributeName="opacity" values="0.8;0.4;0.8" dur="2s" repeatCount="indefinite" begin="0.5s" />
-                                    </rect>
-                                    <path d="M40 97.5 Q20 97.5 30 97.5" stroke="#1a2245" strokeWidth="10" />
-                                    <path d="M160 97.5 Q180 97.5 170 97.5" stroke="#1a2245" strokeWidth="10" />
-                                    <path d="M90 125 Q100 135 110 125" stroke="#ffccd5" strokeWidth="3" fill="none" />
-                                    <path d="M100 120 L100 115" stroke="#ffccd5" strokeWidth="2" />
-                                    <circle cx="100" cy="118" r="4" fill="#ffccd5" />
-                                    <line x1="30" y1="120" x2="60" y2="115" stroke="#f0f0f0" strokeWidth="1" />
-                                    <line x1="30" y1="130" x2="60" y2="125" stroke="#f0f0f0" strokeWidth="1" />
-                                    <line x1="170" y1="120" x2="140" y2="115" stroke="#f0f0f0" strokeWidth="1" />
-                                    <line x1="170" y1="130" x2="140" y2="125" stroke="#f0f0f0" strokeWidth="1" />
-                                    <path d="M40 155 Q100 140 160 155 L160 200 L40 200 Z" fill="#1a2245" />
-                                    <path d="M100 150 L80 180 L120 180 Z" fill="#22c55e" opacity="0.2" />
-                                </svg>
-                            </div>
-                            <h2 className="text-3xl font-black text-white uppercase tracking-tight mb-2">¡Misión Cumplida!</h2>
-                            <p className="text-gray-400 font-medium">Has completado todos los requisitos de esta lección con éxito.</p>
-                            <div className="flex items-center justify-center gap-2 mt-4">
-                                <span className="px-3 py-1 bg-secondary-900/40 text-secondary-400 rounded-full text-[10px] font-black uppercase border border-secondary-500/20">
-                                    +{lesson.total_points || 0} PUNTOS
-                                </span>
-                            </div>
-                        </div>
-
-                        <div className="p-8 space-y-4">
-                            <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest text-center mb-6">¿Qué deseas hacer ahora?</p>
-
-                            <div className="grid grid-cols-1 gap-3">
-                                {navigation.next && (
-                                    <button
-                                        onClick={() => {
-                                            setShowCompletionModal(false);
-                                            navigate(`/lessons/${navigation.next}`);
-                                        }}
-                                        className="flex items-center justify-between p-5 rounded-2xl bg-primary-500 text-white shadow-xl shadow-primary-500/20 hover:scale-[1.02] active:scale-95 transition-all group"
-                                    >
-                                        <div className="flex items-center gap-4 text-left">
-                                            <div className="p-2 bg-white/20 rounded-lg">
-                                                <ChevronRight className="w-5 h-5" />
-                                            </div>
-                                            <div>
-                                                <p className="text-[9px] font-black uppercase opacity-60">Siguiente actividad</p>
-                                                <p className="text-sm font-bold">Continuar aprendizaje</p>
-                                            </div>
-                                        </div>
-                                        <ArrowLeft className="w-5 h-5 -rotate-180 opacity-40 group-hover:translate-x-1 transition-transform" />
-                                    </button>
-                                )}
-
-                                <button
-                                    onClick={() => navigate(`/modules/${lesson.module_id}`)}
-                                    className="flex items-center justify-between p-5 rounded-2xl bg-slate-800/40 border border-white/5 text-white hover:bg-slate-800 hover:border-white/10 transition-all group"
-                                >
-                                    <div className="flex items-center gap-4 text-left">
-                                        <div className="p-2 bg-white/5 rounded-lg">
-                                            <BookOpen className="w-5 h-5 text-primary-400" />
-                                        </div>
-                                        <div>
-                                            <p className="text-[9px] font-black uppercase opacity-60">Volver al índice</p>
-                                            <p className="text-sm font-bold">Menú del Módulo</p>
-                                        </div>
-                                    </div>
-                                    <ChevronRight className="w-5 h-5 opacity-40 group-hover:translate-x-1 transition-transform" />
-                                </button>
-
-                                {navigation.prev && (
-                                    <button
-                                        onClick={() => {
-                                            setShowCompletionModal(false);
-                                            navigate(`/lessons/${navigation.prev}`);
-                                        }}
-                                        className="flex items-center justify-between p-5 rounded-2xl bg-white/5 border border-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-all group"
-                                    >
-                                        <div className="flex items-center gap-4 text-left">
-                                            <div className="p-2 bg-white/5 rounded-lg">
-                                                <ChevronLeft className="w-5 h-5" />
-                                            </div>
-                                            <div>
-                                                <p className="text-[9px] font-black uppercase opacity-60">Repasar contenido</p>
-                                                <p className="text-sm font-bold">Lección Anterior</p>
-                                            </div>
-                                        </div>
-                                        <ChevronRight className="w-5 h-5 opacity-40 group-hover:translate-x-1 transition-transform" />
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="p-4 bg-white/5 border-t border-white/5 text-center">
-                            <button
-                                onClick={() => setShowCompletionModal(false)}
-                                className="text-[10px] font-black text-gray-500 uppercase tracking-widest hover:text-white transition-colors py-2"
-                            >
-                                Cerrar Ventana
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
             {/* Custom Styles for animations */}
             <style>{`
                 @keyframes float {

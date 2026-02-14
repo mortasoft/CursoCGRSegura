@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
+const { cacheMiddleware } = require('../middleware/cache');
 const { getLevels } = require('../utils/gamification');
 
 /**
@@ -9,7 +10,7 @@ const { getLevels } = require('../utils/gamification');
  * @desc    Obtener el ranking global de funcionarios
  * @access  Private
  */
-router.get('/leaderboard', authMiddleware, async (req, res) => {
+router.get('/leaderboard', authMiddleware, cacheMiddleware(600, true), async (req, res) => {
     try {
         const userId = req.user.id;
         const isAdmin = req.user.role === 'admin' && req.headers['x-view-as-student'] !== 'true';

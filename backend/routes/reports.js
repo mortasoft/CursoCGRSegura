@@ -24,16 +24,18 @@ router.get('/compliance', authMiddleware, adminMiddleware, async (req, res) => {
                 FROM user_progress
                 GROUP BY user_id
             ) up_agg ON u.id = up_agg.user_id
-            WHERE u.is_active = TRUE AND u.role = 'user'
+            WHERE u.is_active = TRUE AND u.role = 'student'
         `);
 
         // 2. Cumplimiento por Departamento
         const deptCompliance = await db.query(`
             SELECT 
-                u.department,
+                d.name as department,
                 COUNT(u.id) as staff_count,
+                SUM(CASE WHEN COALESCE(up_agg.completion_rate, 0) >= 100 THEN 1 ELSE 0 END) as completed_count,
                 AVG(COALESCE(up_agg.completion_rate, 0)) as avg_completion
-            FROM users u
+            FROM departments d
+            LEFT JOIN users u ON u.department = d.name AND u.is_active = TRUE AND u.role = 'student'
             LEFT JOIN (
                 SELECT 
                     user_id, 
@@ -42,8 +44,20 @@ router.get('/compliance', authMiddleware, adminMiddleware, async (req, res) => {
                 WHERE status = 'completed'
                 GROUP BY user_id
             ) up_agg ON u.id = up_agg.user_id
-            WHERE u.is_active = TRUE AND u.department IS NOT NULL AND u.role = 'user'
-            GROUP BY u.department
+            GROUP BY d.name
+            ORDER BY avg_completion DESC
+        `);
+
+        // 3. Cumplimiento por Módulo
+        const moduleCompliance = await db.query(`
+            SELECT 
+                m.id, m.title,
+                AVG(CASE WHEN up.status = 'completed' THEN 100 ELSE COALESCE(up.progress_percentage, 0) END) as avg_completion
+            FROM modules m
+            LEFT JOIN user_progress up ON m.id = up.module_id
+            LEFT JOIN users u ON up.user_id = u.id
+            WHERE m.is_published = TRUE AND (u.role = 'student' OR u.id IS NULL)
+            GROUP BY m.id
             ORDER BY avg_completion DESC
         `);
 
@@ -61,7 +75,7 @@ router.get('/compliance', authMiddleware, adminMiddleware, async (req, res) => {
                 WHERE status = 'completed'
                 GROUP BY user_id
             ) up_agg ON u.id = up_agg.user_id
-            WHERE u.is_active = TRUE AND u.role = 'user'
+            WHERE u.is_active = TRUE AND u.role = 'student'
             HAVING progress < 20
             ORDER BY progress ASC
             LIMIT 50
@@ -84,7 +98,7 @@ router.get('/compliance', authMiddleware, adminMiddleware, async (req, res) => {
                 WHERE status = 'completed'
                 GROUP BY user_id
             ) up_agg ON u.id = up_agg.user_id
-            WHERE u.is_active = TRUE AND u.role = 'user'
+            WHERE u.is_active = TRUE AND u.role = 'student'
             ORDER BY progress DESC
         `);
 

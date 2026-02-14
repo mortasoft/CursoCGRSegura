@@ -74,6 +74,8 @@ router.get('/:id', authMiddleware, async (req, res) => {
     }
 });
 
+const { clearCache } = require('../middleware/cache');
+
 /**
  * @route   POST /api/quizzes/:id/submit
  * @desc    Enviar respuestas de un quiz y calificar
@@ -83,6 +85,13 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
     try {
         const quizId = req.params.id;
         const userId = req.user.id;
+
+        // Invalida el caché (incluyendo vista de estudiante)
+        await clearCache(`cache:/api/dashboard*u${userId}*`);
+        await clearCache(`cache:/api/gamification/leaderboard*`);
+        await clearCache(`cache:/api/modules*u${userId}*`);
+        await clearCache(`cache:/api/lessons/*u${userId}*`);
+        await clearCache(`cache:/api/quizzes/${quizId}*u${userId}*`);
         const { answers, timeSpent } = req.body; // answers: { questionId: optionId }
 
         // 1. Obtener el quiz para saber el passing_score
@@ -170,8 +179,9 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
         // Sincronizar nivel
         const levelSync = await syncUserLevel(userId);
 
-        // Verificar si completó el módulo
-        const moduleSync = await checkAndRecordModuleCompletion(userId, quiz.module_id);
+        // Verificar si completó el módulo (considerando si es admin para incluir no publicados)
+        const isAdmin = req.user.role === 'admin' && req.headers['x-view-as-student'] !== 'true';
+        const moduleSync = await checkAndRecordModuleCompletion(userId, quiz.module_id, isAdmin);
 
         // Obtener balance actualizado (siempre para asegurar que el navbar esté sincronizado)
         const [updatedStats] = await db.query(
@@ -190,7 +200,9 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
             newBalance: updatedStats?.points || 0,
             newLevel: updatedStats?.level || 'Novato',
             levelUp: levelSync?.leveledUp || false,
-            levelData: levelSync
+            levelData: levelSync,
+            moduleCompleted: moduleSync?.completed && moduleSync?.newlyRecorded,
+            moduleData: moduleSync
         });
 
     } catch (error) {

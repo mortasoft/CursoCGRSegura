@@ -2,15 +2,19 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
+const { cacheMiddleware } = require('../middleware/cache');
 
 /**
  * @route   GET /api/modules
  * @desc    Obtener todos los módulos publicados
  * @access  Private
  */
-router.get('/', authMiddleware, async (req, res) => {
+router.get('/', authMiddleware, cacheMiddleware(600, true), async (req, res) => {
     try {
-        const isAdmin = req.user.role === 'admin' && req.headers['x-view-as-student'] !== 'true';
+        const isStudentView = req.headers['x-view-as-student'] === 'true' || req.headers['X-View-As-Student'] === 'true';
+        const isAdmin = req.user.role === 'admin' && !isStudentView;
+
+        console.log(`[Modules] User: ${req.user.email}, Role: ${req.user.role}, isStudentView: ${isStudentView}, isAdmin: ${isAdmin}`);
 
         const modules = await db.query(
             `SELECT 
@@ -27,14 +31,18 @@ router.get('/', authMiddleware, async (req, res) => {
             LEFT JOIN lessons l ON m.id = l.module_id 
                 AND l.is_optional = FALSE
                 ${isAdmin ? '' : 'AND l.is_published = TRUE'}
-            WHERE 1=1 ${isAdmin ? '' : 'AND m.is_published = TRUE'}
+            WHERE 1=1 ${isAdmin ? '' : 'AND m.is_published = 1'}
             GROUP BY m.id
             ORDER BY m.order_index ASC`
         );
 
         // Obtener progreso del usuario para cada módulo
         const userId = req.user.id;
-        for (let module of modules) {
+        let lastModuleCompleted = true; // El primer módulo siempre se puede empezar (o si no hay restricción)
+
+        for (let i = 0; i < modules.length; i++) {
+            const module = modules[i];
+
             // 1. Contar lecciones completadas
             const [lessonProgress] = await db.query(
                 `SELECT COUNT(*) as completed_count
@@ -66,6 +74,15 @@ router.get('/', authMiddleware, async (req, res) => {
 
             // No exceder 100%
             if (module.completionPercentage > 100) module.completionPercentage = 100;
+
+            // 3. Determinar si está bloqueado por el anterior
+            module.is_locked = false;
+            if (module.requires_previous && !lastModuleCompleted && !isAdmin) {
+                module.is_locked = true;
+            }
+
+            // Actualizar lastModuleCompleted para el siguiente módulo en la iteración
+            lastModuleCompleted = module.completionPercentage === 100;
 
             module.userProgress = {
                 completed_lessons: completedLessons,
@@ -111,11 +128,12 @@ router.get('/admin/all', authMiddleware, adminMiddleware, async (req, res) => {
  * @desc    Obtener un módulo específico con sus lecciones
  * @access  Private
  */
-router.get('/:id', authMiddleware, async (req, res) => {
+router.get('/:id', authMiddleware, cacheMiddleware(600, true), async (req, res) => {
     try {
         const moduleId = req.params.id;
         const userId = req.user.id;
-        const isAdmin = req.user.role === 'admin' && req.headers['x-view-as-student'] !== 'true';
+        const isStudentView = req.headers['x-view-as-student'] === 'true';
+        const isAdmin = req.user.role === 'admin' && !isStudentView;
 
         // Si es admin, puede ver módulos no publicados
         const [module] = await db.query(
@@ -125,12 +143,60 @@ router.get('/:id', authMiddleware, async (req, res) => {
                  JOIN lessons l2 ON lc.lesson_id = l2.id 
                  WHERE l2.module_id = m.id AND l2.is_optional = FALSE 
                  ${isAdmin ? '' : 'AND l2.is_published = TRUE'}) as points_to_earn
-             FROM modules m WHERE m.id = ? ${isAdmin ? '' : 'AND m.is_published = TRUE'}`,
+             FROM modules m WHERE m.id = ? ${isAdmin ? '' : 'AND m.is_published = 1'}`,
             [moduleId]
         );
 
         if (!module) {
             return res.status(404).json({ error: 'Módulo no encontrado' });
+        }
+
+        // 3. Verificar si está bloqueado por el anterior
+        if (module.requires_previous && !isAdmin) {
+            const [prevModule] = await db.query(
+                `SELECT id, order_index FROM modules 
+                 WHERE order_index < ? AND is_published = TRUE 
+                 ORDER BY order_index DESC LIMIT 1`,
+                [module.order_index]
+            );
+
+            if (prevModule) {
+                // Verificar progreso del módulo anterior
+                const [lessonProgress] = await db.query(
+                    `SELECT COUNT(*) as completed_count
+                     FROM user_progress
+                     WHERE user_id = ? AND module_id = ? AND status = 'completed'`,
+                    [userId, prevModule.id]
+                );
+
+                const [totalRequired] = await db.query(
+                    `SELECT COUNT(*) as total
+                     FROM lessons 
+                     WHERE module_id = ? AND is_optional = FALSE AND is_published = TRUE`,
+                    [prevModule.id]
+                );
+
+                const [quizProgress] = await db.query(
+                    `SELECT COUNT(DISTINCT quiz_id) as passed_count
+                     FROM quiz_attempts
+                     WHERE user_id = ? AND passed = TRUE
+                     AND quiz_id IN (SELECT id FROM quizzes WHERE module_id = ? AND is_published = TRUE)`,
+                    [userId, prevModule.id]
+                );
+
+                const [totalQuizzes] = await db.query(
+                    `SELECT COUNT(*) as total FROM quizzes WHERE module_id = ? AND is_published = TRUE`,
+                    [prevModule.id]
+                );
+
+                const isCompleted = (lessonProgress.completed_count >= totalRequired.total) &&
+                    (quizProgress.passed_count >= totalQuizzes.total);
+
+                if (!isCompleted) {
+                    module.is_locked = true;
+                    module.lock_message = 'Debes completar el módulo anterior antes de acceder a este.';
+                }
+            }
         }
 
         // Obtener lecciones del módulo
@@ -197,6 +263,8 @@ router.get('/:id', authMiddleware, async (req, res) => {
     }
 });
 
+const { clearCache } = require('../middleware/cache');
+
 /**
  * @route   POST /api/modules
  * @desc    Crear un nuevo módulo
@@ -204,6 +272,10 @@ router.get('/:id', authMiddleware, async (req, res) => {
  */
 router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
     try {
+        // Invalida todo el caché de módulos y dashboards
+        await clearCache('cache:/api/modules*');
+        await clearCache('cache:/api/dashboard*');
+
         const {
             module_number,
             title,
@@ -213,12 +285,14 @@ router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
             is_published = false,
             release_date = null,
             order_index,
-            image_url = null
+            image_url = null,
+            generates_certificate = true,
+            requires_previous = false
         } = req.body;
 
         const result = await db.query(
-            `INSERT INTO modules (module_number, title, description, month, duration_minutes, is_published, release_date, order_index, image_url)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            `INSERT INTO modules (module_number, title, description, month, duration_minutes, is_published, generates_certificate, requires_previous, release_date, order_index, image_url)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 module_number,
                 title,
@@ -226,6 +300,8 @@ router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
                 month ?? null,
                 duration_minutes ?? 0,
                 is_published ?? false,
+                generates_certificate ?? true,
+                requires_previous ?? false,
                 release_date ?? null,
                 order_index ?? module_number,
                 image_url ?? null
@@ -259,14 +335,21 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
             is_published = false,
             release_date = null,
             order_index,
-            image_url = null
+            image_url = null,
+            generates_certificate = true,
+            requires_previous = false
         } = req.body;
         const moduleId = req.params.id;
+
+        // Invalida caché
+        await clearCache(`cache:/api/modules/${moduleId}*`);
+        await clearCache('cache:/api/modules*');
+        await clearCache('cache:/api/dashboard*');
 
         await db.query(
             `UPDATE modules 
              SET module_number = ?, title = ?, description = ?, month = ?, 
-                 duration_minutes = ?, is_published = ?, release_date = ?, order_index = ?, image_url = ?
+                 duration_minutes = ?, is_published = ?, generates_certificate = ?, requires_previous = ?, release_date = ?, order_index = ?, image_url = ?
              WHERE id = ?`,
             [
                 module_number,
@@ -275,6 +358,8 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
                 month ?? null,
                 duration_minutes ?? 0,
                 is_published ?? false,
+                generates_certificate ?? true,
+                requires_previous ?? false,
                 release_date ?? null,
                 order_index ?? module_number,
                 image_url ?? null,
@@ -297,6 +382,11 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
 router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
     try {
         const moduleId = req.params.id;
+
+        // Invalida caché
+        await clearCache(`cache:/api/modules/${moduleId}*`);
+        await clearCache('cache:/api/modules*');
+        await clearCache('cache:/api/dashboard*');
 
         // Las lecciones y otros datos se borrarán en cascada por el esquema SQL
         await db.query('DELETE FROM modules WHERE id = ?', [moduleId]);

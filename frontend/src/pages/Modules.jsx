@@ -14,10 +14,11 @@ import {
     Shield
 } from 'lucide-react';
 import { useState } from 'react';
+import CyberCat from '../components/CyberCat';
 
 export default function Modules() {
     const { modules, loading, fetchModules } = useModuleStore();
-    const { user } = useAuthStore();
+    const { user, viewAsStudent } = useAuthStore();
     const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
@@ -73,8 +74,12 @@ export default function Modules() {
                 {filteredModules.length > 0 ?
                     filteredModules.map((module, index) => {
                         const releaseDate = module.release_date ? new Date(module.release_date) : null;
-                        const isAdmin = user?.role === 'admin';
-                        const isLocked = releaseDate && releaseDate > new Date() && !isAdmin;
+                        const isAdminView = user?.role === 'admin' && !viewAsStudent;
+                        const isDateLocked = releaseDate && releaseDate > new Date() && !isAdminView;
+                        const isPrerequisiteLocked = !!module.is_locked && !isAdminView;
+                        const isLocked = isDateLocked; // Only date-locked modules prevent entering the detail
+                        const isPrerequisite = isPrerequisiteLocked;
+
                         const formattedDate = releaseDate
                             ? releaseDate.toLocaleDateString('es-CR', { day: 'numeric', month: 'long' })
                             : module.month;
@@ -84,10 +89,10 @@ export default function Modules() {
                                 <Link
                                     to={isLocked ? '#' : `/modules/${module.id}`}
                                     onClick={(e) => isLocked && e.preventDefault()}
-                                    className={`group relative flex flex-col bg-slate-800/20 border border-white/5 rounded-[1.5rem] overflow-hidden transition-all duration-500 ${isLocked
-                                        ? 'cursor-not-allowed grayscale-[0.5] opacity-80'
+                                    className={`group relative flex flex-col bg-slate-800/20 border border-white/5 rounded-[1.5rem] overflow-hidden transition-all duration-500 ${isLocked || isPrerequisite
+                                        ? 'grayscale-[0.5] opacity-80'
                                         : 'hover:bg-slate-800/40 hover:border-primary-500/30 hover:shadow-[0_20px_50px_rgba(0,0,0,0.3)] hover:-translate-y-2'
-                                        }`}
+                                        } ${isLocked ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                                 >
                                     {/* Imagen del Banner */}
                                     <div className="h-32 w-full relative overflow-hidden">
@@ -153,8 +158,9 @@ export default function Modules() {
                                             {/* Link and Arrow */}
                                             <div className="flex items-center justify-between group/btn">
                                                 {isLocked ? (
-                                                    <div className="w-full py-2 flex items-center justify-center gap-2 bg-white/5 rounded-xl border border-white/5 text-[10px] font-bold text-gray-500 uppercase tracking-[0.2em]">
-                                                        Disponible próximamente
+                                                    <div className="w-full py-2 flex items-center justify-center gap-3 bg-white/5 rounded-xl border border-white/5 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">
+                                                        <CyberCat className="w-5 h-5 opacity-40 grayscale" variant="static" color="#64748b" />
+                                                        {isPrerequisiteLocked ? 'Módulo Bloqueado' : 'Disponible próximamente'}
                                                     </div>
                                                 ) : (
                                                     <>

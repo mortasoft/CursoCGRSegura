@@ -17,7 +17,9 @@ import {
     Calendar,
     Mail,
     ChevronRight,
-    CheckCircle2
+    CheckCircle2,
+    ChevronUp,
+    ChevronDown
 } from 'lucide-react';
 import {
     BarChart,
@@ -43,6 +45,8 @@ export default function Reports() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [view, setView] = useState('summary'); // 'summary' or 'detailed'
+    const [chartType, setChartType] = useState('departments');
+    const [sortConfig, setSortConfig] = useState({ key: 'avg_completion', direction: 'desc' });
 
     useEffect(() => {
         fetchReports();
@@ -109,6 +113,40 @@ export default function Reports() {
         );
     }, [reportData, searchTerm]);
 
+    const getColorForName = (name) => {
+        if (!name) return '#cbd5e1';
+        let hash = 0;
+        for (let i = 0; i < name.length; i++) {
+            hash = name.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        return `hsl(${Math.abs(hash) % 360}, 70%, 60%)`;
+    };
+
+    const requestSort = (key) => {
+        let direction = 'asc';
+        if (sortConfig.key === key && sortConfig.direction === 'asc') {
+            direction = 'desc';
+        }
+        setSortConfig({ key, direction });
+    };
+
+    const sortedDepartments = useMemo(() => {
+        if (!reportData?.departments) return [];
+        let sortableItems = [...reportData.departments];
+        if (sortConfig.key) {
+            sortableItems.sort((a, b) => {
+                if (a[sortConfig.key] < b[sortConfig.key]) {
+                    return sortConfig.direction === 'asc' ? -1 : 1;
+                }
+                if (a[sortConfig.key] > b[sortConfig.key]) {
+                    return sortConfig.direction === 'asc' ? 1 : -1;
+                }
+                return 0;
+            });
+        }
+        return sortableItems;
+    }, [reportData, sortConfig]);
+
     if (loading) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[600px] animate-fade-in text-center">
@@ -121,7 +159,15 @@ export default function Reports() {
 
     if (!reportData) return null;
 
-    const { summary, departments, atRisk } = reportData;
+    const { summary, departments, atRisk, moduleCompliance } = reportData;
+
+    // Ensure activeChartData is always defined
+    const activeChartData = (chartType === 'departments' ? departments : moduleCompliance) || [];
+    const yDataKey = chartType === 'departments' ? 'department' : 'title';
+
+    console.log('Reports Render:', { chartType, dataLength: activeChartData.length });
+
+
 
     // Chart Data Preparation
     const pieData = [
@@ -219,32 +265,46 @@ export default function Reports() {
                         {/* Charts Section */}
                         <div className="lg:col-span-2 space-y-10">
                             <div className="card p-8 space-y-8">
-                                <div className="flex items-center justify-between">
+                                <div className="flex items-center justify-between flex-wrap gap-4">
                                     <h3 className="text-lg font-black text-white uppercase tracking-tight flex items-center gap-3">
-                                        <BarChart3 className="w-6 h-6 text-primary-400" /> Cumplimiento por Unidad
+                                        <BarChart3 className="w-6 h-6 text-primary-400" />
+                                        {chartType === 'departments' ? 'Cumplimiento por Unidad' : 'Cumplimiento por Módulo'}
                                     </h3>
+                                    <select
+                                        value={chartType}
+                                        onChange={(e) => setChartType(e.target.value)}
+                                        className="bg-slate-900 border border-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded-xl px-4 py-2 outline-none focus:border-primary-500/50"
+                                    >
+                                        <option value="departments">Por Unidad Administrativa</option>
+                                        <option value="modules">Por Módulo Educativo</option>
+                                    </select>
                                 </div>
-                                <div className="h-[400px] w-full">
+                                <div className="h-[1000px] w-full">
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={departments} layout="vertical" margin={{ left: 40, right: 40 }}>
-                                            <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" horizontal={true} vertical={false} />
-                                            <XAxis type="number" hide />
+                                        <BarChart
+                                            layout="vertical"
+                                            data={activeChartData}
+                                            margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                                        >
+                                            <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" horizontal={false} />
+                                            <XAxis type="number" domain={[0, 100]} hide />
                                             <YAxis
-                                                dataKey="department"
+                                                dataKey={yDataKey}
                                                 type="category"
-                                                axisLine={false}
-                                                tickLine={false}
-                                                tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 900 }}
-                                                width={100}
+                                                width={260}
+                                                tick={{ fill: '#94a3b8', fontSize: 9, width: 250 }}
+                                                interval={0}
                                             />
                                             <Tooltip
                                                 cursor={{ fill: '#ffffff05' }}
-                                                contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #ffffff10', borderRadius: '12px' }}
-                                                itemStyle={{ color: '#fff', fontSize: '12px', fontWeight: 'bold' }}
+                                                contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #ffffff10', color: '#fff' }}
                                             />
-                                            <Bar dataKey="avg_completion" radius={[0, 4, 4, 0]} barSize={24}>
-                                                {departments.map((entry, index) => (
-                                                    <Cell key={`cell-${index}`} fill={entry.avg_completion >= 80 ? '#22c55e' : entry.avg_completion >= 50 ? '#f97316' : '#ef4444'} />
+                                            <Bar dataKey="avg_completion" radius={[0, 4, 4, 0]} barSize={20}>
+                                                {activeChartData.map((entry, index) => (
+                                                    <Cell
+                                                        key={`cell-${index}`}
+                                                        fill={getColorForName(entry[yDataKey])}
+                                                    />
                                                 ))}
                                             </Bar>
                                         </BarChart>
@@ -271,14 +331,43 @@ export default function Reports() {
                                 <table className="w-full text-left">
                                     <thead className="bg-slate-900/50 text-[10px] font-black text-gray-400 uppercase tracking-widest border-b border-white/5">
                                         <tr>
-                                            <th className="px-8 py-5">Unidad Administrativa</th>
-                                            <th className="px-8 py-5 text-center">Personal</th>
-                                            <th className="px-8 py-5">Barra de Progreso</th>
+                                            <th className="px-8 py-5 cursor-pointer group hover:bg-white/5 transition-colors" onClick={() => requestSort('department')}>
+                                                <div className="flex items-center gap-2">
+                                                    Área / Unidad
+                                                    {sortConfig.key === 'department' && (
+                                                        sortConfig.direction === 'asc' ? <ChevronUp className="w-3 h-3 text-primary-400" /> : <ChevronDown className="w-3 h-3 text-primary-400" />
+                                                    )}
+                                                </div>
+                                            </th>
+                                            <th className="px-8 py-5 text-center cursor-pointer group hover:bg-white/5 transition-colors" onClick={() => requestSort('staff_count')}>
+                                                <div className="flex items-center justify-center gap-2">
+                                                    Total Pax
+                                                    {sortConfig.key === 'staff_count' && (
+                                                        sortConfig.direction === 'asc' ? <ChevronUp className="w-3 h-3 text-primary-400" /> : <ChevronDown className="w-3 h-3 text-primary-400" />
+                                                    )}
+                                                </div>
+                                            </th>
+                                            <th className="px-8 py-5 text-center cursor-pointer group hover:bg-white/5 transition-colors" onClick={() => requestSort('completed_count')}>
+                                                <div className="flex items-center justify-center gap-2">
+                                                    Completado
+                                                    {sortConfig.key === 'completed_count' && (
+                                                        sortConfig.direction === 'asc' ? <ChevronUp className="w-3 h-3 text-primary-400" /> : <ChevronDown className="w-3 h-3 text-primary-400" />
+                                                    )}
+                                                </div>
+                                            </th>
+                                            <th className="px-8 py-5 text-center cursor-pointer group hover:bg-white/5 transition-colors" onClick={() => requestSort('avg_completion')}>
+                                                <div className="flex items-center justify-center gap-2">
+                                                    % Cumplimiento
+                                                    {sortConfig.key === 'avg_completion' && (
+                                                        sortConfig.direction === 'asc' ? <ChevronUp className="w-3 h-3 text-primary-400" /> : <ChevronDown className="w-3 h-3 text-primary-400" />
+                                                    )}
+                                                </div>
+                                            </th>
                                             <th className="px-8 py-5 text-right">Estatus</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-white/5">
-                                        {departments
+                                        {sortedDepartments
                                             .filter(d => d.department.toLowerCase().includes(searchTerm.toLowerCase()))
                                             .map((dept, idx) => (
                                                 <tr key={idx} className="hover:bg-white/[0.02] transition-colors group">
@@ -288,7 +377,11 @@ export default function Reports() {
                                                     <td className="px-8 py-6 text-center">
                                                         <span className="text-xs font-black text-gray-300">{dept.staff_count}</span>
                                                     </td>
-                                                    <td className="px-8 py-6">
+                                                    <td className="px-8 py-6 text-center">
+                                                        <span className="text-xs font-black text-white">{dept.completed_count || 0}</span>
+                                                        <span className="text-[10px] text-gray-500 ml-1">/ {dept.staff_count}</span>
+                                                    </td>
+                                                    <td className="px-8 py-6 max-w-[200px]">
                                                         <div className="flex items-center gap-4">
                                                             <div className="flex-1 h-2 bg-slate-900 rounded-full overflow-hidden border border-white/5">
                                                                 <div

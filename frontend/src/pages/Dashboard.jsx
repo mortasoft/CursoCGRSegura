@@ -154,7 +154,11 @@ export default function Dashboard() {
                                 modules.filter(m => filterCompleted ? m.status === 'completed' : m.status !== 'completed').map((module) => (
                                     <div
                                         key={module.id}
-                                        onClick={() => navigate(`/modules/${module.id}`)}
+                                        onClick={(e) => {
+                                            // Solo navegar al módulo si no se hizo clic en el botón de acción
+                                            if (e.target.closest('button')) return;
+                                            navigate(`/modules/${module.id}`);
+                                        }}
                                         className="group relative flex flex-col p-6 rounded-2xl bg-slate-900/50 border border-white/5 hover:border-primary-500/30 hover:bg-slate-900 transition-all duration-300 cursor-pointer"
                                     >
                                         <div className="flex justify-between items-start mb-4">
@@ -187,15 +191,13 @@ export default function Dashboard() {
 
                                             {/* Action Button Integrated */}
                                             {module.status !== 'completed' && module.next_lesson_id && (
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        navigate(`/lessons/${module.next_lesson_id}`);
-                                                    }}
+                                                <Link
+                                                    to={`/lessons/${module.next_lesson_id}`}
+                                                    onClick={(e) => e.stopPropagation()}
                                                     className="w-full py-2.5 rounded-xl bg-primary-500 hover:bg-primary-600 text-white text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-lg shadow-primary-500/20 flex items-center justify-center gap-2 group/btn"
                                                 >
-                                                    Continuar <TrendingUp className="w-3.5 h-3.5 group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform" />
-                                                </button>
+                                                    {module.status === 'not_started' ? 'Empezar' : 'Continuar'} <TrendingUp className="w-3.5 h-3.5 group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform" />
+                                                </Link>
                                             )}
                                             {module.status === 'completed' && (
                                                 <div className="w-full py-2.5 rounded-xl bg-slate-800/50 text-gray-500 text-[10px] font-black uppercase tracking-[0.2em] text-center border border-white/5">

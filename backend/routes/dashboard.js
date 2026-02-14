@@ -2,22 +2,24 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
+const { cacheMiddleware } = require('../middleware/cache');
 
 /**
  * @route   GET /api/dashboard
  * @desc    Obtener resumen de estadísticas y progreso para el usuario
  * @access  Private
  */
-router.get('/', authMiddleware, async (req, res) => {
+router.get('/', authMiddleware, cacheMiddleware(300, true), async (req, res) => {
     try {
         const userId = req.user.id;
-        const isAdmin = req.user.role === 'admin' && req.headers['x-view-as-student'] !== 'true';
+        const isStudentView = req.headers['x-view-as-student'] === 'true';
+        const isAdmin = req.user.role === 'admin' && !isStudentView;
 
         // 1. Obtener todos los módulos (Admins ven todos, estudiantes solo publicados)
         const modules = await db.query(
             `SELECT m.id, m.title, m.order_index
              FROM modules m
-             WHERE 1=1 ${isAdmin ? '' : 'AND m.is_published = TRUE'}
+             WHERE 1=1 ${isAdmin ? '' : 'AND m.is_published = TRUE AND (m.release_date IS NULL OR m.release_date <= NOW())'}
              ORDER BY m.order_index ASC`
         );
 

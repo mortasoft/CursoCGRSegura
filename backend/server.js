@@ -28,28 +28,14 @@ const directoryRoutes = require('./routes/directory');
 const departmentRoutes = require('./routes/departments');
 const badgeRoutes = require('./routes/badges');
 const contentRoutes = require('./routes/lesson_content');
+const certificateRoutes = require('./routes/certificates');
 const { authMiddleware, adminMiddleware } = require('./middleware/auth');
 const maintenanceMiddleware = require('./middleware/maintenance');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Configuración de Redis
-const redisClient = createClient({
-    socket: {
-        host: process.env.REDIS_HOST || 'localhost',
-        port: process.env.REDIS_PORT || 6379
-    },
-    password: process.env.REDIS_PASSWORD
-});
-
-redisClient.on('error', (err) => logger.error('Redis Client Error', err));
-redisClient.on('connect', () => logger.info('Redis Client Connected'));
-
-// Conectar Redis
-(async () => {
-    await redisClient.connect();
-})();
+const redisClient = require('./config/redis');
 
 // Middlewares generales (CORS debe ir primero)
 app.use(cors({
@@ -146,6 +132,7 @@ app.use('/api/directory', authMiddleware, maintenanceMiddleware, directoryRoutes
 app.use('/api/departments', authMiddleware, maintenanceMiddleware, departmentRoutes);
 app.use('/api/badges', badgeRoutes);
 app.use('/api/content', contentRoutes);
+app.use('/api/certificates', authMiddleware, maintenanceMiddleware, certificateRoutes);
 
 // Ruta para obtener configuraciones globales del sistema (Admin)
 app.get('/api/system/settings', authMiddleware, adminMiddleware, async (req, res) => {

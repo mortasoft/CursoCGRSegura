@@ -19,10 +19,11 @@ import { useState, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
 import { useNotificationStore } from '../store/notificationStore';
 import LevelUpModal from './LevelUpModal';
+import ModuleCompletionModal from './ModuleCompletionModal';
 
 export default function Layout() {
     const { user, logout, viewAsStudent, setViewAsStudent } = useAuthStore();
-    const { pendingLevelUp, clearLevelUp } = useNotificationStore();
+    const { pendingLevelUp, clearLevelUp, pendingModuleCompletion, clearModuleCompletion } = useNotificationStore();
     const navigate = useNavigate();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -232,6 +233,11 @@ export default function Layout() {
                 isOpen={!!pendingLevelUp}
                 onClose={clearLevelUp}
                 levelData={pendingLevelUp}
+            />
+            <ModuleCompletionModal
+                isOpen={!!pendingModuleCompletion}
+                onClose={clearModuleCompletion}
+                data={pendingModuleCompletion}
             />
         </div>
     );

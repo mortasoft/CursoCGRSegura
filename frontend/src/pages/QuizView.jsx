@@ -96,6 +96,14 @@ export default function QuizView() {
                     useNotificationStore.getState().setPendingLevelUp(response.data.levelData);
                 }
 
+                if (response.data.moduleCompleted) {
+                    useNotificationStore.getState().setPendingModuleCompletion({
+                        moduleId: response.data.moduleData.id,
+                        bonusPoints: response.data.moduleData.bonusPoints,
+                        generatesCertificate: response.data.moduleData.generatesCertificate
+                    });
+                }
+
                 toast.success(response.data.passed ? '¡Felicidades! Has aprobado.' : 'No has alcanzado la nota mínima.');
                 window.scrollTo(0, 0);
             }

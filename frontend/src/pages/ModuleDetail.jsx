@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useModuleStore } from '../store/moduleStore';
 import { useAuthStore } from '../store/authStore';
+import { useNotificationStore } from '../store/notificationStore';
 import {
     PlayCircle,
     FileText,
@@ -19,24 +20,27 @@ import {
     AlertTriangle
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import CyberCat from '../components/CyberCat';
 
 export default function ModuleDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
     const { fetchModule } = useModuleStore();
-    const { user } = useAuthStore();
+    const { user, viewAsStudent } = useAuthStore();
     const [module, setModule] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(location.state?.error || null);
 
     useEffect(() => {
         const loadModule = async () => {
             const data = await fetchModule(id);
             if (data.success) {
                 const releaseDate = data.module.release_date ? new Date(data.module.release_date) : null;
-                const isAdmin = user?.role === 'admin';
-                const isLocked = releaseDate && releaseDate > new Date() && !isAdmin;
+                const isAdminView = user?.role === 'admin' && !viewAsStudent;
+                const isDateLocked = releaseDate && releaseDate > new Date() && !isAdminView;
 
-                if (isLocked) {
+                if (isDateLocked) {
                     const formattedDate = releaseDate.toLocaleDateString('es-CR', { day: 'numeric', month: 'long', year: 'numeric' });
                     toast.error(`Este módulo estará disponible el ${formattedDate}`, {
                         id: `locked-${id}`,
@@ -46,6 +50,8 @@ export default function ModuleDetail() {
                     return;
                 }
                 setModule(data.module);
+            } else {
+                setError(data.error || 'Módulo no encontrado');
             }
             setLoading(false);
         };
@@ -61,10 +67,40 @@ export default function ModuleDetail() {
         );
     }
 
+    const isPrerequisiteLocked = !!module?.is_locked && user?.role !== 'admin' && !viewAsStudent;
+
+    if (error === 'Módulo bloqueado' || (isPrerequisiteLocked && error === 'Módulo bloqueado')) {
+        return (
+            <div className="text-center py-20 animate-fade-in">
+                <div className="w-24 h-24 mx-auto mb-6">
+                    <CyberCat className="w-full h-full" variant="panic" />
+                </div>
+                <h2 className="text-2xl font-bold text-white mb-2">{error}</h2>
+                <p className="text-gray-500 mb-8 max-w-md mx-auto">
+                    {module?.lock_message || 'Debes completar el módulo anterior antes de poder acceder a este contenido.'}
+                </p>
+                <div className="flex justify-center gap-4">
+                    <button onClick={() => setError(null)} className="btn-secondary">
+                        Ver previsualización
+                    </button>
+                    <button onClick={() => navigate('/modules')} className="btn-primary">
+                        Volver al catálogo
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     if (!module) {
         return (
             <div className="text-center py-20 animate-fade-in">
-                <h2 className="text-2xl font-bold text-white mb-4">Módulo no encontrado</h2>
+                <div className="w-24 h-24 mx-auto mb-6">
+                    <CyberCat className="w-full h-full" variant="normal" />
+                </div>
+                <h2 className="text-2xl font-bold text-white mb-2">{error || 'Módulo no encontrado'}</h2>
+                <p className="text-gray-500 mb-8 max-w-md mx-auto">
+                    El contenido solicitado no está disponible en este momento.
+                </p>
                 <button onClick={() => navigate('/modules')} className="btn-primary">
                     Volver al catálogo
                 </button>
@@ -168,13 +204,34 @@ export default function ModuleDetail() {
                         </div>
                         <button
                             onClick={() => {
+                                if (isPrerequisiteLocked) {
+                                    setError('Módulo bloqueado');
+                                    return;
+                                }
                                 const nextLesson = module.lessons.find(l => l.status !== 'completed') || module.lessons[0];
                                 if (nextLesson) navigate(`/lessons/${nextLesson.id}`);
                             }}
-                            className="btn-secondary w-full py-4 text-sm font-black uppercase tracking-widest shadow-[0_10px_30px_rgba(229,123,60,0.3)]"
+                            className="btn-secondary w-full py-4 text-sm font-black uppercase tracking-widest shadow-[0_10px_30px_rgba(229,123,60,0.3)] mb-3"
                         >
                             {module.completionPercentage === 100 ? 'Repasar Módulo' : module.completionPercentage > 0 ? 'Continuar Módulo' : 'Empezar Módulo'}
                         </button>
+
+                        {/* Celebration Button for Completed Modules */}
+                        {module.completionPercentage === 100 && (
+                            <button
+                                onClick={() => {
+                                    useNotificationStore.getState().setPendingModuleCompletion({
+                                        moduleId: module.id,
+                                        bonusPoints: module.points_to_earn || 0,
+                                        generatesCertificate: !!module.generates_certificate
+                                    });
+                                }}
+                                className="w-full py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg font-black uppercase tracking-widest text-xs shadow-lg hover:shadow-green-500/25 transition-all transform hover:-translate-y-0.5 flex items-center justify-center gap-2 group"
+                            >
+                                <Trophy className="w-4 h-4 text-yellow-300 group-hover:scale-110 transition-transform" />
+                                ¡Ver Celebración!
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
@@ -186,6 +243,15 @@ export default function ModuleDetail() {
                         <div className="w-2 h-8 bg-primary-500 rounded-full"></div>
                         Contenido del Módulo
                     </h2>
+
+                    {module.lessons.some(l => l.is_optional) && (
+                        <div className="p-4 rounded-xl bg-indigo-500/5 border border-indigo-500/10 flex gap-4 items-center">
+                            <AlertTriangle className="w-5 h-5 text-indigo-400 opacity-60 flex-shrink-0" />
+                            <p className="text-indigo-300/60 text-[10px] font-bold uppercase tracking-widest leading-relaxed">
+                                Las <span className="text-indigo-400">actividades opcionales</span> brindan puntos extra y conocimiento complementario, pero no bloquean el progreso del curso.
+                            </p>
+                        </div>
+                    )}
 
                     <div className="space-y-4">
                         {module.lessons.map((lesson, index) => {
@@ -205,7 +271,14 @@ export default function ModuleDetail() {
                                                 ? 'border-green-500/20 bg-green-500/5 cursor-pointer'
                                                 : 'bg-slate-800/20 border-white/5 hover:border-primary-500/40 hover:bg-slate-800/40 cursor-pointer'
                                         }`}
-                                    onClick={() => !isLocked && navigate(`/lessons/${lesson.id}`)}
+                                    onClick={() => {
+                                        if (isLocked) return;
+                                        if (isPrerequisiteLocked) {
+                                            setError('Módulo bloqueado');
+                                            return;
+                                        }
+                                        navigate(`/lessons/${lesson.id}`);
+                                    }}
                                 >
                                     {!!lesson.is_optional && (
                                         <div className="absolute top-0 right-10 mt-[-12px]">

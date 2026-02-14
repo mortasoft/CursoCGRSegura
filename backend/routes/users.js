@@ -179,12 +179,14 @@ router.get('/:id/full-profile', authMiddleware, adminMiddleware, async (req, res
     }
 });
 
+const { cacheMiddleware, clearCache } = require('../middleware/cache');
+
 /**
  * @route   GET /api/users/profile
  * @desc    Obtener perfil completo del funcionario (datos, estadísticas, insignias)
  * @access  Private
  */
-router.get('/profile', authMiddleware, async (req, res) => {
+router.get('/profile', authMiddleware, cacheMiddleware(300, true), async (req, res) => {
     try {
         const profileData = await getUserProfileData(req.user.id);
         if (!profileData) {
@@ -301,6 +303,14 @@ router.post('/:id/reset', authMiddleware, adminMiddleware, async (req, res) => {
     const connection = await db.pool.getConnection();
     try {
         const userId = req.params.id;
+
+        // Invalida el caché (incluyendo vista de estudiante)
+        await clearCache(`cache:/api/dashboard*u${userId}*`);
+        await clearCache(`cache:/api/users/profile*u${userId}*`);
+        await clearCache(`cache:/api/gamification/leaderboard*`);
+        await clearCache(`cache:/api/modules*u${userId}*`);
+        await clearCache(`cache:/api/lessons/*u${userId}*`);
+
         await connection.beginTransaction();
 
         // 1. Eliminar progreso de lecciones

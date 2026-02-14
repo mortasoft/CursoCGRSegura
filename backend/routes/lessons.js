@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
+const { cacheMiddleware } = require('../middleware/cache');
 const { syncUserLevel, getSystemSettings, checkAndRecordModuleCompletion } = require('../utils/gamification');
 
 /**
@@ -9,7 +10,7 @@ const { syncUserLevel, getSystemSettings, checkAndRecordModuleCompletion } = req
  * @desc    Obtener detalles de una lección y progreso del usuario
  * @access  Private
  */
-router.get('/:id', authMiddleware, async (req, res) => {
+router.get('/:id', authMiddleware, cacheMiddleware(600, true), async (req, res) => {
     try {
         const lessonId = req.params.id;
         const userId = req.user.id;
@@ -49,6 +50,49 @@ router.get('/:id', authMiddleware, async (req, res) => {
                 message: `Debes completar la lección "${prevMandatoryIncomplete.title}" para continuar.`,
                 moduleId: lesson.module_id
             });
+        }
+
+        // 1.2 Validar si el MÓDULO completo está bloqueado por el anterior
+        const [moduleInfo] = await db.query('SELECT order_index, requires_previous FROM modules WHERE id = ?', [lesson.module_id]);
+
+        if (moduleInfo && moduleInfo.requires_previous && !isAdmin) {
+            const [prevModule] = await db.query(
+                'SELECT id FROM modules WHERE order_index < ? AND is_published = TRUE ORDER BY order_index DESC LIMIT 1',
+                [moduleInfo.order_index]
+            );
+
+            if (prevModule) {
+                // Verificar lecciones del anterior
+                const [lessonProgress] = await db.query(
+                    'SELECT COUNT(*) as completed_count FROM user_progress WHERE user_id = ? AND module_id = ? AND status = "completed"',
+                    [userId, prevModule.id]
+                );
+                const [totalRequired] = await db.query(
+                    'SELECT COUNT(*) as total FROM lessons WHERE module_id = ? AND is_published = TRUE AND is_optional = FALSE',
+                    [prevModule.id]
+                );
+
+                // Verificar quizzes del anterior
+                const [quizProgress] = await db.query(
+                    'SELECT COUNT(*) as passed_count FROM quiz_attempts WHERE user_id = ? AND quiz_id IN (SELECT id FROM quizzes WHERE module_id = ?) AND passed = TRUE',
+                    [userId, prevModule.id]
+                );
+                const [totalQuizzes] = await db.query(
+                    'SELECT COUNT(*) as total FROM quizzes WHERE module_id = ? AND is_published = TRUE',
+                    [prevModule.id]
+                );
+
+                const isCompleted = (lessonProgress.completed_count >= totalRequired.total) &&
+                    (quizProgress.passed_count >= totalQuizzes.total);
+
+                if (!isCompleted) {
+                    return res.status(403).json({
+                        error: 'Módulo bloqueado',
+                        message: 'Debes completar el módulo anterior antes de acceder a este contenido.',
+                        moduleId: lesson.module_id
+                    });
+                }
+            }
         }
 
         // 2. Obtener o crear progreso
@@ -92,7 +136,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
 
         // 4. Obtener todas las lecciones del módulo con progreso
         const moduleLessons = await db.query(
-            `SELECT l.id, l.title, l.order_index, l.is_optional, up.status,
+            `SELECT l.id, l.title, l.order_index, l.is_optional, l.lesson_type, l.duration_minutes, l.is_published, up.status,
                 (SELECT SUM(points) FROM lesson_contents WHERE lesson_id = l.id) as total_points
              FROM lessons l
              LEFT JOIN user_progress up ON l.id = up.lesson_id AND up.user_id = ?
@@ -117,6 +161,8 @@ router.get('/:id', authMiddleware, async (req, res) => {
     }
 });
 
+const { clearCache } = require('../middleware/cache');
+
 /**
  * @route   POST /api/lessons/:id/complete
  * @desc    Marcar lección como completada
@@ -126,6 +172,12 @@ router.post('/:id/complete', authMiddleware, async (req, res) => {
     try {
         const lessonId = req.params.id;
         const userId = req.user.id;
+
+        // Invalida el caché del dashboard y leaderboard del usuario (incluyendo vista de estudiante)
+        await clearCache(`cache:/api/dashboard*u${userId}*`);
+        await clearCache(`cache:/api/gamification/leaderboard*`);
+        await clearCache(`cache:/api/modules*u${userId}*`);
+        await clearCache(`cache:/api/lessons/*u${userId}*`);
 
         const [lesson] = await db.query('SELECT module_id FROM lessons WHERE id = ?', [lessonId]);
         if (!lesson) return res.status(404).json({ error: 'Lección no encontrada' });
@@ -167,8 +219,9 @@ router.post('/:id/complete', authMiddleware, async (req, res) => {
         // Sincronizar nivel
         const levelSync = await syncUserLevel(userId);
 
-        // Verificar si completó el módulo
-        const moduleSync = await checkAndRecordModuleCompletion(userId, lesson.module_id);
+        // Verificar si completó el módulo (considerando si es admin para incluir no publicados)
+        const isAdmin = req.user.role === 'admin' && req.headers['x-view-as-student'] !== 'true';
+        const moduleSync = await checkAndRecordModuleCompletion(userId, lesson.module_id, isAdmin);
 
         // Obtener balance actualizado
         const [updatedStats] = await db.query(
@@ -183,7 +236,9 @@ router.post('/:id/complete', authMiddleware, async (req, res) => {
             newBalance: updatedStats?.points || 0,
             newLevel: updatedStats?.level || 'Novato',
             levelUp: levelSync?.leveledUp || false,
-            levelData: levelSync
+            levelData: levelSync,
+            moduleCompleted: moduleSync?.completed && moduleSync?.newlyRecorded,
+            moduleData: moduleSync
         });
     } catch (error) {
         console.error('Error al completar lección:', error);
@@ -205,6 +260,9 @@ router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [module_id, title, content || null, lesson_type || 'reading', video_url || null, duration_minutes || 15, order_index, is_published || false, is_optional || false]
         );
+
+        // Invalida el caché de módulos
+        await clearCache('cache:/api/modules*');
 
         res.status(201).json({ success: true, lessonId: result.insertId });
     } catch (error) {
@@ -254,6 +312,10 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
             ]
         );
 
+        // Invalida el caché de la lección y módulos
+        await clearCache(`cache:/api/lessons/${lessonId}*`);
+        await clearCache('cache:/api/modules*');
+
         res.json({ success: true, message: 'Lección actualizada' });
     } catch (error) {
         console.error('Error actualizando lección:', error);
@@ -270,6 +332,11 @@ router.delete('/:id', authMiddleware, adminMiddleware, async (req, res) => {
     try {
         const lessonId = req.params.id;
         await db.query('DELETE FROM lessons WHERE id = ?', [lessonId]);
+
+        // Invalida el caché
+        await clearCache(`cache:/api/lessons/${lessonId}*`);
+        await clearCache('cache:/api/modules*');
+
         res.json({ success: true, message: 'Lección eliminada' });
     } catch (error) {
         console.error('Error eliminando lección:', error);
