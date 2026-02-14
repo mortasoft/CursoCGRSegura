@@ -20,13 +20,14 @@ import toast from 'react-hot-toast';
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export default function Leaderboard() {
-    const { token, user: loggedUser } = useAuthStore();
+    const { token, user: loggedUser, viewAsStudent } = useAuthStore();
     const [institutionalLeaderboard, setInstitutionalLeaderboard] = useState([]);
     const [departmentLeaderboard, setDepartmentLeaderboard] = useState([]);
     const [deptRanking, setDeptRanking] = useState([]);
     const [currentUser, setCurrentUser] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [view, setView] = useState('global'); // 'global', 'area', or 'strategic'
+    const isAdmin = loggedUser?.role === 'admin' && !viewAsStudent;
+    const [view, setView] = useState(isAdmin ? 'global' : 'area'); // 'global', 'area', or 'strategic'
     const [searchTerm, setSearchTerm] = useState('');
     const [filterLevel, setFilterLevel] = useState('all');
     const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -48,7 +49,7 @@ export default function Leaderboard() {
 
     const currentLevel = levels.find(l => l.id === filterLevel) || levels[0];
 
-    const isAdmin = loggedUser?.role === 'admin';
+    // isAdmin already defined above with viewAsStudent check
 
     useEffect(() => {
         fetchLeaderboard();
@@ -136,12 +137,14 @@ export default function Leaderboard() {
             {/* Tabs Control */}
             <div className="flex flex-col md:flex-row gap-6 items-center justify-between">
                 <div className="flex w-full md:w-auto p-1 bg-slate-900/50 rounded-2xl border border-white/5 items-stretch">
-                    <button
-                        onClick={() => setView('global')}
-                        className={`flex-1 md:flex-none px-2 md:px-6 py-3 rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all ${view === 'global' ? 'bg-primary-500 text-white shadow-lg' : 'text-gray-500 hover:text-white'}`}
-                    >
-                        Institucional
-                    </button>
+                    {isAdmin && (
+                        <button
+                            onClick={() => setView('global')}
+                            className={`flex-1 md:flex-none px-2 md:px-6 py-3 rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all ${view === 'global' ? 'bg-primary-500 text-white shadow-lg' : 'text-gray-500 hover:text-white'}`}
+                        >
+                            Institucional
+                        </button>
+                    )}
                     <button
                         onClick={() => setView('area')}
                         className={`flex-1 md:flex-none px-2 md:px-6 py-3 rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all ${view === 'area' ? 'bg-primary-500 text-white shadow-lg' : 'text-gray-500 hover:text-white'}`}

@@ -150,8 +150,8 @@ export default function Dashboard() {
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {(filterCompleted ? modules.filter(m => m.status === 'completed') : modules).length > 0 ? (
-                                (filterCompleted ? modules.filter(m => m.status === 'completed') : modules).map((module) => (
+                            {modules.filter(m => filterCompleted ? m.status === 'completed' : m.status !== 'completed').length > 0 ? (
+                                modules.filter(m => filterCompleted ? m.status === 'completed' : m.status !== 'completed').map((module) => (
                                     <div
                                         key={module.id}
                                         onClick={() => navigate(`/modules/${module.id}`)}
