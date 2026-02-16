@@ -39,6 +39,7 @@ router.get('/', authMiddleware, cacheMiddleware(600, true), async (req, res) => 
         // Obtener progreso del usuario para cada módulo
         const userId = req.user.id;
         let lastModuleCompleted = true; // El primer módulo siempre se puede empezar (o si no hay restricción)
+        let previousModuleTitle = "";
 
         for (let i = 0; i < modules.length; i++) {
             const module = modules[i];
@@ -77,12 +78,15 @@ router.get('/', authMiddleware, cacheMiddleware(600, true), async (req, res) => 
 
             // 3. Determinar si está bloqueado por el anterior
             module.is_locked = false;
+            module.lock_reason = null;
             if (module.requires_previous && !lastModuleCompleted && !isAdmin) {
                 module.is_locked = true;
+                module.lock_reason = `Completa el módulo "${previousModuleTitle}"`;
             }
 
             // Actualizar lastModuleCompleted para el siguiente módulo en la iteración
             lastModuleCompleted = module.completionPercentage === 100;
+            previousModuleTitle = module.title;
 
             module.userProgress = {
                 completed_lessons: completedLessons,
@@ -132,7 +136,7 @@ router.get('/:id', authMiddleware, cacheMiddleware(600, true), async (req, res) 
     try {
         const moduleId = req.params.id;
         const userId = req.user.id;
-        const isStudentView = req.headers['x-view-as-student'] === 'true';
+        const isStudentView = req.headers['x-view-as-student'] === 'true' || req.headers['X-View-As-Student'] === 'true';
         const isAdmin = req.user.role === 'admin' && !isStudentView;
 
         // Si es admin, puede ver módulos no publicados

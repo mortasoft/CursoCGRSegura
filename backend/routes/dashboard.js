@@ -12,12 +12,12 @@ const { cacheMiddleware } = require('../middleware/cache');
 router.get('/', authMiddleware, cacheMiddleware(300, true), async (req, res) => {
     try {
         const userId = req.user.id;
-        const isStudentView = req.headers['x-view-as-student'] === 'true';
+        const isStudentView = req.headers['x-view-as-student'] === 'true' || req.headers['X-View-As-Student'] === 'true';
         const isAdmin = req.user.role === 'admin' && !isStudentView;
 
         // 1. Obtener todos los módulos (Admins ven todos, estudiantes solo publicados)
         const modules = await db.query(
-            `SELECT m.id, m.title, m.order_index
+            `SELECT m.id, m.title, m.order_index, m.requires_previous
              FROM modules m
              WHERE 1=1 ${isAdmin ? '' : 'AND m.is_published = TRUE AND (m.release_date IS NULL OR m.release_date <= NOW())'}
              ORDER BY m.order_index ASC`
@@ -28,6 +28,9 @@ router.get('/', authMiddleware, cacheMiddleware(300, true), async (req, res) => 
         let completedMandatoryItemsGlobally = 0;
         const totalModulesCount = modules.length;
         const modulesWithProgress = [];
+
+        let lastModuleCompleted = true;
+        let previousModuleTitle = "";
 
         for (const m of modules) {
             // Contar lecciones totales (SOLO OBLIGATORIAS) y completadas (SOLO OBLIGATORIAS)
@@ -64,6 +67,14 @@ router.get('/', authMiddleware, cacheMiddleware(300, true), async (req, res) => 
 
             if (isFullyCompleted) completedModulesCount++;
 
+            // Determinar si está bloqueado por el anterior
+            let isLocked = false;
+            let lockReason = null;
+            if (m.requires_previous && !lastModuleCompleted && !isAdmin) {
+                isLocked = true;
+                lockReason = `Completa el módulo "${previousModuleTitle}"`;
+            }
+
             // Determinar siguiente lección
             const [nextLesson] = await db.query(
                 `SELECT l.id FROM lessons l
@@ -80,8 +91,14 @@ router.get('/', authMiddleware, cacheMiddleware(300, true), async (req, res) => 
                 order_index: m.order_index,
                 progress: progress,
                 status: isFullyCompleted ? 'completed' : (completedItems > 0 ? 'in_progress' : 'not_started'),
-                next_lesson_id: nextLesson?.id || null
+                next_lesson_id: nextLesson?.id || null,
+                is_locked: isLocked,
+                lock_reason: lockReason
             });
+
+            // Para el siguiente módulo en la iteración
+            lastModuleCompleted = isFullyCompleted;
+            previousModuleTitle = m.title;
         }
 
         // 2. Obtener puntos y nivel del usuario

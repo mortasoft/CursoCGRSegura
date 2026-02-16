@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useModuleStore } from '../store/moduleStore';
 import { useAuthStore } from '../store/authStore';
+import { motion } from 'framer-motion';
 import {
     BookOpen,
     Clock,
@@ -77,7 +78,7 @@ export default function Modules() {
                         const isAdminView = user?.role === 'admin' && !viewAsStudent;
                         const isDateLocked = releaseDate && releaseDate > new Date() && !isAdminView;
                         const isPrerequisiteLocked = !!module.is_locked && !isAdminView;
-                        const isLocked = isDateLocked; // Only date-locked modules prevent entering the detail
+                        const isLocked = isDateLocked || isPrerequisiteLocked;
                         const isPrerequisite = isPrerequisiteLocked;
 
                         const formattedDate = releaseDate
@@ -91,7 +92,9 @@ export default function Modules() {
                                     onClick={(e) => isLocked && e.preventDefault()}
                                     className={`group relative flex flex-col bg-slate-800/20 border border-white/5 rounded-[1.5rem] overflow-hidden transition-all duration-500 ${isLocked || isPrerequisite
                                         ? 'grayscale-[0.5] opacity-80'
-                                        : 'hover:bg-slate-800/40 hover:border-primary-500/30 hover:shadow-[0_20px_50px_rgba(0,0,0,0.3)] hover:-translate-y-2'
+                                        : module.completionPercentage === 100
+                                            ? 'bg-green-500/[0.03] border-green-500/30 shadow-[0_0_30px_rgba(34,197,94,0.08)] hover:border-green-500/50'
+                                            : 'hover:bg-slate-800/40 hover:border-primary-500/30 hover:shadow-[0_20px_50px_rgba(0,0,0,0.3)] hover:-translate-y-2'
                                         } ${isLocked ? 'cursor-not-allowed' : 'cursor-pointer'}`}
                                 >
                                     {/* Imagen del Banner */}
@@ -116,7 +119,10 @@ export default function Modules() {
                                     <div className="p-6 space-y-4">
                                         {/* Badge and Number */}
                                         <div className="flex justify-between items-start">
-                                            <div className={`w-14 h-14 bg-slate-900 rounded-2xl border border-white/10 flex items-center justify-center text-2xl font-black text-white ${!isLocked && 'group-hover:text-secondary-500'} transition-colors shadow-2xl`}>
+                                            <div className={`w-14 h-14 bg-slate-900 rounded-2xl border flex items-center justify-center text-2xl font-black transition-all shadow-2xl ${module.completionPercentage === 100
+                                                ? 'border-green-500/30 text-green-500 shadow-green-500/10'
+                                                : 'border-white/10 text-white group-hover:text-secondary-500'
+                                                }`}>
                                                 {module.module_number < 10 ? `0${module.module_number}` : module.module_number}
                                             </div>
                                             <div className="flex flex-col items-end gap-2">
@@ -125,8 +131,8 @@ export default function Modules() {
                                                     {formattedDate}
                                                 </span>
                                                 {module.completionPercentage === 100 && (
-                                                    <div className="flex items-center gap-1 text-green-500 text-[10px] font-black uppercase tracking-tighter">
-                                                        <CheckCircle className="w-3 h-3" /> Completado
+                                                    <div className="flex items-center gap-1.5 bg-green-500/10 border border-green-500/20 px-2 py-1 rounded-lg text-green-400 text-[10px] font-black uppercase tracking-widest shadow-[0_0_15px_rgba(34,197,94,0.1)]">
+                                                        <CheckCircle className="w-3.5 h-3.5" /> Completado
                                                     </div>
                                                 )}
                                             </div>
@@ -158,15 +164,30 @@ export default function Modules() {
                                             {/* Link and Arrow */}
                                             <div className="flex items-center justify-between group/btn">
                                                 {isLocked ? (
-                                                    <div className="w-full py-2 flex items-center justify-center gap-3 bg-white/5 rounded-xl border border-white/5 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">
-                                                        <CyberCat className="w-5 h-5 opacity-40 grayscale" variant="static" color="#64748b" />
-                                                        {isPrerequisiteLocked ? 'Módulo Bloqueado' : 'Disponible próximamente'}
-                                                    </div>
+                                                    <motion.div
+                                                        initial={{ opacity: 0.8 }}
+                                                        animate={{ opacity: [0.8, 1, 0.8] }}
+                                                        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                                                        className="w-full py-5 flex flex-col items-center justify-center gap-2 bg-orange-500/10 rounded-xl border border-orange-500/30 text-orange-200 px-4 shadow-[0_0_20px_rgba(249,115,22,0.1)]"
+                                                    >
+                                                        <div className="flex items-center gap-3 text-xs font-black uppercase tracking-[0.2em] text-orange-400">
+                                                            <CyberCat className="w-6 h-6 opacity-80" variant="static" color="#f97316" />
+                                                            {isPrerequisiteLocked ? 'Módulo Bloqueado' : 'Próximamente'}
+                                                        </div>
+                                                        {isPrerequisiteLocked && module.lock_reason && (
+                                                            <p className="text-[11px] text-orange-100/90 font-bold leading-tight text-center">
+                                                                {module.lock_reason}
+                                                            </p>
+                                                        )}
+                                                    </motion.div>
                                                 ) : (
                                                     <>
                                                         <div className="h-1 flex-1 bg-white/5 rounded-full overflow-hidden mr-6">
                                                             <div
-                                                                className="h-full bg-gradient-to-r from-primary-500 to-secondary-500 transition-all duration-700"
+                                                                className={`h-full transition-all duration-700 ${module.completionPercentage === 100
+                                                                    ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.4)]'
+                                                                    : 'bg-gradient-to-r from-primary-500 to-secondary-500'
+                                                                    }`}
                                                                 style={{ width: `${module.completionPercentage || 0}%` }}
                                                             ></div>
                                                         </div>

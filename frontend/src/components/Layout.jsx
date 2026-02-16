@@ -220,7 +220,7 @@ export default function Layout() {
                         </div>
                         <div className="text-right flex flex-col items-end gap-1">
                             <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
-                                Version 1.0.0
+                                Version 1.8.0
                             </p>
 
                         </div>

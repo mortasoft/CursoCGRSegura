@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { useNavigate, Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
     BookOpen,
     Trophy,
@@ -10,8 +11,10 @@ import {
     Award,
     CheckCircle,
     AlertCircle,
-    Shield
+    Shield,
+    Lock
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -155,19 +158,32 @@ export default function Dashboard() {
                                     <div
                                         key={module.id}
                                         onClick={(e) => {
-                                            // Solo navegar al módulo si no se hizo clic en el botón de acción
+                                            // Solo navegar al módulo si no se hizo clic en el botón de acción y no está bloqueado
                                             if (e.target.closest('button')) return;
+                                            if (module.is_locked) {
+                                                toast.error(module.lock_reason || 'Debes completar el módulo anterior primero.');
+                                                return;
+                                            }
                                             navigate(`/modules/${module.id}`);
                                         }}
-                                        className="group relative flex flex-col p-6 rounded-2xl bg-slate-900/50 border border-white/5 hover:border-primary-500/30 hover:bg-slate-900 transition-all duration-300 cursor-pointer"
+                                        className={`group relative flex flex-col p-6 rounded-2xl border transition-all duration-300 cursor-pointer ${module.is_locked
+                                            ? 'bg-slate-900/20 border-white/5 opacity-60 cursor-not-allowed'
+                                            : module.status === 'completed'
+                                                ? 'bg-green-500/5 border-green-500/20 shadow-[0_0_20px_rgba(34,197,94,0.05)] hover:border-green-500/40'
+                                                : 'bg-slate-900/50 border-white/5 hover:border-primary-500/30 hover:bg-slate-900'
+                                            }`}
                                     >
                                         <div className="flex justify-between items-start mb-4">
-                                            <h3 className="font-bold text-white group-hover:text-primary-400 transition-colors leading-tight">
+                                            <h3 className={`font-bold transition-colors leading-tight ${module.is_locked ? 'text-gray-500' : 'text-white group-hover:text-primary-400'}`}>
                                                 {module.title}
                                             </h3>
                                             {module.status === 'completed' ? (
                                                 <div className="p-1.5 bg-green-500/20 rounded-full text-green-500">
                                                     <CheckCircle className="w-4 h-4" />
+                                                </div>
+                                            ) : module.is_locked ? (
+                                                <div className="p-1.5 bg-gray-500/10 rounded-full text-gray-500">
+                                                    <Lock className="w-4 h-4" />
                                                 </div>
                                             ) : (
                                                 <div className="p-1.5 bg-secondary-500/20 rounded-full text-secondary-500 animate-pulse">
@@ -179,30 +195,48 @@ export default function Dashboard() {
                                             <div className="space-y-2">
                                                 <div className="flex justify-between items-end text-[10px] font-black uppercase text-gray-500 tracking-widest">
                                                     <span>Progreso</span>
-                                                    <span className="text-white">{module.progress}%</span>
+                                                    <span className={`${module.is_locked ? 'text-gray-600' : 'text-white'}`}>{module.progress}%</span>
                                                 </div>
-                                                <div className="progress-bar h-1.5">
+                                                <div className="progress-bar h-1.5 bg-white/5">
                                                     <div
-                                                        className="progress-fill"
+                                                        className={`progress-fill ${module.is_locked ? 'bg-gray-700' : module.status === 'completed' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]' : ''}`}
                                                         style={{ width: `${module.progress}%` }}
                                                     ></div>
                                                 </div>
                                             </div>
 
                                             {/* Action Button Integrated */}
-                                            {module.status !== 'completed' && module.next_lesson_id && (
-                                                <Link
-                                                    to={`/lessons/${module.next_lesson_id}`}
-                                                    onClick={(e) => e.stopPropagation()}
-                                                    className="w-full py-2.5 rounded-xl bg-primary-500 hover:bg-primary-600 text-white text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-lg shadow-primary-500/20 flex items-center justify-center gap-2 group/btn"
+                                            {module.is_locked ? (
+                                                <motion.div
+                                                    initial={{ opacity: 0.8 }}
+                                                    animate={{ opacity: [0.8, 1, 0.8] }}
+                                                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                                                    className="w-full py-4 rounded-xl bg-orange-500/10 text-orange-200 text-center border border-orange-500/30 flex flex-col items-center justify-center gap-2 px-4 shadow-[0_0_20px_rgba(249,115,22,0.1)]"
                                                 >
-                                                    {module.status === 'not_started' ? 'Empezar' : 'Continuar'} <TrendingUp className="w-3.5 h-3.5 group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform" />
-                                                </Link>
-                                            )}
-                                            {module.status === 'completed' && (
-                                                <div className="w-full py-2.5 rounded-xl bg-slate-800/50 text-gray-500 text-[10px] font-black uppercase tracking-[0.2em] text-center border border-white/5">
-                                                    Módulo Completado
-                                                </div>
+                                                    <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-orange-400">
+                                                        <Lock className="w-4 h-4" /> Módulo Bloqueado
+                                                    </div>
+                                                    <p className="text-[11px] text-orange-100/80 leading-tight font-bold">
+                                                        {module.lock_reason}
+                                                    </p>
+                                                </motion.div>
+                                            ) : (
+                                                <>
+                                                    {module.status !== 'completed' && module.next_lesson_id && (
+                                                        <Link
+                                                            to={`/modules/${module.id}`}
+                                                            onClick={(e) => e.stopPropagation()}
+                                                            className="w-full py-2.5 rounded-xl bg-primary-500 hover:bg-primary-600 text-white text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-lg shadow-primary-500/20 flex items-center justify-center gap-2 group/btn"
+                                                        >
+                                                            {module.status === 'not_started' ? 'Empezar' : 'Continuar'} <TrendingUp className="w-3.5 h-3.5 group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1 transition-transform" />
+                                                        </Link>
+                                                    )}
+                                                    {module.status === 'completed' && (
+                                                        <div className="w-full py-2.5 rounded-xl bg-green-500/10 text-green-500 text-[10px] font-black uppercase tracking-[0.2em] text-center border border-green-500/20 flex items-center justify-center gap-2">
+                                                            <CheckCircle className="w-3.5 h-3.5" /> Módulo Completado
+                                                        </div>
+                                                    )}
+                                                </>
                                             )}
                                         </div>
                                     </div>

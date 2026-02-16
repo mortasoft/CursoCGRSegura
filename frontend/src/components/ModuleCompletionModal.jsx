@@ -229,7 +229,10 @@ const ModuleCompletionModal = ({ isOpen, onClose, data }) => {
                         )}
 
                         <button
-                            onClick={onClose}
+                            onClick={() => {
+                                navigate('/modules');
+                                onClose();
+                            }}
                             className="w-full py-3 bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white rounded-xl font-bold text-xs uppercase tracking-widest transition-colors"
                         >
                             Continuar Aprendiendo
