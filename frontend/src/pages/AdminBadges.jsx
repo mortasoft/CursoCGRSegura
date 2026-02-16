@@ -152,12 +152,17 @@ export default function AdminBadges() {
                         <div className="absolute top-0 right-0 w-32 h-32 bg-primary-500/5 rounded-bl-full blur-3xl group-hover:bg-primary-500/10 transition-all"></div>
 
                         <div className="flex items-start justify-between mb-8 relative">
-                            <div className="w-20 h-20 rounded-[2.5rem] bg-slate-950 border border-white/10 flex items-center justify-center relative group-hover:scale-110 transition-transform duration-500 shadow-2xl">
+                            <div className="w-20 h-20 rounded-[2.5rem] bg-slate-950 border border-white/10 flex items-center justify-center relative group-hover:scale-110 transition-transform duration-500 shadow-2xl overflow-hidden">
                                 <div className="absolute inset-0 bg-primary-500/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                                <Award className="w-10 h-10 text-primary-400 relative z-10" />
-                                <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-xl bg-slate-900 border border-white/10 flex items-center justify-center text-gray-500">
-                                    <ImageIcon className="w-4 h-4" />
-                                </div>
+                                {badge.image_url ? (
+                                    <img
+                                        src={`/src/assets/badges/${badge.image_url}`}
+                                        alt={badge.name}
+                                        className="w-full h-full object-contain relative z-10 p-2"
+                                    />
+                                ) : (
+                                    <Award className="w-10 h-10 text-primary-400 relative z-10" />
+                                )}
                             </div>
                             <div className="flex gap-2">
                                 <button

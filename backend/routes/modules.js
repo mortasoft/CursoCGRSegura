@@ -134,7 +134,7 @@ router.get('/admin/all', authMiddleware, adminMiddleware, async (req, res) => {
  */
 router.get('/:id', authMiddleware, cacheMiddleware(600, true), async (req, res) => {
     try {
-        const moduleId = req.params.id;
+        const moduleId = Number(req.params.id);
         const userId = req.user.id;
         const isStudentView = req.headers['x-view-as-student'] === 'true' || req.headers['X-View-As-Student'] === 'true';
         const isAdmin = req.user.role === 'admin' && !isStudentView;
@@ -224,6 +224,7 @@ router.get('/:id', authMiddleware, cacheMiddleware(600, true), async (req, res) 
             'SELECT * FROM resources WHERE module_id = ? ORDER BY id ASC',
             [moduleId]
         );
+        console.log(`[Modules] Resources for module ${moduleId}:`, resources.length);
 
         // Obtener quizzes del módulo
         const quizzes = await db.query(

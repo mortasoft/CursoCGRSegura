@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useModuleStore } from '../store/moduleStore';
+import { useAuthStore } from '../store/authStore';
 import {
     Plus,
     Edit2,
@@ -18,10 +19,17 @@ import {
     ChevronDown,
     ChevronUp,
     Trophy,
-    Award
+    Award,
+    Download,
+    ExternalLink,
+    FileText,
+    Settings
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import axios from 'axios';
 import ConfirmModal from '../components/ConfirmModal';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 export default function AdminModules() {
     const navigate = useNavigate();
@@ -61,6 +69,20 @@ export default function AdminModules() {
     });
     // Editing lesson state
     const [editingLesson, setEditingLesson] = useState(null);
+
+    // Resource Management State
+    const [moduleResources, setModuleResources] = useState([]);
+    const [resourcesLoading, setResourcesLoading] = useState(false);
+    const [isResourceModalOpen, setIsResourceModalOpen] = useState(false);
+    const [editingResource, setEditingResource] = useState(null);
+    const [resourceFormData, setResourceFormData] = useState({
+        module_id: null,
+        title: '',
+        description: '',
+        resource_type: 'pdf',
+        url: '',
+        file: null
+    });
 
     useEffect(() => {
         fetchAdminModules();
@@ -133,17 +155,26 @@ export default function AdminModules() {
 
     const fetchModuleLessons = async (moduleId) => {
         setLessonsLoading(true);
+        // Limpiamos los estados para asegurar que la UI se resetee antes de mostrar nuevos datos
+        setModuleLessons([]);
+        setModuleResources([]);
         try {
-            const token = localStorage.getItem('cgr-lms-auth') ? JSON.parse(localStorage.getItem('cgr-lms-auth')).state.token : null;
-            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/modules/${moduleId}`, {
-                headers: { Authorization: `Bearer ${token}` }
+            const token = useAuthStore.getState().token;
+            // Usamos axios para consistencia y añadimos cache-control
+            const response = await axios.get(`${API_URL}/modules/${moduleId}`, {
+                params: { _t: Date.now() },
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
             });
-            const data = await response.json();
-            if (data.success) {
-                setModuleLessons(data.module.lessons);
+
+            if (response.data.success) {
+                setModuleLessons(response.data.module.lessons || []);
+                setModuleResources(response.data.module.resources || []);
             }
         } catch (error) {
-            toast.error('Error al cargar lecciones');
+            console.error('Error fetching module content:', error);
+            toast.error('Error al cargar contenido');
         } finally {
             setLessonsLoading(false);
         }
@@ -156,6 +187,93 @@ export default function AdminModules() {
         }
         setExpandedModule(moduleId);
         fetchModuleLessons(moduleId);
+    };
+
+    // RESOURCE HANDLERS
+    const handleOpenResourceModal = (moduleId, resource = null) => {
+        if (resource) {
+            setEditingResource(resource);
+            setResourceFormData({
+                module_id: moduleId,
+                title: resource.title,
+                description: resource.description || '',
+                resource_type: resource.resource_type,
+                url: resource.url || '',
+                file: null
+            });
+        } else {
+            setEditingResource(null);
+            setResourceFormData({
+                module_id: moduleId,
+                title: '',
+                description: '',
+                resource_type: 'pdf',
+                url: '',
+                file: null
+            });
+        }
+        setIsResourceModalOpen(true);
+    };
+
+    const handleSaveResource = async (e) => {
+        e.preventDefault();
+        try {
+            const token = useAuthStore.getState().token;
+            const formData = new FormData();
+            formData.append('module_id', resourceFormData.module_id);
+            formData.append('title', resourceFormData.title);
+            formData.append('description', resourceFormData.description);
+            formData.append('resource_type', resourceFormData.resource_type);
+            formData.append('url', resourceFormData.url);
+            if (resourceFormData.file) {
+                formData.append('file', resourceFormData.file);
+            }
+
+            let url = `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/resources`;
+            let method = 'POST';
+
+            if (editingResource) {
+                url = `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/resources/${editingResource.id}`;
+                method = 'PUT';
+            }
+
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    Authorization: `Bearer ${token}`
+                },
+                body: formData
+            });
+            const data = await response.json();
+            if (data.success) {
+                toast.success(editingResource ? 'Recurso actualizado' : 'Recurso creado');
+                setIsResourceModalOpen(false);
+                fetchModuleLessons(resourceFormData.module_id);
+            } else {
+                toast.error(data.error || 'Error al guardar recurso');
+            }
+        } catch (error) {
+            toast.error('Error de conexión');
+        }
+    };
+
+    const handleDeleteResource = async (resourceId, moduleId) => {
+        if (!window.confirm("¿Seguro que deseas eliminar este recurso?")) return;
+        try {
+            const token = localStorage.getItem('cgr-lms-auth') ? JSON.parse(localStorage.getItem('cgr-lms-auth')).state.token : null;
+            const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/resources/${resourceId}`, {
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (response.ok) {
+                toast.success("Recurso eliminado");
+                fetchModuleLessons(moduleId);
+            } else {
+                toast.error("Error al eliminar");
+            }
+        } catch (error) {
+            toast.error("Error de conexión");
+        }
     };
 
     const toggleLessonOptional = async (lessonId) => {
@@ -515,6 +633,78 @@ export default function AdminModules() {
                                             )}
                                         </div>
                                     )}
+                                    {/* RESOURCES SECTION */}
+                                    <div className="mt-8 pt-8 border-t border-white/5 animate-fade-in">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <div className="flex items-center gap-2">
+                                                <Download className="w-4 h-4 text-secondary-400" />
+                                                <h4 className="text-sm font-black text-gray-400 uppercase tracking-widest">Recursos del Módulo</h4>
+                                            </div>
+                                            <button
+                                                onClick={() => handleOpenResourceModal(module.id)}
+                                                className="text-xs font-bold text-secondary-400 hover:text-white flex items-center gap-1 bg-secondary-500/10 hover:bg-secondary-500 py-1.5 px-3 rounded-lg transition-colors border border-secondary-500/20"
+                                            >
+                                                <Plus className="w-3 h-3" />
+                                                Nuevo Recurso
+                                            </button>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            {moduleResources.length > 0 ? (
+                                                moduleResources.map((res) => (
+                                                    <div key={res.id} className="flex items-center justify-between p-3 bg-slate-900/40 rounded-xl border border-white/5 hover:border-white/10 transition-all group/res">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center border shadow-sm transition-all 
+                                                                ${res.resource_type === 'drive'
+                                                                    ? 'bg-blue-500/10 border-blue-500/20 text-blue-400'
+                                                                    : 'bg-red-500/10 border-red-500/20 text-red-500 shadow-[0_0_10px_rgba(239,68,68,0.1)]'}`}>
+                                                                {res.resource_type === 'drive' ? (
+                                                                    <div className="flex items-center justify-center">
+                                                                        <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current" xmlns="http://www.w3.org/2000/svg">
+                                                                            <path d="M7.71 3.502L1.15 14.782L4.44 20.492L11 9.212L7.71 3.502ZM9.73 14.782L6.44 20.492H19.56L22.85 14.782H9.73ZM12.91 9.212L16.2 3.502H9.71L6.42 9.212H12.91Z" />
+                                                                        </svg>
+                                                                    </div>
+                                                                ) : (
+                                                                    <FileText className="w-5 h-5" />
+                                                                )}
+                                                            </div>
+                                                            <div>
+                                                                <p className={`text-sm font-bold transition-colors ${res.resource_type === 'drive' ? 'text-white group-hover/res:text-blue-400' : 'text-white group-hover/res:text-secondary-400'}`}>{res.title}</p>
+                                                                <p className="text-[10px] text-gray-500 uppercase font-black tracking-tight line-clamp-1">{res.description || 'Sin descripción'}</p>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <button
+                                                                onClick={() => handleOpenResourceModal(module.id, res)}
+                                                                className="p-1.5 text-gray-400 hover:text-white hover:bg-slate-800 rounded transition-colors"
+                                                            >
+                                                                <Edit2 className="w-3.5 h-3.5" />
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleDeleteResource(res.id, module.id)}
+                                                                className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
+                                                            >
+                                                                <Trash2 className="w-3.5 h-3.5" />
+                                                            </button>
+                                                            <div className="w-px h-4 bg-white/10 mx-1"></div>
+                                                            <a
+                                                                href={res.url}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="p-1.5 text-secondary-400 hover:bg-secondary-500 hover:text-white rounded transition-all"
+                                                            >
+                                                                <ExternalLink className="w-3.5 h-3.5" />
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <div className="py-4 text-center bg-slate-800/20 rounded-xl border border-dashed border-white/5">
+                                                    <p className="text-gray-500 text-[10px] font-black uppercase tracking-widest">Sin recursos adicionales</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -749,6 +939,114 @@ export default function AdminModules() {
                         </div>
                     </div>
                 )
+            }
+
+            {/* RESOURCE MODAL */}
+            {isResourceModalOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+                    <div className="card w-full max-w-lg bg-[#1b2341] border-slate-700 p-0 overflow-hidden shadow-2xl">
+                        <div className="p-6 border-b border-white/5 bg-slate-900/50 flex items-center gap-3">
+                            <Download className="w-5 h-5 text-secondary-500" />
+                            <h2 className="text-xl font-bold text-white">
+                                {editingResource ? 'Editar Recurso' : 'Nuevo Recurso'}
+                            </h2>
+                        </div>
+                        <form onSubmit={handleSaveResource} className="p-6 space-y-4">
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-gray-400 uppercase tracking-widest text-[10px] font-black">Título del Recurso</label>
+                                <input
+                                    type="text"
+                                    required
+                                    className="input-field"
+                                    placeholder="Ej: Guía de Navegación Segura"
+                                    value={resourceFormData.title}
+                                    onChange={(e) => setResourceFormData({ ...resourceFormData, title: e.target.value })}
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-gray-400 uppercase tracking-widest text-[10px] font-black">Descripción (Opcional)</label>
+                                <textarea
+                                    rows="2"
+                                    className="input-field resize-none"
+                                    placeholder="Breve descripción del contenido..."
+                                    value={resourceFormData.description}
+                                    onChange={(e) => setResourceFormData({ ...resourceFormData, description: e.target.value })}
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-gray-400 uppercase tracking-widest text-[10px] font-black">Tipo de Recurso</label>
+                                    <select
+                                        className="input-field"
+                                        value={resourceFormData.resource_type}
+                                        onChange={(e) => setResourceFormData({ ...resourceFormData, resource_type: e.target.value })}
+                                    >
+                                        <option value="pdf" className="bg-slate-900 text-gray-300">PDF</option>
+                                        <option value="drive" className="bg-slate-900 text-gray-300">Google Drive</option>
+                                        <option value="video" className="bg-slate-900 text-gray-300">Video</option>
+                                        <option value="link" className="bg-slate-900 text-gray-300">Enlace Externo</option>
+                                        <option value="document" className="bg-slate-900 text-gray-300">Documento</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-gray-400 uppercase tracking-widest text-[10px] font-black">Archivo (Subir)</label>
+                                    <div className="relative">
+                                        <input
+                                            type="file"
+                                            className="hidden"
+                                            id="resource-file"
+                                            onChange={(e) => setResourceFormData({ ...resourceFormData, file: e.target.files[0] })}
+                                        />
+                                        <label
+                                            htmlFor="resource-file"
+                                            className="flex items-center justify-center gap-2 p-2.5 rounded-xl bg-slate-800 border border-white/10 text-xs font-bold text-gray-300 hover:border-secondary-500/50 hover:bg-slate-700 transition-all cursor-pointer"
+                                        >
+                                            <Plus className="w-4 h-4" />
+                                            {resourceFormData.file ? 'Archivo listo' : 'Seleccionar'}
+                                        </label>
+                                        {resourceFormData.file && (
+                                            <p className="text-[9px] text-secondary-400 mt-1 truncate max-w-full">{resourceFormData.file.name}</p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium text-gray-400 uppercase tracking-widest text-[10px] font-black">O URL Directa</label>
+                                <div className="relative">
+                                    <ExternalLink className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                                    <input
+                                        type="text"
+                                        className="input-field pl-10"
+                                        placeholder="https://..."
+                                        disabled={!!resourceFormData.file}
+                                        value={resourceFormData.url}
+                                        onChange={(e) => setResourceFormData({ ...resourceFormData, url: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex justify-end gap-3 pt-6 border-t border-white/5">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsResourceModalOpen(false)}
+                                    className="px-6 py-2.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/5 transition-all font-bold"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="px-8 py-2.5 bg-secondary-600 hover:bg-secondary-500 text-white rounded-lg font-bold shadow-lg shadow-secondary-900/20 transition-all"
+                                >
+                                    {editingResource ? 'Actualizar' : 'Crear Recurso'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )
             }
 
             <ConfirmModal

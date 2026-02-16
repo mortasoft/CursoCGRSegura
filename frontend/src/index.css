@@ -17,16 +17,19 @@
     --secondary-foreground: 0 0% 100%;
 
     /* Colores Complementarios */
-    --comp-blue: 198 75% 52%;   /* #28a9e0 */
-    --comp-yellow: 36 93% 61%; /* #f8ae40 */
-    --comp-gray: 0 0% 86%;     /* #dbdbdb */
+    --comp-blue: 198 75% 52%;
+    /* #28a9e0 */
+    --comp-yellow: 36 93% 61%;
+    /* #f8ae40 */
+    --comp-gray: 0 0% 86%;
+    /* #dbdbdb */
 
     --border: 0 0% 15%;
   }
 
   body {
     @apply bg-[#0d1127] text-white min-h-screen text-base antialiased selection:bg-primary-500/30;
-    background-image: 
+    background-image:
       radial-gradient(circle at 0% 0%, rgba(56, 74, 153, 0.15) 0%, transparent 40%),
       radial-gradient(circle at 100% 100%, rgba(229, 123, 60, 0.05) 0%, transparent 40%);
     background-attachment: fixed;
@@ -67,6 +70,74 @@
 
 .animate-wiggle {
   animation: wiggle 0.5s ease-in-out infinite;
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0) rotate(0);
+  }
+
+  33% {
+    transform: translateY(-15px) rotate(2deg);
+  }
+
+  66% {
+    transform: translateY(-5px) rotate(-2deg);
+  }
+}
+
+@keyframes shine {
+  0% {
+    left: -100%;
+    transition: all 0.7s ease-in-out;
+  }
+
+  20% {
+    left: 100%;
+    transition: all 0.7s ease-in-out;
+  }
+
+  100% {
+    left: 100%;
+    transition: all 0.7s ease-in-out;
+  }
+}
+
+.animate-shine {
+  position: relative;
+  overflow: hidden;
+}
+
+.animate-shine::after {
+  content: "";
+  position: absolute;
+  top: -110%;
+  left: -210%;
+  width: 200%;
+  height: 200%;
+  opacity: 0;
+  transform: rotate(30deg);
+  background: rgba(255, 255, 255, 0.13);
+  background: linear-gradient(to right,
+      rgba(255, 255, 255, 0.13) 0%,
+      rgba(255, 255, 255, 0.13) 77%,
+      rgba(255, 255, 255, 0.5) 92%,
+      rgba(255, 255, 255, 0.0) 100%);
+}
+
+.animate-shine:hover::after {
+  opacity: 1;
+  top: -30%;
+  left: -30%;
+  transition-property: left, top, opacity;
+  transition-duration: 0.7s, 0.7s, 0.1s;
+  transition-timing-function: ease;
 }
 
 .custom-scrollbar::-webkit-scrollbar {

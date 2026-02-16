@@ -136,16 +136,6 @@ export default function Login() {
                             </div>
                         </div>
                     </motion.div>
-
-                    {/* Support Link */}
-                    <motion.p
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: 1 }}
-                        className="text-gray-600 text-[10px] font-bold uppercase tracking-[0.2em]"
-                    >
-                        ¿Problemas de acceso? <button className="text-primary-500 hover:text-primary-400 transition-colors">Contactar a Soporte TI</button>
-                    </motion.p>
                 </motion.div>
             </div>
 
@@ -169,7 +159,7 @@ export default function Login() {
                         <div className="flex flex-col items-center md:items-end gap-2">
 
                             <p className="text-[9px] text-gray-500 font-bold uppercase tracking-[0.3em]">
-                                Versión 1.7.0 • 2026
+                                Versión {import.meta.env.VITE_APP_VERSION || '1.8.0'} • 2026
                             </p>
                         </div>
                     </div>

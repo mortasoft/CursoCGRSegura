@@ -17,8 +17,18 @@ const getUserProfileData = async (userId) => {
 
     // 2. Estadísticas de puntos y nivel + Rankings
     const [stats] = await db.query(
-        `SELECT points, level, badges 
+        `SELECT points, level 
          FROM user_points WHERE user_id = ?`,
+        [userId]
+    );
+
+    // 2.1 Obtener insignias reales de la tabla user_badges
+    const userBadges = await db.query(
+        `SELECT b.id, b.name, b.description, b.image_url, b.icon_name, ub.earned_at
+         FROM user_badges ub
+         JOIN badges b ON ub.badge_id = b.id
+         WHERE ub.user_id = ?
+         ORDER BY ub.earned_at DESC`,
         [userId]
     );
 
@@ -91,7 +101,7 @@ const getUserProfileData = async (userId) => {
         next_level_min_points: nextLevel ? Number(nextLevel.minPoints ?? nextLevel.min_points ?? 0) : null,
         points_for_next: pointsForNext,
         level_progress_percentage: levelProgressPercentage,
-        badges: stats?.badges || '[]',
+        badges: userBadges,
         rank: rank,
         departmentRank: departmentRank,
         totalUsers: globalRanking.length

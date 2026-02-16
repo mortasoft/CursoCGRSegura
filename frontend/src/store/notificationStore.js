@@ -10,6 +10,7 @@ export const useNotificationStore = create((set, get) => ({
     loading: false,
     pendingLevelUp: null,
     pendingModuleCompletion: null,
+    pendingBadge: null,
 
     setPendingLevelUp: (data) => {
         set({ pendingLevelUp: data });
@@ -18,6 +19,13 @@ export const useNotificationStore = create((set, get) => ({
         audio.play().catch(e => console.log('Audio play blocked:', e));
     },
     clearLevelUp: () => set({ pendingLevelUp: null }),
+
+    setPendingBadge: (badge) => {
+        set({ pendingBadge: badge });
+        const audio = new Audio('/points.mp3');
+        audio.play().catch(e => console.log('Audio play blocked:', e));
+    },
+    clearBadge: () => set({ pendingBadge: null }),
 
     setPendingModuleCompletion: (data) => {
         set({ pendingModuleCompletion: data });

@@ -46,6 +46,34 @@ export default function LessonView() {
     const [ytApiLoaded, setYtApiLoaded] = useState(!!window.YT);
     const [showCompletionModal, setShowCompletionModal] = useState(false);
 
+    const handleResourceDownload = async (resourceId, title) => {
+        try {
+            const response = await axios.post(`${API_URL}/resources/${resourceId}/track-download`, {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            if (response.data.success && response.data.badgeAwarded) {
+                const badge = response.data.badgeAwarded;
+                toast.success(
+                    <div className="flex flex-col gap-1">
+                        <p className="font-black text-secondary-500 uppercase tracking-widest text-[10px]">¡Nueva Insignia Ganada!</p>
+                        <p className="font-bold text-white tracking-tight">{badge.name}</p>
+                    </div>,
+                    {
+                        duration: 6000,
+                        icon: '🏆',
+                        style: {
+                            border: '1px solid rgba(229, 123, 60, 0.4)',
+                            background: '#0d1127'
+                        }
+                    }
+                );
+            }
+        } catch (error) {
+            console.error('Error tracking download:', error);
+        }
+    };
+
     useEffect(() => {
         setWatchedVideos(new Set());
         setVisitedLinks(new Set());
@@ -338,9 +366,15 @@ export default function LessonView() {
             case 'file':
                 const fileLink = data.file_url ? `${API_URL.replace('/api', '')}${data.file_url}` : '#';
                 return (
-                    <a href={fileLink} target="_blank" rel="noopener noreferrer" className="block group">
-                        <div className="flex items-center gap-6 p-6 rounded-2xl bg-slate-800/40 border border-white/5 hover:bg-slate-800 hover:border-primary-500/40 transition-all">
-                            <div className="w-14 h-14 rounded-xl bg-slate-900 flex items-center justify-center text-orange-400 shadow-inner group-hover:scale-110 transition-transform">
+                    <a
+                        href={fileLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block group"
+                        onClick={() => handleResourceDownload(item.id, item.title)}
+                    >
+                        <div className="flex items-center gap-6 p-6 rounded-2xl bg-slate-800/40 border border-white/5 hover:bg-slate-800 hover:border-red-500/40 transition-all">
+                            <div className="w-14 h-14 rounded-xl bg-red-500/10 flex items-center justify-center text-red-500 shadow-[0_0_20px_rgba(239,68,68,0.1)] group-hover:scale-110 transition-transform border border-red-500/20">
                                 <FileText className="w-7 h-7" />
                             </div>
                             <div className="flex-1">

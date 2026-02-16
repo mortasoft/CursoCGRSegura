@@ -20,10 +20,15 @@ import toast from 'react-hot-toast';
 import { useNotificationStore } from '../store/notificationStore';
 import LevelUpModal from './LevelUpModal';
 import ModuleCompletionModal from './ModuleCompletionModal';
+import BadgeAwardModal from './BadgeAwardModal';
 
 export default function Layout() {
     const { user, logout, viewAsStudent, setViewAsStudent } = useAuthStore();
-    const { pendingLevelUp, clearLevelUp, pendingModuleCompletion, clearModuleCompletion } = useNotificationStore();
+    const {
+        pendingLevelUp, clearLevelUp,
+        pendingModuleCompletion, clearModuleCompletion,
+        pendingBadge, clearBadge
+    } = useNotificationStore();
     const navigate = useNavigate();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -220,7 +225,7 @@ export default function Layout() {
                         </div>
                         <div className="text-right flex flex-col items-end gap-1">
                             <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
-                                Version 1.8.0
+                                Version {import.meta.env.VITE_APP_VERSION || '1.8.0'}
                             </p>
 
                         </div>
@@ -239,6 +244,11 @@ export default function Layout() {
                 onClose={clearModuleCompletion}
                 data={pendingModuleCompletion}
             />
+            <BadgeAwardModal
+                isOpen={!!pendingBadge}
+                onClose={clearBadge}
+                badge={pendingBadge}
+            />
         </div>
     );
-}
+};

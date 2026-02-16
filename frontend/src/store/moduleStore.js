@@ -96,5 +96,48 @@ export const useModuleStore = create((set, get) => ({
             set({ error: error.response?.data?.error || 'Error al obtener el módulo', loading: false });
             return { success: false, error: error.response?.data?.error };
         }
+    },
+
+    // Resource Management
+    createResource: async (formData) => {
+        try {
+            const token = useAuthStore.getState().token;
+            const response = await axios.post(`${API_URL}/resources`, formData, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+            return { success: true, data: response.data };
+        } catch (error) {
+            return { success: false, error: error.response?.data?.error || 'Error al crear recurso' };
+        }
+    },
+
+    updateResource: async (id, formData) => {
+        try {
+            const token = useAuthStore.getState().token;
+            const response = await axios.put(`${API_URL}/resources/${id}`, formData, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+            return { success: true, data: response.data };
+        } catch (error) {
+            return { success: false, error: error.response?.data?.error || 'Error al actualizar recurso' };
+        }
+    },
+
+    deleteResource: async (id) => {
+        try {
+            const token = useAuthStore.getState().token;
+            await axios.delete(`${API_URL}/resources/${id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            return { success: true };
+        } catch (error) {
+            return { success: false, error: error.response?.data?.error || 'Error al eliminar recurso' };
+        }
     }
 }));

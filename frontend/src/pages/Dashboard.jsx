@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import axios from 'axios';
+import primaryBanner from '../assets/primary-banner.svg';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -81,18 +82,14 @@ export default function Dashboard() {
     return (
         <div className="space-y-2 md:space-y-3 animate-fade-in">
             {/* Banner Principal del Curso */}
-            <div className="relative w-full h-24 md:h-36 rounded-[1.5rem] overflow-hidden bg-slate-800/20 border border-white/5 shadow-2xl">
+            <div className="relative w-full h-32 md:h-48 rounded-[1.5rem] overflow-hidden bg-[#0d1127] border border-white/5 shadow-2xl">
                 <img
-                    src="/images/banner-principal-curso.png"
+                    src={primaryBanner}
                     alt="Banner Principal del Curso"
                     className="w-full h-full object-cover"
-                    onError={(e) => {
-                        // Fallback por si la imagen aún no existe en la carpeta public
-                        e.target.src = 'https://images.unsplash.com/photo-1639322537228-f710d846310a?auto=format&fit=crop&w=1600&q=80';
-                    }}
                 />
                 {/* Overlay sutil para mantener el estilo glassmorphism en los bordes */}
-                <div className="absolute inset-0 ring-1 ring-inset ring-white/10 rounded-[2.5rem]"></div>
+                <div className="absolute inset-0 ring-1 ring-inset ring-white/10 rounded-[1.5rem]"></div>
             </div>
 
             {/* Master Welcome Banner */}
