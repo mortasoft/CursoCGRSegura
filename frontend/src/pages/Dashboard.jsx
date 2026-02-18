@@ -47,22 +47,8 @@ export default function Dashboard() {
                 });
             }
         } catch (error) {
-            console.warn('Usando datos de ejemplo (Backend no listo):', error.message);
-            setStats({
-                completedModules: 2,
-                totalModules: 8,
-                points: 350,
-                level: 'Defensor',
-                rank: 45,
-                totalUsers: 700,
-                completionPercentage: 25
-            });
-            setModules([
-                { id: 1, title: 'Fundamentos de Seguridad', progress: 100, status: 'completed' },
-                { id: 2, title: 'Protección de Datos', progress: 60, status: 'in_progress', next_lesson_id: 10 },
-                { id: 3, title: 'IA y Ciberseguridad', progress: 0, status: 'not_started', next_lesson_id: 15 },
-                { id: 4, title: 'Malware y Amenazas', progress: 0, status: 'not_started', next_lesson_id: 20 }
-            ]);
+            console.error('Error cargando dashboard:', error);
+            navigate('/500');
         } finally {
             setLoading(false);
         }

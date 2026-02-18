@@ -27,6 +27,15 @@ export default function Modules() {
         fetchModules();
     }, [fetchModules]);
 
+    const { error } = useModuleStore();
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        if (error) {
+            navigate('/500');
+        }
+    }, [error, navigate]);
+
     const filteredModules = modules.filter(module =>
         module.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         module.description.toLowerCase().includes(searchTerm.toLowerCase())

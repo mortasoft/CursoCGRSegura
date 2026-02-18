@@ -69,7 +69,8 @@ export default function Leaderboard() {
                 setScope(response.data.scope);
             }
         } catch (error) {
-            toast.error('Error al cargar el ranking');
+            console.error('Error cargando leaderboard:', error);
+            navigate('/500');
         } finally {
             setLoading(false);
         }
