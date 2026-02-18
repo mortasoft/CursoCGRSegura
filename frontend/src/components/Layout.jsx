@@ -233,14 +233,14 @@ export default function Layout() {
                 </div>
             </footer>
 
-            {/* Gamification Modals */}
+            {/* Gamification Modals - Ordered by priority: Badge > Module > LevelUp */}
             <LevelUpModal
-                isOpen={!!pendingLevelUp}
+                isOpen={!!pendingLevelUp && !pendingModuleCompletion && !pendingBadge}
                 onClose={clearLevelUp}
                 levelData={pendingLevelUp}
             />
             <ModuleCompletionModal
-                isOpen={!!pendingModuleCompletion}
+                isOpen={!!pendingModuleCompletion && !pendingBadge}
                 onClose={clearModuleCompletion}
                 data={pendingModuleCompletion}
             />

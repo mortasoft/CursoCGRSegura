@@ -290,32 +290,32 @@ export default function AdminUsers() {
                                     )}
                                 </td>
                                 <td className="px-6 py-5 text-right">
-                                    <div className="flex items-center justify-end gap-2">
+                                    <div className="grid grid-cols-2 gap-2 w-fit ml-auto">
                                         <button
                                             onClick={() => navigate(`/admin/users/${u.id}/profile`)}
                                             className="p-2 text-indigo-400 bg-indigo-500/5 hover:bg-indigo-500/10 rounded-lg transition-all"
-                                            title="Ver Historial Completo"
+                                            title="Ver Historial"
                                         >
                                             <History className="w-4 h-4" />
                                         </button>
                                         <button
                                             onClick={() => handleEditUser(u)}
                                             className="p-2 text-primary-400 bg-primary-500/5 hover:bg-primary-500/10 rounded-lg transition-all"
-                                            title="Editar Usuario"
+                                            title="Editar"
                                         >
                                             <Edit2 className="w-4 h-4" />
                                         </button>
                                         <button
                                             onClick={() => handleResetClick(u)}
                                             className="p-2 text-orange-500 bg-orange-500/5 hover:bg-orange-500/10 rounded-lg transition-all"
-                                            title="Reiniciar Progreso"
+                                            title="Reiniciar"
                                         >
                                             <RefreshCcw className="w-4 h-4" />
                                         </button>
                                         <button
                                             onClick={() => handleDeleteClick(u)}
                                             className="p-2 text-red-500 bg-red-500/5 hover:bg-red-500/10 rounded-lg transition-all"
-                                            title="Eliminar Usuario"
+                                            title="Eliminar"
                                         >
                                             <Trash2 className="w-4 h-4" />
                                         </button>
@@ -427,7 +427,7 @@ export default function AdminUsers() {
                 onClose={() => setResetModalOpen(false)}
                 onConfirm={handleConfirmReset}
                 title="Reiniciar Progreso"
-                message={`¿Estás seguro de que deseas reiniciar todo el progreso de ${userToReset?.first_name} ${userToReset?.last_name}? Esto pondrá sus puntos en 0, borrará sus certificados, lecciones completadas e historial de actividad.`}
+                message={`¿Estás seguro de que deseas reiniciar todo el progreso de ${userToReset?.first_name} ${userToReset?.last_name}? Esto pondrá sus puntos en 0, borrará sus certificados, insignias obtenidas, lecciones completadas e historial de actividad.`}
                 confirmText="Reiniciar Todo"
                 cancelText="Cancelar"
                 isDestructive={true}

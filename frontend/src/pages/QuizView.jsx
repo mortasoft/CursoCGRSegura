@@ -22,6 +22,29 @@ import { useNotificationStore } from '../store/notificationStore';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
+const PointsCounter = ({ target }) => {
+    const [count, setCount] = useState(0);
+
+    useEffect(() => {
+        if (target <= 0) return;
+        let start = 0;
+        const duration = 1000;
+        const increment = target / (duration / 16);
+        const timer = setInterval(() => {
+            start += increment;
+            if (start >= target) {
+                setCount(target);
+                clearInterval(timer);
+            } else {
+                setCount(Math.floor(start));
+            }
+        }, 16);
+        return () => clearInterval(timer);
+    }, [target]);
+
+    return <span>{count}</span>;
+};
+
 export default function QuizView() {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -104,6 +127,10 @@ export default function QuizView() {
                     });
                 }
 
+                if (response.data.badgeAwarded) {
+                    useNotificationStore.getState().setPendingBadge(response.data.badgeAwarded);
+                }
+
                 toast.success(response.data.passed ? '¡Felicidades! Has aprobado.' : 'No has alcanzado la nota mínima.');
                 window.scrollTo(0, 0);
             }
@@ -158,7 +185,7 @@ export default function QuizView() {
 
                         {results.pointsAwarded > 0 && (
                             <div className="inline-flex items-center gap-2 px-6 py-2 bg-secondary-500/20 border border-secondary-500/30 rounded-full text-secondary-500 font-black text-sm animate-bounce">
-                                <Star className="w-4 h-4 fill-secondary-500" /> +{results.pointsAwarded} PUNTOS DE EXPERIENCIA
+                                <Star className="w-4 h-4 fill-secondary-500" /> +<PointsCounter target={results.pointsAwarded} /> PUNTOS DE EXPERIENCIA
                             </div>
                         )}
 

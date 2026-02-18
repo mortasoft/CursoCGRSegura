@@ -25,6 +25,7 @@ import AdminSettings from './pages/AdminSettings';
 import NotFound from './pages/NotFound';
 import ServerError from './pages/ServerError';
 import Maintenance from './pages/Maintenance';
+import DisabledAccount from './pages/DisabledAccount';
 
 // Components
 import ProtectedRoute from './components/ProtectedRoute';
@@ -108,6 +109,7 @@ function App() {
 
           {/* Página 404, 500 y Mantenimiento - Fuera del Layout para pantalla completa */}
           <Route path="/maintenance" element={<Maintenance />} />
+          <Route path="/disabled" element={<DisabledAccount />} />
           <Route path="/500" element={<ServerError />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

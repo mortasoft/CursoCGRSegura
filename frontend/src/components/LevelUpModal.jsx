@@ -7,7 +7,9 @@ const LevelUpModal = ({ isOpen, onClose, levelData }) => {
     useEffect(() => {
         if (isOpen) {
             setIsVisible(true);
-            // Optional: play sound here
+            // Reproducir sonido de level up
+            const audio = new Audio('/level-up.mp3');
+            audio.play().catch(e => console.log('Audio play blocked:', e));
         } else {
             setIsVisible(false);
         }

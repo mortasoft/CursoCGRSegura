@@ -12,9 +12,9 @@ const BadgeAwardModal = ({ isOpen, onClose, badge }) => {
             setIsVisible(true);
             isAnimatingRef.current = true;
 
-            // Suena efecto de puntos/insignia (ya se dispara en el store pero por si acaso o para consistencia)
-            // audioRef.current = new Audio('/celebrate.mp3');
-            // audioRef.current.play().catch(e => console.log('Audio blocked'));
+            // Suena efecto de insignia
+            audioRef.current = new Audio('/badge.mp3');
+            audioRef.current.play().catch(e => console.log('Audio blocked', e));
 
             // Lanzar confeti premium
             const end = Date.now() + 2000;

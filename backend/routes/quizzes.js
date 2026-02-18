@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../config/database');
 const { authMiddleware } = require('../middleware/auth');
 const { syncUserLevel, getSystemSettings, checkAndRecordModuleCompletion } = require('../utils/gamification');
+const { checkAllBadges } = require('../utils/badges');
 
 /**
  * @route   GET /api/quizzes/:id
@@ -183,6 +184,15 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
         const isAdmin = req.user.role === 'admin' && req.headers['x-view-as-student'] !== 'true';
         const moduleSync = await checkAndRecordModuleCompletion(userId, quiz.module_id, isAdmin);
 
+        // Verificar insignias si aprobó
+        let badgeSync = null;
+        if (passed) {
+            badgeSync = await checkAllBadges(userId, {
+                moduleId: quiz.module_id,
+                isModuleCompletion: moduleSync?.completed && moduleSync?.newlyRecorded
+            });
+        }
+
         // Obtener balance actualizado (siempre para asegurar que el navbar esté sincronizado)
         const [updatedStats] = await db.query(
             'SELECT points, level FROM user_points WHERE user_id = ?',
@@ -202,7 +212,8 @@ router.post('/:id/submit', authMiddleware, async (req, res) => {
             levelUp: levelSync?.leveledUp || false,
             levelData: levelSync,
             moduleCompleted: moduleSync?.completed && moduleSync?.newlyRecorded,
-            moduleData: moduleSync
+            moduleData: moduleSync,
+            badgeAwarded: badgeSync?.awarded ? badgeSync.badge : null
         });
 
     } catch (error) {

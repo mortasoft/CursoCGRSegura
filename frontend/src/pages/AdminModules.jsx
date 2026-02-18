@@ -480,16 +480,26 @@ export default function AdminModules() {
                             <div className="flex justify-between items-start mb-4">
                                 <div className="flex items-center gap-4">
                                     <div className="relative w-16 h-16 bg-slate-900 rounded-xl flex items-center justify-center text-xl font-bold text-primary-400 border border-white/5 overflow-hidden flex-shrink-0">
-                                        {module.image_url ? (
-                                            <>
-                                                <img src={module.image_url} alt="" className="w-full h-full object-cover opacity-40" />
-                                                <div className="absolute inset-0 flex items-center justify-center text-white font-black drop-shadow-lg">
-                                                    {module.module_number}
-                                                </div>
-                                            </>
-                                        ) : (
-                                            module.module_number
-                                        )}
+                                        {(() => {
+                                            const num = module.module_number ?? 0;
+                                            const paddedNum = num.toString().padStart(2, '0');
+                                            const cardSrc = new URL(`../assets/card-banner/Tar-Sec-${paddedNum}.svg`, import.meta.url).href;
+                                            return (
+                                                <>
+                                                    <img
+                                                        src={cardSrc}
+                                                        alt=""
+                                                        className="w-full h-full object-cover opacity-40"
+                                                        onError={(e) => {
+                                                            if (module.image_url) e.target.src = module.image_url;
+                                                        }}
+                                                    />
+                                                    <div className="absolute inset-0 flex items-center justify-center text-white font-black drop-shadow-lg">
+                                                        {module.module_number}
+                                                    </div>
+                                                </>
+                                            );
+                                        })()}
                                     </div>
                                     <div>
                                         <h3 className="text-lg font-bold text-white group-hover:text-primary-400 transition-colors">

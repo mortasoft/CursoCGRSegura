@@ -14,32 +14,18 @@ export const useNotificationStore = create((set, get) => ({
 
     setPendingLevelUp: (data) => {
         set({ pendingLevelUp: data });
-        // Reproducir sonido de level up
-        const audio = new Audio('/level-up.mp3');
-        audio.play().catch(e => console.log('Audio play blocked:', e));
     },
     clearLevelUp: () => set({ pendingLevelUp: null }),
 
     setPendingBadge: (badge) => {
         set({ pendingBadge: badge });
-        const audio = new Audio('/points.mp3');
-        audio.play().catch(e => console.log('Audio play blocked:', e));
     },
     clearBadge: () => set({ pendingBadge: null }),
 
     setPendingModuleCompletion: (data) => {
         set({ pendingModuleCompletion: data });
     },
-    clearModuleCompletion: () => {
-        const { pendingLevelUp } = get();
-        set({ pendingModuleCompletion: null });
-
-        // Si hay un nivel pendiente, se "dispara" ahora al cerrar el de modulo
-        if (pendingLevelUp) {
-            // Refrescar el estado para que LevelUpModal lo detecte si es necesario
-            set({ pendingLevelUp: { ...pendingLevelUp } });
-        }
-    },
+    clearModuleCompletion: () => set({ pendingModuleCompletion: null }),
 
     fetchNotifications: async () => {
         set({ loading: true });

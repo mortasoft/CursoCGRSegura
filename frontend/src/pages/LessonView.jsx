@@ -30,6 +30,32 @@ import { useNotificationStore } from '../store/notificationStore';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
+const PointsCounter = ({ target }) => {
+    const [count, setCount] = useState(0);
+
+    useEffect(() => {
+        if (target <= 0) return;
+
+        let start = 0;
+        const duration = 1000; // 1 segundo
+        const increment = target / (duration / 16); // 60fps
+
+        const timer = setInterval(() => {
+            start += increment;
+            if (start >= target) {
+                setCount(target);
+                clearInterval(timer);
+            } else {
+                setCount(Math.floor(start));
+            }
+        }, 16);
+
+        return () => clearInterval(timer);
+    }, [target]);
+
+    return <span>{count}</span>;
+};
+
 export default function LessonView() {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -202,6 +228,11 @@ export default function LessonView() {
                 setProgress(lessonRes.data.progress);
                 setNavigation(lessonRes.data.navigation);
                 setModuleLessons(lessonRes.data.moduleLessons || []);
+
+                // Badge Award on Start
+                if (lessonRes.data.badgeAwarded) {
+                    useNotificationStore.getState().setPendingBadge(lessonRes.data.badgeAwarded);
+                }
             }
             if (contentRes.data.success) {
                 setContents(contentRes.data.contents);
@@ -250,6 +281,10 @@ export default function LessonView() {
                         bonusPoints: response.data.moduleData.bonusPoints,
                         generatesCertificate: response.data.moduleData.generatesCertificate
                     });
+                }
+
+                if (response.data.badgeAwarded) {
+                    useNotificationStore.getState().setPendingBadge(response.data.badgeAwarded);
                 }
 
                 await fetchLessonData(true); // Silent refresh
@@ -768,7 +803,9 @@ export default function LessonView() {
                                         <div className="inline-flex items-center gap-2 px-6 py-2 bg-green-500/10 rounded-full border border-green-500/20 mt-2">
                                             <Award className="w-5 h-5 text-green-500" />
                                             <span className="text-green-400 text-xs font-black uppercase tracking-widest">
-                                                Recompensa obtenida: +{progress?.points_earned || 0} PTS
+                                                Recompensa obtenida: +
+                                                <PointsCounter target={progress?.points_earned || 0} />
+                                                {" "}PTS
                                             </span>
                                         </div>
                                     </div>

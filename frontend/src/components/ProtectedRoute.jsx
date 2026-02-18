@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useAuthStore } from '../store/authStore';
 
 export default function ProtectedRoute() {
-    const { isAuthenticated, verifyToken } = useAuthStore();
+    const { isAuthenticated, verifyToken, user } = useAuthStore();
     const [isVerifying, setIsVerifying] = useState(true);
 
     useEffect(() => {
@@ -25,5 +25,12 @@ export default function ProtectedRoute() {
         );
     }
 
-    return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
+    if (!isAuthenticated) return <Navigate to="/login" replace />;
+
+    // Si el usuario está deshabilitado explícitamente, redirigir a la página de cuenta deshabilitada
+    if (user && user.is_active === false && window.location.pathname !== '/disabled') {
+        return <Navigate to="/disabled" replace />;
+    }
+
+    return <Outlet />;
 }

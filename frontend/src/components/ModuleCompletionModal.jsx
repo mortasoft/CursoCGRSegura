@@ -3,6 +3,29 @@ import { useNavigate } from 'react-router-dom';
 import { Trophy, Star, ChevronRight, X, Download, Share2 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
+const PointsCounter = ({ target }) => {
+    const [count, setCount] = useState(0);
+
+    useEffect(() => {
+        if (!target || target <= 0) return;
+        let start = 0;
+        const duration = 1000;
+        const increment = target / (duration / 16);
+        const timer = setInterval(() => {
+            start += increment;
+            if (start >= target) {
+                setCount(target);
+                clearInterval(timer);
+            } else {
+                setCount(Math.floor(start));
+            }
+        }, 16);
+        return () => clearInterval(timer);
+    }, [target]);
+
+    return <span>{count}</span>;
+};
+
 const ModuleCompletionModal = ({ isOpen, onClose, data }) => {
     const [isVisible, setIsVisible] = useState(false);
     const navigate = useNavigate();
@@ -209,7 +232,7 @@ const ModuleCompletionModal = ({ isOpen, onClose, data }) => {
                             <div className="w-10 h-10 rounded-full bg-primary-500/20 flex items-center justify-center mb-1 text-primary-400">
                                 <Star className="w-5 h-5" />
                             </div>
-                            <span className="text-xl font-black text-white">+{bonusPoints}</span>
+                            <span className="text-xl font-black text-white">+<PointsCounter target={bonusPoints} /></span>
                             <span className="text-[10px] text-gray-500 font-bold uppercase">Puntos Bonus</span>
                         </div>
                     </div>
@@ -233,7 +256,7 @@ const ModuleCompletionModal = ({ isOpen, onClose, data }) => {
                                 navigate('/modules');
                                 onClose();
                             }}
-                            className="w-full py-3 bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white rounded-xl font-bold text-xs uppercase tracking-widest transition-colors"
+                            className="w-full py-4 bg-secondary-600 hover:bg-secondary-500 text-white rounded-xl font-black uppercase tracking-widest text-[10px] shadow-lg shadow-secondary-900/40 transition-all transform hover:-translate-y-0.5 active:scale-95"
                         >
                             Continuar Aprendiendo
                         </button>

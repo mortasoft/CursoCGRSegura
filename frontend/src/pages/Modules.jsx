@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import CyberCat from '../components/CyberCat';
+import primaryBanner from '../assets/primary-banner.svg';
 
 export default function Modules() {
     const { modules, loading, fetchModules } = useModuleStore();
@@ -47,7 +48,7 @@ export default function Modules() {
                 {/* Background Image with Overlay */}
                 <div className="absolute inset-0 z-0">
                     <img
-                        src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=1600&q=80"
+                        src={primaryBanner}
                         alt="Hero Background"
                         className="w-full h-full object-cover opacity-20"
                     />
@@ -99,17 +100,36 @@ export default function Modules() {
                                 >
                                     {/* Imagen del Banner */}
                                     <div className="h-32 w-full relative overflow-hidden">
-                                        {module.image_url ? (
-                                            <img
-                                                src={module.image_url}
-                                                alt={module.title}
-                                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                                            />
-                                        ) : (
-                                            <div className="w-full h-full bg-gradient-to-br from-slate-800/40 to-slate-900/40 flex items-center justify-center">
-                                                <BookOpen className="w-12 h-12 text-slate-700/50" />
-                                            </div>
-                                        )}
+                                        {(() => {
+                                            try {
+                                                const num = module.module_number ?? 0;
+                                                const paddedNum = num.toString().padStart(2, '0');
+                                                // Resolve local SVG path
+                                                const cardSrc = new URL(`../assets/card-banner/Tar-Sec-${paddedNum}.svg`, import.meta.url).href;
+
+                                                return (
+                                                    <img
+                                                        src={cardSrc}
+                                                        alt={module.title}
+                                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                                        onError={(e) => {
+                                                            // Fallback to database image_url if SVG fails
+                                                            if (module.image_url) e.target.src = module.image_url;
+                                                            else e.target.style.display = 'none';
+                                                        }}
+                                                    />
+                                                );
+                                            } catch (error) {
+                                                // Final fallback logic
+                                                return module.image_url ? (
+                                                    <img src={module.image_url} alt={module.title} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full bg-slate-800/40 flex items-center justify-center">
+                                                        <BookOpen className="w-12 h-12 text-slate-700/50" />
+                                                    </div>
+                                                );
+                                            }
+                                        })()}
                                         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent"></div>
                                     </div>
 

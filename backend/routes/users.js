@@ -8,7 +8,7 @@ const { getLevels } = require('../utils/gamification');
 const getUserProfileData = async (userId) => {
     // 1. Datos básicos del usuario
     const [user] = await db.query(
-        `SELECT id, first_name, last_name, email, profile_picture, role, department, position, created_at 
+        `SELECT id, first_name, last_name, email, profile_picture, role, department, position, created_at, is_active 
          FROM users WHERE id = ?`,
         [userId]
     );
@@ -335,7 +335,10 @@ router.post('/:id/reset', authMiddleware, adminMiddleware, async (req, res) => {
         // 4. Eliminar certificados
         await connection.query('DELETE FROM certificates WHERE user_id = ?', [userId]);
 
-        // 5. Reiniciar puntos y nivel
+        // 5. Eliminar insignias (Badges)
+        await connection.query('DELETE FROM user_badges WHERE user_id = ?', [userId]);
+
+        // 6. Reiniciar puntos y nivel
         // Obtenemos el nombre del primer nivel para el reset
         const levels = await getLevels();
         const initialLevel = levels[0]?.name || 'Novato';

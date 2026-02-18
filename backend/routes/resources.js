@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
-const { checkResourceBadge } = require('../utils/badges');
+const { checkAllBadges } = require('../utils/badges');
 const { clearCache } = require('../middleware/cache');
 const logger = require('../config/logger');
 const multer = require('multer');
@@ -160,8 +160,8 @@ router.post('/:id/track-download', authMiddleware, async (req, res) => {
             [userId, 0, resourceId, `Descargó recurso: ${resource.title}`]
         );
 
-        // 3. Verificar si gana la insignia "Seguridad sin igual"
-        const badgeResult = await checkResourceBadge(userId);
+        // 3. Verificar insignias
+        const badgeResult = await checkAllBadges(userId);
 
         if (badgeResult?.awarded) {
             // Limpiar caché del perfil para que la nueva insignia aparezca inmediatamente

@@ -4,6 +4,7 @@ const db = require('../config/database');
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 const { cacheMiddleware } = require('../middleware/cache');
 const { syncUserLevel, getSystemSettings, checkAndRecordModuleCompletion } = require('../utils/gamification');
+const { checkAllBadges } = require('../utils/badges');
 
 /**
  * @route   GET /api/lessons/:id
@@ -101,6 +102,7 @@ router.get('/:id', authMiddleware, cacheMiddleware(600, true), async (req, res) 
             [userId, lessonId]
         );
 
+        let badgeAwarded = null;
         if (!progress) {
             await db.query(
                 `INSERT INTO user_progress (user_id, module_id, lesson_id, status, last_accessed) 
@@ -111,6 +113,12 @@ router.get('/:id', authMiddleware, cacheMiddleware(600, true), async (req, res) 
                 'SELECT * FROM user_progress WHERE user_id = ? AND lesson_id = ?',
                 [userId, lessonId]
             );
+
+            // Verificar si gana insignia por iniciar módulo
+            const badgeResult = await checkAllBadges(userId, { moduleId: lesson.module_id });
+            if (badgeResult?.awarded) {
+                badgeAwarded = badgeResult.badge;
+            }
         } else {
             // Actualizar última visita
             await db.query(
@@ -150,6 +158,7 @@ router.get('/:id', authMiddleware, cacheMiddleware(600, true), async (req, res) 
             lesson,
             progress,
             moduleLessons,
+            badgeAwarded,
             navigation: {
                 prev: prevLesson?.id || null,
                 next: nextLesson?.id || null
@@ -223,6 +232,12 @@ router.post('/:id/complete', authMiddleware, async (req, res) => {
         const isAdmin = req.user.role === 'admin' && req.headers['x-view-as-student'] !== 'true';
         const moduleSync = await checkAndRecordModuleCompletion(userId, lesson.module_id, isAdmin);
 
+        // Verificar insignias
+        const badgeSync = await checkAllBadges(userId, {
+            moduleId: lesson.module_id,
+            isModuleCompletion: moduleSync?.completed && moduleSync?.newlyRecorded
+        });
+
         // Obtener balance actualizado
         const [updatedStats] = await db.query(
             'SELECT points, level FROM user_points WHERE user_id = ?',
@@ -238,7 +253,8 @@ router.post('/:id/complete', authMiddleware, async (req, res) => {
             levelUp: levelSync?.leveledUp || false,
             levelData: levelSync,
             moduleCompleted: moduleSync?.completed && moduleSync?.newlyRecorded,
-            moduleData: moduleSync
+            moduleData: moduleSync,
+            badgeAwarded: badgeSync?.awarded ? badgeSync.badge : null
         });
     } catch (error) {
         console.error('Error al completar lección:', error);

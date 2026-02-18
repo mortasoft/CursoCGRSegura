@@ -143,18 +143,24 @@ export default function ModuleDetail() {
             {/* Header / Hero Section */}
             <div className="relative rounded-[2.5rem] overflow-hidden bg-slate-800/40 border border-white/5 shadow-2xl">
                 {/* Imagen de Fondo (Banner) */}
-                {module.image_url ? (
-                    <div className="absolute inset-0 z-0">
-                        <img
-                            src={module.image_url}
-                            alt=""
-                            className="w-full h-full object-cover opacity-20"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-r from-[#0d1127] via-[#0d1127]/60 to-transparent"></div>
-                    </div>
-                ) : (
-                    <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-primary-500/10 to-transparent"></div>
-                )}
+                <div className="absolute inset-0 z-0">
+                    {(() => {
+                        const num = module.module_number ?? 0;
+                        const paddedNum = num.toString().padStart(2, '0');
+                        const bannerSrc = new URL(`../assets/section-banner/Ban-Sec-${paddedNum}.svg`, import.meta.url).href;
+                        return (
+                            <img
+                                src={bannerSrc}
+                                alt=""
+                                className="w-full h-full object-cover opacity-20"
+                                onError={(e) => {
+                                    if (module.image_url) e.target.src = module.image_url;
+                                }}
+                            />
+                        );
+                    })()}
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#0d1127] via-[#0d1127]/60 to-transparent"></div>
+                </div>
 
                 <div className="relative z-10 p-8 md:p-10 flex flex-col md:flex-row gap-8 items-center">
                     <div className="flex-1 space-y-4">

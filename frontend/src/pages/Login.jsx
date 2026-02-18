@@ -21,8 +21,13 @@ export default function Login() {
         onSuccess: async (tokenResponse) => {
             const result = await loginWithGoogle(tokenResponse.access_token);
             if (result.success) {
-                toast.success(`¡Bienvenido ${result.user.firstName}!`);
-                navigate('/dashboard');
+                if (result.user.is_active === false) {
+                    toast.error('Tu cuenta está deshabilitada');
+                    navigate('/disabled');
+                } else {
+                    toast.success(`¡Bienvenido ${result.user.firstName}!`);
+                    navigate('/dashboard');
+                }
             }
         },
         onError: () => {

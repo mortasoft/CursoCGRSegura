@@ -168,6 +168,7 @@ router.post('/google', async (req, res) => {
                 department: user.department,
                 position: user.position,
                 role: user.role,
+                is_active: !!user.is_active,
                 profilePicture: user.profile_picture,
                 points: stats?.points || 0,
                 level: stats?.level || 'Novato',
@@ -249,6 +250,7 @@ router.get('/verify', async (req, res) => {
                 lastName: user.last_name,
                 profilePicture: user.profile_picture,
                 role: user.role,
+                is_active: !!user.is_active,
                 points: user.points || 0,
                 level: user.level || 'Novato'
             }
