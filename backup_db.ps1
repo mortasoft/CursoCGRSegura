@@ -38,9 +38,10 @@ Write-Host "------------------------------------------------------------"
 Write-Host "Iniciando respaldo de base de datos: $DbName"
 
 # 3. Ejecutar mariadb-dump dentro del contenedor
-# Nota: Redireccionamos la salida a un archivo con encoding UTF8
+# Usamos cmd /c para realizar un redireccionamiento binario puro y evitar que PowerShell altere los acentos
 try {
-    docker exec $ContainerName mariadb-dump -h 127.0.0.1 -u "$DbUser" "-p$DbPass" "$DbName" | Out-File -FilePath $FullBackupPath -Encoding utf8
+    $Command = "docker exec $ContainerName mariadb-dump -h 127.0.0.1 -u $DbUser -p$DbPass $DbName > `"$FullBackupPath`""
+    cmd /c $Command
     
     if (Test-Path $FullBackupPath) {
         Write-Host "Respaldo completado exitosamente: $FullBackupPath"
