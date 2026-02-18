@@ -43,8 +43,11 @@ CREATE TABLE IF NOT EXISTS modules (
     month VARCHAR(20) NOT NULL COMMENT 'Mes programado (Febrero, Marzo, etc.)',
     duration_minutes INT DEFAULT 60,
     is_published BOOLEAN DEFAULT FALSE,
+    requires_previous BOOLEAN DEFAULT FALSE,
+    generates_certificate BOOLEAN DEFAULT TRUE,
     release_date DATE COMMENT 'Fecha de lanzamiento',
     order_index INT NOT NULL,
+    image_url TEXT,
     points_to_earn INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -94,6 +97,7 @@ CREATE TABLE IF NOT EXISTS quizzes (
     module_id INT NOT NULL,
     lesson_id INT,
     title VARCHAR(255) NOT NULL,
+    type ENUM('quiz', 'survey') DEFAULT 'quiz',
     description TEXT,
     passing_score INT DEFAULT 80 COMMENT 'Porcentaje mínimo para aprobar',
     time_limit_minutes INT DEFAULT 30,
@@ -130,6 +134,39 @@ CREATE TABLE IF NOT EXISTS quiz_options (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (question_id) REFERENCES quiz_questions(id) ON DELETE CASCADE,
     INDEX idx_question_id (question_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tabla de contenidos de lección (Estructura flexible)
+CREATE TABLE IF NOT EXISTS lesson_contents (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    lesson_id INT NOT NULL,
+    title VARCHAR(255),
+    content_type ENUM('text', 'video', 'image', 'file', 'link', 'quiz', 'survey', 'assignment', 'note', 'heading') NOT NULL,
+    data JSON COMMENT 'Almacena contenido HTML, URLs, ID de quiz, config de archivo, etc.',
+    order_index INT NOT NULL,
+    points INT DEFAULT 0,
+    is_required BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (lesson_id) REFERENCES lessons(id) ON DELETE CASCADE,
+    INDEX idx_lesson_id (lesson_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tabla de entregas de tareas
+CREATE TABLE IF NOT EXISTS assignment_submissions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    content_id INT NOT NULL COMMENT 'Referencia a lesson_contents id',
+    user_id INT NOT NULL,
+    file_url TEXT NOT NULL,
+    submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+    feedback TEXT,
+    grade INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (content_id) REFERENCES lesson_contents(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_content_user (content_id, user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Tabla de progreso del usuario
