@@ -355,7 +355,7 @@ export default function AdminUsers() {
                                         onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value })}
                                         className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-primary-500"
                                     >
-                                        <option value="user">Usuario (Funcionario)</option>
+                                        <option value="student">Usuario (Funcionario)</option>
                                         <option value="admin">Administrador (TI/Seguridad)</option>
                                     </select>
                                 </div>

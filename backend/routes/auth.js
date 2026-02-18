@@ -57,8 +57,8 @@ router.post('/google', async (req, res) => {
             );
 
             // Determinar rol inicial (admin si coincide con el correo configurado)
-            const defaultAdminEmail = process.env.DEFAULT_ADMIN_EMAIL || 'admin@cgr.go.cr';
-            const role = email.toLowerCase() === defaultAdminEmail.toLowerCase() ? 'admin' : 'user';
+            const defaultAdminEmail = process.env.DEFAULT_ADMIN_EMAIL;
+            const role = (defaultAdminEmail && email.toLowerCase() === defaultAdminEmail.toLowerCase()) ? 'admin' : 'student';
 
             // Crear nuevo usuario
             const result = await db.query(

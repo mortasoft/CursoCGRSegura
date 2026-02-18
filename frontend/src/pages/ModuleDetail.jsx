@@ -426,7 +426,7 @@ export default function ModuleDetail() {
                     <div className="card bg-slate-800/40 p-8 space-y-6">
                         <h3 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-3">
                             <Download className="w-5 h-5 text-primary-400" />
-                            Recursos
+                            Recursos Adicionales
                         </h3>
                         {module.resources && module.resources.length > 0 ? (
                             <div className="space-y-3">
