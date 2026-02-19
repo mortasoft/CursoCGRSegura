@@ -25,7 +25,6 @@ services:
     image: redis:7.2-alpine
     container_name: cgr-lms-redis
     restart: unless-stopped
-    # Redis requiere el password como comando si no se usa archivo de config
     command: >
       /bin/sh -c 'redis-server --requirepass "$${REDIS_PASSWORD}" --maxmemory 512mb --maxmemory-policy allkeys-lru'
     environment:
@@ -47,24 +46,20 @@ services:
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
     container_name: cgr-lms-backend
     restart: unless-stopped
     environment:
       TZ: ${TZ:-America/Costa_Rica}
+      NODE_ENV: production
     env_file: .env
-    # ports:
-    #   - "5000:5000"
     depends_on:
       mariadb:
         condition: service_healthy
       redis:
         condition: service_healthy
     volumes:
-      - ./backend:/app
-      - /app/node_modules
       - ./uploads:/app/uploads
-      - ./backend/logs:/app/logs
     networks:
       - cgr-network
     healthcheck:
@@ -74,26 +69,22 @@ services:
       retries: 5
       start_period: 15s
 
-  # Frontend (React + Vite Dev)
+  # Frontend (React + Nginx)
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
       args:
-        VITE_API_URL: ${VITE_API_URL}
+        VITE_API_URL: ${VITE_API_URL:-/api}
         VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID}
     container_name: cgr-lms-frontend
     restart: unless-stopped
     env_file: .env
     ports:
-      - "80:3000"
-      - "443:3000"
+      - "80:80"
     depends_on:
       backend:
         condition: service_healthy
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
     networks:
       - cgr-network
 
