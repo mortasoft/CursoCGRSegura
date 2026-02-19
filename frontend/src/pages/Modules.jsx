@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useModuleStore } from '../store/moduleStore';
 import { useAuthStore } from '../store/authStore';
 import { motion } from 'framer-motion';
@@ -11,7 +11,6 @@ import {
     Lock,
     Search,
     Calendar,
-    BarChart3,
     Shield
 } from 'lucide-react';
 import { useState } from 'react';

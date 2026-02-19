@@ -4,17 +4,10 @@ import { useAuthStore } from '../store/authStore';
 import {
     Award,
     Plus,
-    Search,
     Edit2,
     Trash2,
     ArrowLeft,
-    Shield,
-    Image as ImageIcon,
-    Target,
-    Settings2,
-    CheckCircle2,
-    Info,
-    HelpCircle
+    Info
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
