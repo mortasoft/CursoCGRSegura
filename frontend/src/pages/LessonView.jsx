@@ -17,13 +17,12 @@ import {
     HelpCircle,
     ClipboardList,
     Upload,
-    Maximize,
-    Volume2,
-    Settings,
     Award,
     BookOpen,
     Zap,
-    Lock
+    Lock,
+    Eye,
+    RotateCcw
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNotificationStore } from '../store/notificationStore';
@@ -525,18 +524,20 @@ export default function LessonView() {
             case 'survey':
             case 'assignment':
                 const iconMap = {
-                    quiz: <HelpCircle className="w-8 h-8 text-red-400" />,
-                    survey: <ClipboardList className="w-8 h-8 text-yellow-400" />,
-                    assignment: <Upload className="w-8 h-8 text-pink-400" />
+                    quiz: item.isCompleted ? <CheckCircle className="w-8 h-8 text-green-400" /> : <HelpCircle className="w-8 h-8 text-red-400" />,
+                    survey: item.isCompleted ? <CheckCircle className="w-8 h-8 text-green-400" /> : <ClipboardList className="w-8 h-8 text-yellow-400" />,
+                    assignment: item.isCompleted ? <CheckCircle className="w-8 h-8 text-green-400" /> : <Upload className="w-8 h-8 text-pink-400" />
                 };
                 const colorMap = {
                     quiz: 'border-red-500/30 bg-red-500/5 hover:bg-red-500/10',
                     survey: 'border-yellow-500/30 bg-yellow-500/5 hover:bg-yellow-500/10',
                     assignment: 'border-pink-500/30 bg-pink-500/5 hover:bg-pink-500/10'
                 };
-
                 return (
-                    <div className={`p-8 rounded-2xl border ${colorMap[item.content_type]} transition-all flex flex-col md:flex-row items-center gap-6 text-center md:text-left`}>
+                    <div className={`p-8 rounded-2xl border transition-all flex flex-col md:flex-row items-center gap-6 text-center md:text-left ${item.isCompleted
+                        ? 'border-green-500/30 bg-green-500/10 hover:bg-green-500/15'
+                        : colorMap[item.content_type]
+                        }`}>
                         <div className="p-4 bg-slate-900/50 rounded-2xl shadow-lg">
                             {iconMap[item.content_type]}
                         </div>
@@ -547,8 +548,8 @@ export default function LessonView() {
                             {item.content_type === 'assignment' && item.submission && (
                                 <div className="mt-3 inline-flex items-center gap-2 p-2 rounded-xl bg-slate-900 border border-white/5 text-xs font-medium">
                                     <span className={`px-2 py-0.5 rounded uppercase tracking-wider font-black ${item.submission.status === 'approved' ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
-                                            item.submission.status === 'rejected' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
-                                                'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                                        item.submission.status === 'rejected' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
+                                            'bg-blue-500/20 text-blue-400 border border-blue-500/30'
                                         }`}>
                                         {item.submission.status === 'approved' ? 'Aprobada' : item.submission.status === 'rejected' ? 'Rechazada' : 'Enviada / Pendiente'}
                                     </span>
@@ -562,12 +563,22 @@ export default function LessonView() {
                                 </p>
                             )}
 
-                            {item.points > 0 && (
-                                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-900 rounded-lg text-xs font-bold text-gray-300 border border-white/10 mt-2">
-                                    <Award className="w-3 h-3 text-yellow-500" />
-                                    <span>Vale <span className="text-white">{item.points} puntos</span></span>
-                                </div>
-                            )}
+                            <div className="flex flex-wrap gap-2 mt-2">
+                                {item.points > 0 && (
+                                    <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-900 rounded-lg text-xs font-bold text-gray-300 border border-white/10">
+                                        <Award className="w-3 h-3 text-yellow-500" />
+                                        <span>Valor: <span className="text-white">{item.points} puntos</span></span>
+                                    </div>
+                                )}
+
+                                {item.content_type === 'quiz' && (
+                                    <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold border ${item.attemptsMade >= item.maxAttempts ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-slate-900 border-white/10 text-gray-300'}`}>
+                                        <Clock className="w-3 h-3" />
+                                        <span>Intentos: <span className={item.attemptsMade >= item.maxAttempts ? 'text-red-400' : 'text-white'}>{item.attemptsMade} / {item.maxAttempts}</span></span>
+
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         {item.content_type === 'assignment' ? (
@@ -591,8 +602,33 @@ export default function LessonView() {
                                 </label>
                             </div>
                         ) : (
-                            <button className="btn-secondary px-8">
-                                Iniciar Actividad
+                            <button
+                                onClick={() => {
+                                    const quizId = data.quiz_id;
+                                    if (quizId) {
+                                        // Ir a repaso si está completado O si ya no tiene intentos
+                                        const url = (item.isCompleted || (item.attemptsMade >= item.maxAttempts))
+                                            ? `/quizzes/${quizId}?review=true`
+                                            : `/quizzes/${quizId}`;
+                                        navigate(url);
+                                    } else {
+                                        toast.error('Evaluación no disponible todavía');
+                                    }
+                                }}
+                                className={`px-8 font-black uppercase tracking-widest transition-all rounded-xl h-12 flex items-center justify-center border-2 ${item.isCompleted
+                                    ? 'bg-green-600 hover:bg-green-700 border-green-600 text-white shadow-lg shadow-green-500/20'
+                                    : (item.attemptsMade >= item.maxAttempts)
+                                        ? 'bg-red-600 hover:bg-red-700 border-red-600 text-white shadow-lg shadow-red-500/20'
+                                        : 'btn-secondary'
+                                    }`}
+                            >
+                                {item.isCompleted ? (
+                                    <><Eye className="w-4 h-4 mr-2" /> Repasar Actividad</>
+                                ) : (item.attemptsMade >= item.maxAttempts) ? (
+                                    <><RotateCcw className="w-4 h-4 mr-2" /> Ver Resultados</>
+                                ) : (
+                                    <><Zap className="w-4 h-4 mr-2" /> Iniciar Actividad</>
+                                )}
                             </button>
                         )}
                     </div>

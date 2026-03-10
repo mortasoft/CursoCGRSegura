@@ -23,6 +23,7 @@ import {
     Type
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
+import QuizEditorModal from '../components/QuizEditorModal';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -41,6 +42,10 @@ export default function AdminLessonEditor() {
     // Modal Form State
     const [viewingAssignment, setViewingAssignment] = useState(null);
     const [assignmentSubmissions, setAssignmentSubmissions] = useState([]);
+
+    // Quiz Editor State
+    const [isQuizEditorOpen, setIsQuizEditorOpen] = useState(false);
+    const [activeQuizItem, setActiveQuizItem] = useState(null);
 
     const [formData, setFormData] = useState({
         title: '',
@@ -122,10 +127,15 @@ export default function AdminLessonEditor() {
     const handleOpenModal = (type, item = null) => {
         if (item) {
             setEditingItem(item);
+            let dataVal = item.data;
+            if (typeof item.data === 'object' && item.data !== null) {
+                dataVal = item.data.description || item.data.text || item.data.url || '';
+            }
+
             setFormData({
                 title: item.title,
                 content_type: item.content_type,
-                data: typeof item.data === 'object' ? JSON.stringify(item.data) : item.data,
+                data: dataVal,
                 file: null,
                 video_source: item.data?.url ? 'url' : 'file',
                 is_required: !!item.is_required,
@@ -174,7 +184,12 @@ export default function AdminLessonEditor() {
                 if (['note', 'heading'].includes(formData.content_type)) {
                     finalData = { text: formData.data };
                 } else {
-                    finalData = { description: formData.data };
+                    // Prevenir pérdida de IDs de quiz/survey/assignment anteriores
+                    const currentData = typeof editingItem?.data === 'string' ? JSON.parse(editingItem.data) : (editingItem?.data || {});
+                    finalData = {
+                        ...currentData,
+                        description: formData.data
+                    };
                 }
             }
             // For files/images, data is handled by backend largely, but we can pass metadata
@@ -231,6 +246,42 @@ export default function AdminLessonEditor() {
             setContents(prev => prev.filter(c => c.id !== id));
         } catch (error) {
             toast.error('Error al eliminar');
+        }
+    };
+
+    const handleQuizSaved = async (quizId) => {
+        if (!activeQuizItem) return;
+
+        try {
+            // Update the lesson content's data to include the new quiz_id
+            const currentData = typeof activeQuizItem.data === 'string' ? JSON.parse(activeQuizItem.data) : (activeQuizItem.data || {});
+            const newData = { ...currentData, quiz_id: quizId };
+
+            const dataToSubmit = new FormData();
+            dataToSubmit.append('lesson_id', lessonId);
+            dataToSubmit.append('title', activeQuizItem.title);
+            dataToSubmit.append('content_type', activeQuizItem.content_type);
+            dataToSubmit.append('is_required', activeQuizItem.is_required);
+            dataToSubmit.append('points', activeQuizItem.points);
+            dataToSubmit.append('data', JSON.stringify(newData));
+            dataToSubmit.append('order_index', activeQuizItem.order_index);
+
+            const res = await axios.put(`${API_URL}/content/${activeQuizItem.id}`, dataToSubmit, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+
+            if (res.data.success) {
+                toast.success('Contenido vinculado al quiz');
+                fetchLessonAndContents();
+            }
+        } catch (error) {
+            toast.error('Error vinculando quiz al contenido');
+        } finally {
+            setIsQuizEditorOpen(false);
+            setActiveQuizItem(null);
         }
     };
 
@@ -413,6 +464,18 @@ export default function AdminLessonEditor() {
                                 </div>
 
                                 <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    {item.content_type === 'quiz' && (
+                                        <button
+                                            onClick={() => {
+                                                setActiveQuizItem(item);
+                                                setIsQuizEditorOpen(true);
+                                            }}
+                                            className="p-2 bg-slate-800 text-red-400 rounded-lg hover:bg-red-500 hover:text-white transition-colors"
+                                            title="Configurar Cuestionario"
+                                        >
+                                            <HelpCircle className="w-4 h-4" />
+                                        </button>
+                                    )}
                                     {item.content_type === 'assignment' && (
                                         <button
                                             onClick={() => fetchSubmissions(item.id, item.title)}
@@ -669,8 +732,8 @@ export default function AdminLessonEditor() {
                                             </div>
                                             <div className="flex items-center gap-3">
                                                 <span className={`text-[10px] uppercase font-black px-2 py-0.5 rounded-full border ${sub.status === 'approved' ? 'bg-green-500/20 text-green-400 border-green-500/30' :
-                                                        sub.status === 'rejected' ? 'bg-red-500/20 text-red-400 border-red-500/30' :
-                                                            'bg-blue-500/20 text-blue-400 border-blue-500/30'
+                                                    sub.status === 'rejected' ? 'bg-red-500/20 text-red-400 border-red-500/30' :
+                                                        'bg-blue-500/20 text-blue-400 border-blue-500/30'
                                                     }`}>
                                                     {sub.status === 'approved' ? 'Aprobada' : sub.status === 'rejected' ? 'Rechazada' : 'Pendiente'}
                                                 </span>
@@ -714,6 +777,22 @@ export default function AdminLessonEditor() {
                     </div>
                 </div>
             )}
+
+            {/* Quiz Editor Modal */}
+            <QuizEditorModal
+                isOpen={isQuizEditorOpen}
+                onClose={(quizId) => {
+                    if (quizId) handleQuizSaved(quizId);
+                    else {
+                        setIsQuizEditorOpen(false);
+                        setActiveQuizItem(null);
+                    }
+                }}
+                quizId={activeQuizItem?.data ? (typeof activeQuizItem.data === 'string' ? JSON.parse(activeQuizItem.data).quiz_id : activeQuizItem.data.quiz_id) : undefined}
+                moduleId={lesson?.module_id}
+                lessonId={lessonId}
+                title={activeQuizItem?.title}
+            />
         </div>
     );
 }

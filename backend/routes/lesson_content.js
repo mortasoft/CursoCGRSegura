@@ -63,6 +63,30 @@ router.get('/lesson/:lessonId', authMiddleware, async (req, res) => {
             [userId, lessonId]
         );
 
+        // Obtener IDs de quizzes aprobados por el usuario
+        const passedQuizzes = await db.query(
+            'SELECT DISTINCT quiz_id FROM quiz_attempts WHERE user_id = ? AND passed = TRUE',
+            [userId]
+        );
+        const passedQuizIds = passedQuizzes.map(q => q.quiz_id);
+
+        // Obtener intentos de quizzes
+        const quizAttemptCounts = await db.query(
+            'SELECT quiz_id, COUNT(*) as count FROM quiz_attempts WHERE user_id = ? GROUP BY quiz_id',
+            [userId]
+        );
+        const attemptsMap = {};
+        quizAttemptCounts.forEach(q => {
+            attemptsMap[q.quiz_id] = q.count;
+        });
+
+        // Obtener max_attempts de los quizzes
+        const quizMaxAttempts = await db.query('SELECT id, max_attempts FROM quizzes');
+        const maxAttemptsMap = {};
+        quizMaxAttempts.forEach(q => {
+            maxAttemptsMap[q.id] = q.max_attempts;
+        });
+
         // Parsear el campo JSON 'data'
         const parsedContents = contents.map(item => {
             let userSubmission = null;
@@ -77,16 +101,35 @@ router.get('/lesson/:lessonId', authMiddleware, async (req, res) => {
                 };
             }
 
+            const itemData = typeof item.data === 'string' ? JSON.parse(item.data) : (item.data || {});
+
+            // Determinar si este elemento específico está completado
+            let isCompleted = false;
+            let attemptsMade = 0;
+            let maxAttempts = 3;
+
+            if (item.content_type === 'quiz' && itemData.quiz_id) {
+                const qId = parseInt(itemData.quiz_id);
+                isCompleted = passedQuizIds.includes(qId);
+                attemptsMade = attemptsMap[qId] || 0;
+                maxAttempts = maxAttemptsMap[qId] || 3;
+            } else if (item.content_type === 'assignment') {
+                isCompleted = item.asub_status === 'approved';
+            }
+
             return {
                 id: item.id,
                 lesson_id: item.lesson_id,
                 title: item.title,
                 content_type: item.content_type,
-                data: typeof item.data === 'string' ? JSON.parse(item.data) : (item.data || {}),
+                data: itemData,
                 order_index: item.order_index,
                 points: item.points,
                 is_required: item.is_required,
-                submission: userSubmission
+                submission: userSubmission,
+                isCompleted,
+                attemptsMade,
+                maxAttempts
             };
         });
 

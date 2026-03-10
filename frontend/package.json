@@ -1,7 +1,7 @@
 {
   "name": "cgr-lms",
   "private": true,
-  "version": "1.11.260310",
+  "version": "1.12.260310",
   "type": "module",
   "scripts": {
     "dev": "vite",

@@ -77,19 +77,17 @@
 }
 
 @keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  50% { transform: translateY(-6px) rotate(1deg); }
+}
 
-  0%,
-  100% {
-    transform: translateY(0) rotate(0);
-  }
+@keyframes float-subtle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
 
-  33% {
-    transform: translateY(-15px) rotate(2deg);
-  }
-
-  66% {
-    transform: translateY(-5px) rotate(-2deg);
-  }
+.animate-float-subtle {
+  animation: float-subtle 3s ease-in-out infinite;
 }
 
 @keyframes shine {

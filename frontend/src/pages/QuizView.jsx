@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { useAuthStore } from '../store/authStore';
 import {
@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNotificationStore } from '../store/notificationStore';
+import CyberCat from '../components/CyberCat';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -47,6 +48,10 @@ const PointsCounter = ({ target }) => {
 
 export default function QuizView() {
     const { id } = useParams();
+    const location = useLocation();
+    const queryParams = new URLSearchParams(location.search);
+    const isReviewMode = queryParams.get('review') === 'true';
+
     const navigate = useNavigate();
     const { token, updateUser } = useAuthStore();
     const [quizData, setQuizData] = useState(null);
@@ -68,13 +73,46 @@ export default function QuizView() {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (response.data.success) {
-                setQuizData(response.data);
+                let data = response.data;
+                // Mezclar opciones si el quiz lo requiere
+                if (data.quiz.randomize_options) {
+                    data.questions = data.questions.map(q => ({
+                        ...q,
+                        options: [...q.options].sort(() => Math.random() - 0.5)
+                    }));
+                }
+                setQuizData(data);
+
+                // Si estamos en modo repaso, cargar el último intento
+                if (isReviewMode) {
+                    try {
+                        const lastAttemptRes = await axios.get(`${API_URL}/quizzes/${id}/last-attempt`, {
+                            headers: { Authorization: `Bearer ${token}` }
+                        });
+                        if (lastAttemptRes.data.success) {
+                            setResults(lastAttemptRes.data.results);
+                            setAnswers(lastAttemptRes.data.results.answers || {});
+                        }
+                    } catch (err) {
+                        console.error('Error al cargar último intento:', err);
+                    }
+                }
             }
         } catch (error) {
             const msg = error.response?.data?.error || 'Error al cargar la evaluación';
             toast.error(msg);
             if (error.response?.status === 403) {
-                // Navegar de vuelta si ya no tiene intentos
+                // Si el error es por intentos agotados, intentar cargar modo repaso automáticamente
+                try {
+                    const lastAttemptRes = await axios.get(`${API_URL}/quizzes/${id}/last-attempt`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    if (lastAttemptRes.data.success) {
+                        setResults(lastAttemptRes.data.results);
+                        setAnswers(lastAttemptRes.data.results.answers || {});
+                        return; // Salir sin navegar fuera
+                    }
+                } catch (err) { }
                 navigate(-1);
             }
         } finally {
@@ -162,14 +200,26 @@ export default function QuizView() {
             <div className="max-w-4xl mx-auto space-y-8 animate-fade-in pb-20">
                 <div className={`card overflow-hidden border-t-8 ${results.passed ? 'border-green-500 bg-green-500/5' : 'border-red-500 bg-red-500/5'}`}>
                     <div className="p-10 text-center space-y-6">
-                        <div className="flex justify-center">
+                        <div className="flex justify-center -mt-4">
                             {results.passed ? (
-                                <div className="w-24 h-24 rounded-full bg-green-500/20 flex items-center justify-center text-green-500 ring-8 ring-green-500/10">
-                                    <Award className="w-12 h-12" />
+                                <div className="w-48 h-48 rounded-full bg-green-500/10 flex items-center justify-center ring-[12px] ring-green-500/5 mb-6 backdrop-blur-md relative shadow-[0_0_50px_rgba(34,197,94,0.15)]">
+                                    <CyberCat
+                                        className="w-32 h-32 animate-float-subtle"
+                                        variant="success"
+                                        color="#22c55e"
+                                        showMedal={true}
+                                    />
+                                    {/* Subtle celebratory glows */}
+                                    <div className="absolute inset-0 rounded-full animate-pulse bg-green-500/5 blur-xl"></div>
                                 </div>
                             ) : (
-                                <div className="w-24 h-24 rounded-full bg-red-500/20 flex items-center justify-center text-red-500 ring-8 ring-red-500/10">
-                                    <XCircle className="w-12 h-12" />
+                                <div className="w-48 h-48 rounded-full bg-red-500/10 flex items-center justify-center ring-[12px] ring-red-500/5 mb-6 backdrop-blur-md relative shadow-[0_0_50px_rgba(239,68,68,0.15)]">
+                                    <CyberCat
+                                        className="w-32 h-32 animate-panic"
+                                        variant="panic"
+                                        color="#ef4444"
+                                    />
+                                    <div className="absolute inset-0 rounded-full animate-pulse bg-red-500/5 blur-xl"></div>
                                 </div>
                             )}
                         </div>
@@ -179,7 +229,7 @@ export default function QuizView() {
                                 {results.passed ? 'Evaluación Aprobada' : 'Resultado Insuficiente'}
                             </h1>
                             <p className="text-gray-400 font-bold uppercase tracking-widest text-sm">
-                                Has obtenido un <span className={results.passed ? 'text-green-500' : 'text-red-500'}>{results.score.toFixed(1)}%</span>
+                                Has obtenido un <span className={results.passed ? 'text-green-500' : 'text-red-500'}>{Number(results.score || 0).toFixed(1)}%</span>
                             </p>
                         </div>
 
@@ -189,7 +239,7 @@ export default function QuizView() {
                             </div>
                         )}
 
-                        <div className="grid grid-cols-2 gap-4 max-w-sm mx-auto pt-4">
+                        <div className="grid grid-cols-3 gap-4 max-w-lg mx-auto pt-4">
                             <div className="bg-slate-900/50 p-4 rounded-2xl border border-white/5">
                                 <p className="text-2xl font-black text-white">{results.earnedPoints}/{results.totalPoints}</p>
                                 <p className="text-[10px] text-gray-500 font-bold uppercase">Puntos</p>
@@ -198,14 +248,18 @@ export default function QuizView() {
                                 <p className="text-2xl font-black text-white">{quiz.passing_score}%</p>
                                 <p className="text-[10px] text-gray-500 font-bold uppercase">Requerido</p>
                             </div>
+                            <div className="bg-slate-900/50 p-4 rounded-2xl border border-white/5">
+                                <p className="text-2xl font-black text-white">{results.attemptNumber}/{quiz.max_attempts}</p>
+                                <p className="text-[10px] text-gray-500 font-bold uppercase">Intento</p>
+                            </div>
                         </div>
 
                         <div className="pt-8 flex flex-col md:flex-row gap-4 justify-center">
                             <button
-                                onClick={() => navigate(`/modules/${quiz.module_id}`)}
+                                onClick={() => navigate(-1)}
                                 className="px-10 py-4 bg-white text-slate-900 rounded-2xl font-black uppercase tracking-widest text-xs hover:scale-105 transition-all"
                             >
-                                Volver al Módulo
+                                Volver
                             </button>
                             {!results.passed && (
                                 <button
@@ -232,6 +286,11 @@ export default function QuizView() {
                                     <span className="text-lg font-black text-gray-700">{(idx + 1).toString().padStart(2, '0')}</span>
                                     <div className="space-y-4 flex-1">
                                         <p className="text-white font-bold leading-tight">{q.question_text}</p>
+                                        {q.image_url && (
+                                            <div className="w-full max-h-48 rounded-xl overflow-hidden border border-white/5 bg-slate-950/20">
+                                                <img src={q.image_url} alt="Imagen de pregunta" className="w-full h-full object-contain" />
+                                            </div>
+                                        )}
 
                                         <div className="grid gap-2">
                                             {q.options.map(opt => {
@@ -252,10 +311,19 @@ export default function QuizView() {
                                             })}
                                         </div>
 
-                                        <div className="p-4 bg-slate-900 rounded-xl border border-white/5 space-y-1">
-                                            <p className="text-[10px] font-black text-primary-400 uppercase tracking-widest">Explicación del CISO</p>
-                                            <p className="text-xs text-gray-400 leading-relaxed font-medium">{feedback.explanation}</p>
-                                        </div>
+                                        {!feedback.isCorrect && (
+                                            <div className="p-4 bg-slate-900/50 rounded-xl border border-white/5 flex gap-4 items-start group">
+                                                <CyberCat
+                                                    className="w-10 h-10 shrink-0 animate-float-subtle"
+                                                    variant="panic"
+                                                    color="#ef4444"
+                                                />
+                                                <div className="space-y-1">
+                                                    <p className="text-[10px] font-black text-primary-400 uppercase tracking-widest">Explicación de la respuesta</p>
+                                                    <p className="text-xs text-gray-400 leading-relaxed font-medium">{feedback.explanation}</p>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -280,7 +348,11 @@ export default function QuizView() {
                     </button>
                     <h1 className="text-2xl font-black text-white uppercase tracking-tight">{quiz.title}</h1>
                 </div>
-                <div className="flex items-center gap-6">
+                <div className="flex items-center gap-8">
+                    <div className="text-right">
+                        <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Intento</p>
+                        <p className="text-xl font-black text-white">{(quizData.attemptsMade || 0) + 1} <span className="text-gray-600">/ {quiz.max_attempts}</span></p>
+                    </div>
                     <div className="text-right">
                         <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Pregunta</p>
                         <p className="text-xl font-black text-white">{currentQuestionIndex + 1} <span className="text-gray-600">/ {questions.length}</span></p>
@@ -301,10 +373,25 @@ export default function QuizView() {
                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary-500/5 rounded-bl-full blur-2xl"></div>
 
                 <div className="space-y-6 relative z-10">
-                    <div className="flex items-center gap-3">
-                        <Target className="w-6 h-6 text-secondary-500" />
-                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">Cuestionamiento Institucional</span>
+                    <div className="flex flex-col gap-3">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-secondary-500/10 rounded-full border border-secondary-500/20 self-start">
+                            <Target className="w-3.5 h-3.5 text-secondary-500" />
+                            <span className="text-[9px] font-black text-secondary-400 uppercase tracking-widest">Actividad de Evaluación</span>
+                        </div>
+                        <p className="text-gray-300 text-sm md:text-base font-semibold italic border-l-4 border-primary-500/40 pl-4 py-1 max-w-2xl leading-relaxed">
+                            {quiz.description || 'Por favor, lea con atención y seleccione la respuesta correcta para cada cuestionamiento.'}
+                        </p>
                     </div>
+
+                    {currentQuestion.image_url && (
+                        <div className="w-full max-h-96 rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-slate-950/40 flex justify-center">
+                            <img
+                                src={currentQuestion.image_url}
+                                alt="Contexto de la pregunta"
+                                className="max-w-full max-h-96 object-contain"
+                            />
+                        </div>
+                    )}
                     <h2 className="text-2xl md:text-3xl font-bold text-white leading-tight">
                         {currentQuestion.question_text}
                     </h2>
@@ -366,13 +453,6 @@ export default function QuizView() {
                 )}
             </div>
 
-            {/* Security Disclaimer */}
-            <div className="flex items-center gap-4 p-6 bg-slate-900/30 rounded-3xl border border-dashed border-white/5 opacity-50">
-                <Shield className="w-8 h-8 text-gray-700" />
-                <p className="text-[10px] text-gray-500 font-medium uppercase tracking-widest leading-relaxed">
-                    Esta evaluación es de cumplimiento obligatorio para la certificación anual. Sus respuestas son confidenciales y utilizadas únicamente con fines educativos y estadísticos para la mejora de la postura de seguridad institucional.
-                </p>
-            </div>
         </div>
     );
 }

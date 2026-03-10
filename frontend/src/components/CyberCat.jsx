@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function CyberCat({ className = "w-12 h-12", color = "#28a9e0", variant = "normal" }) {
+export default function CyberCat({ className = "w-12 h-12", color = "#28a9e0", variant = "normal", showMedal = false }) {
     const isPanic = variant === "panic";
     const accessoryColor = isPanic ? "#ef4444" : color;
 
@@ -42,6 +42,20 @@ export default function CyberCat({ className = "w-12 h-12", color = "#28a9e0", v
             {/* Hoodie */}
             <path d="M40 155 Q100 140 160 155 L160 200 L40 200 Z" fill="#1a2245" />
             <path d="M100 150 L80 180 L120 180 Z" fill={accessoryColor} opacity="0.2" />
+
+            {/* Achievement Medal */}
+            {showMedal && (
+                <g className="animate-bounce-subtle">
+                    {/* Ribbon */}
+                    <path d="M85 155 L75 185 L100 180 L125 185 L115 155 Z" fill="#ef4444" />
+                    <path d="M90 155 L85 180 L100 178 L115 180 L110 155 Z" fill="#dc2626" />
+                    {/* Gold Coin */}
+                    <circle cx="100" cy="182" r="16" fill="#facc15" stroke="#eab308" strokeWidth="2" />
+                    <circle cx="100" cy="182" r="12" fill="none" stroke="#ca8a04" strokeWidth="1" strokeDasharray="2 2" />
+                    {/* Star in the middle */}
+                    <path d="M100 174 L103 180 L110 181 L105 185 L106 191 L100 188 L94 191 L95 185 L90 181 L97 180 Z" fill="#eab308" />
+                </g>
+            )}
         </svg>
     );
 }
