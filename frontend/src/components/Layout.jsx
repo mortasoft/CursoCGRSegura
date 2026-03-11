@@ -1,4 +1,4 @@
-import { Outlet, NavLink, useNavigate } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import {
     LayoutDashboard,
@@ -8,20 +8,23 @@ import {
     LogOut,
     Shield,
     Menu,
-    X,
-    CheckCircle2,
-    ArrowRight,
-    Info,
-    AlertTriangle,
-    Check
+    X
 } from 'lucide-react';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { useNotificationStore } from '../store/notificationStore';
 import LevelUpModal from './LevelUpModal';
 import ModuleCompletionModal from './ModuleCompletionModal';
 import BadgeAwardModal from './BadgeAwardModal';
 import SoundControl from './SoundControl';
+import ScrollToTop from './ScrollToTop';
+
+const NAV_ITEMS = [
+    { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+    { to: '/modules', icon: BookOpen, label: 'Módulos' },
+    { to: '/leaderboard', icon: Trophy, label: 'Ranking' },
+    { to: '/profile', icon: UserCircleIcon, label: 'Perfil' },
+];
 
 export default function Layout() {
     const { user, logout, viewAsStudent, setViewAsStudent } = useAuthStore();
@@ -31,9 +34,13 @@ export default function Layout() {
         pendingBadge, clearBadge
     } = useNotificationStore();
     const navigate = useNavigate();
+    const location = useLocation();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-
+    // Cerrar menú móvil al cambiar de ruta
+    useEffect(() => {
+        setIsMobileMenuOpen(false);
+    }, [location.pathname]);
 
     const handleLogout = async () => {
         await logout();
@@ -41,25 +48,19 @@ export default function Layout() {
         navigate('/login');
     };
 
-    const navItems = [
-        { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-        { to: '/modules', icon: BookOpen, label: 'Módulos' },
-        { to: '/leaderboard', icon: Trophy, label: 'Ranking' },
-        { to: '/profile', icon: UserCircleIcon, label: 'Perfil' },
-    ];
-
-    if (user?.role === 'admin' && !viewAsStudent) {
-        navItems.push({ to: '/admin', icon: Shield, label: 'Admin' });
-    }
+    const isAdmin = user?.role === 'admin' && !viewAsStudent;
 
     return (
-        <div className="min-h-screen bg-[#0d1127]">
+        <div className="min-h-screen bg-[#0d1127] flex flex-col">
+            <ScrollToTop />
+
             {/* Admin Student View Banner */}
             {user?.role === 'admin' && viewAsStudent && (
                 <div className="bg-secondary-600 text-white text-[10px] font-black uppercase py-1 text-center tracking-[0.3em] sticky top-0 z-[60] animate-pulse">
                     Modo Estudiante Activo - Vista Restringida
                 </div>
             )}
+
             {/* Navbar */}
             <nav className="bg-[#0d1127]/90 backdrop-blur-md border-b border-primary-500/10 sticky top-0 z-50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -82,27 +83,39 @@ export default function Layout() {
 
                         {/* Desktop Navigation */}
                         <div className="hidden md:flex items-center gap-1 bg-slate-900/40 p-1 rounded-xl border border-white/5">
-                            {navItems.map((item) => (
+                            {NAV_ITEMS.map((item) => (
                                 <NavLink
                                     key={item.to}
                                     to={item.to}
                                     className={({ isActive }) =>
-                                        `flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-300 group ${isActive
-                                            ? 'bg-primary-500/20 text-white border border-primary-500/20 shadow-[0_0_15px_rgba(56,74,153,0.2)]'
-                                            : 'text-gray-400 hover:text-white hover:bg-white/5'
+                                        `flex items-center gap-2 px-3 py-2 rounded-lg transition-colors duration-200 group ${isActive
+                                            ? 'bg-primary-500/20 text-white border border-primary-500/20 shadow-[0_0_15px_rgba(56,74,153,0.1)]'
+                                            : 'text-gray-400 hover:text-white hover:bg-white/5 border border-transparent'
                                         }`
                                     }
                                 >
-                                    <item.icon className={`w-3.5 h-3.5 transition-transform duration-300 group-hover:scale-110 ${item.label === 'Admin' ? 'text-secondary-500' : ''}`} />
+                                    <item.icon className={`w-3.5 h-3.5 transition-transform duration-300 group-hover:scale-110`} />
                                     <span className="text-[11px] font-black uppercase tracking-widest">{item.label}</span>
                                 </NavLink>
                             ))}
+                            {isAdmin && (
+                                <NavLink
+                                    to="/admin"
+                                    className={({ isActive }) =>
+                                        `flex items-center gap-2 px-3 py-2 rounded-lg transition-colors duration-200 group ${isActive
+                                            ? 'bg-secondary-500/20 text-secondary-500 border border-secondary-500/20 shadow-[0_0_15px_rgba(229,123,60,0.1)]'
+                                            : 'text-gray-400 hover:text-secondary-500 hover:bg-white/5 border border-transparent'
+                                        }`
+                                    }
+                                >
+                                    <Shield className={`w-3.5 h-3.5 transition-transform duration-300 group-hover:scale-110`} />
+                                    <span className="text-[11px] font-black uppercase tracking-widest text-secondary-500">Admin</span>
+                                </NavLink>
+                            )}
                         </div>
 
                         {/* User Actions Section */}
                         <div className="flex items-center gap-3">
-
-
                             {/* User Profile */}
                             <div className="hidden sm:flex items-center gap-3 px-3 py-1 bg-transparent rounded-2xl border border-transparent hover:bg-white/5 transition-all duration-300 cursor-pointer" onClick={() => navigate('/profile')}>
                                 <div className="relative">
@@ -164,11 +177,10 @@ export default function Layout() {
                 {isMobileMenuOpen && (
                     <div className="md:hidden border-t border-primary-500/10 bg-[#0d1127]/95 backdrop-blur-md">
                         <div className="px-4 py-4 space-y-2">
-                            {navItems.map((item) => (
+                            {NAV_ITEMS.map((item) => (
                                 <NavLink
                                     key={item.to}
                                     to={item.to}
-                                    onClick={() => setIsMobileMenuOpen(false)}
                                     className={({ isActive }) =>
                                         `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${isActive
                                             ? 'bg-primary-500/20 text-primary-400 border border-primary-500/30'
@@ -180,6 +192,20 @@ export default function Layout() {
                                     <span className="font-medium">{item.label}</span>
                                 </NavLink>
                             ))}
+                            {isAdmin && (
+                                <NavLink
+                                    to="/admin"
+                                    className={({ isActive }) =>
+                                        `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${isActive
+                                            ? 'bg-secondary-500/20 text-secondary-500 border border-secondary-500/30'
+                                            : 'text-gray-400 hover:text-secondary-500 hover:bg-slate-800'
+                                        }`
+                                    }
+                                >
+                                    <Shield className="w-5 h-5 text-secondary-500" />
+                                    <span className="font-medium text-secondary-500">Administración</span>
+                                </NavLink>
+                            )}
                             <button
                                 onClick={handleLogout}
                                 className="w-full flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-red-500/10 rounded-lg transition-all duration-200"
@@ -193,7 +219,7 @@ export default function Layout() {
             </nav>
 
             {/* Main Content */}
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 md:py-4">
+            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 md:py-4 flex-grow">
                 <Outlet />
             </main>
 
@@ -210,7 +236,7 @@ export default function Layout() {
                         </div>
                         <div className="text-right flex flex-col items-end gap-1">
                             <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
-                                Version {import.meta.env.VITE_APP_VERSION || '1.8.0'}
+                                Version {import.meta.env.VITE_APP_VERSION}
                             </p>
                             {user?.role === 'admin' && (
                                 <div className="flex items-center gap-2 px-3 py-1 bg-slate-900/50 rounded-full border border-white/5 shadow-lg mt-1">
@@ -230,7 +256,6 @@ export default function Layout() {
                                     </button>
                                 </div>
                             )}
-
                         </div>
                     </div>
                 </div>
@@ -254,4 +279,4 @@ export default function Layout() {
             />
         </div>
     );
-};
+}

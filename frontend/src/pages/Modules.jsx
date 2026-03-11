@@ -43,7 +43,7 @@ export default function Modules() {
 
     if (loading && modules.length === 0) {
         return (
-            <div className="space-y-8 animate-fade-in">
+            <div className="space-y-8">
                 <DashboardHeroSkeleton />
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <Skeleton className="h-10 w-64" />

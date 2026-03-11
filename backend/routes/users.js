@@ -1,7 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
+const redisClient = require('../config/redis');
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
+const { cacheMiddleware, clearCache } = require('../middleware/cache');
 const { getLevels } = require('../utils/gamification');
 
 // Helper function to get full profile data
@@ -32,32 +34,69 @@ const getUserProfileData = async (userId) => {
         [userId]
     );
 
-    // Calculate rankings
+    // Calculate rankings using Redis Cache (Much faster than full table scans)
+    let rank = null;
+    let departmentRank = null;
+    let totalUsersCount = 0;
+
     const email = user?.email;
     const dept = user?.department;
     const userEmailLower = email ? email.toLowerCase() : '';
 
-    const globalRanking = await db.query(
-        `SELECT LOWER(sd.email) as email, RANK() OVER (ORDER BY COALESCE(up.points, -1) DESC, sd.full_name ASC) as pos
-         FROM staff_directory sd
-         LEFT JOIN users u ON sd.email = u.email
-         LEFT JOIN user_points up ON u.id = up.user_id`
-    );
-    const userGlobalRankRaw = globalRanking.find(r => r.email === userEmailLower);
-    const rank = userGlobalRankRaw ? userGlobalRankRaw.pos : (globalRanking.length + 1);
+    if (redisClient && redisClient.isOpen) {
+        try {
+            // 1. Try real-time ZSET for global rank (very fast)
+            const zRank = await redisClient.zRevRank('leaderboard:points', userId.toString());
+            
+            // 2. Try institutional cache for total users and deep search
+            const cachedInst = await redisClient.get('leaderboard:institutional');
+            if (cachedInst) {
+                const institutionalLeaderboard = JSON.parse(cachedInst);
+                totalUsersCount = institutionalLeaderboard.length;
 
-    let departmentRank = null;
-    if (dept) {
-        const deptRanking = await db.query(
+                if (zRank !== null) {
+                    rank = zRank + 1;
+                } else {
+                    const userEntry = institutionalLeaderboard.find(r => r.email?.toLowerCase() === userEmailLower);
+                    rank = userEntry ? userEntry.rank_position : (totalUsersCount + 1);
+                }
+
+                // Department Rank
+                if (dept) {
+                    const deptUsers = institutionalLeaderboard.filter(r => r.department === dept);
+                    const myDeptIndex = deptUsers.findIndex(r => r.email?.toLowerCase() === userEmailLower);
+                    departmentRank = myDeptIndex !== -1 ? myDeptIndex + 1 : null;
+                }
+            }
+        } catch (redisError) {
+            console.error('Redis error in profile ranking:', redisError);
+        }
+    }
+
+    // Fallback to Database if Redis is unavailable or empty
+    if (rank === null) {
+        const globalRanking = await db.query(
             `SELECT LOWER(sd.email) as email, RANK() OVER (ORDER BY COALESCE(up.points, -1) DESC, sd.full_name ASC) as pos
              FROM staff_directory sd
              LEFT JOIN users u ON sd.email = u.email
-             LEFT JOIN user_points up ON u.id = up.user_id
-             WHERE sd.department = ?`,
-            [dept]
+             LEFT JOIN user_points up ON u.id = up.user_id`
         );
-        const userDeptRankRaw = deptRanking.find(r => r.email === userEmailLower);
-        departmentRank = userDeptRankRaw ? userDeptRankRaw.pos : null;
+        const userGlobalRankRaw = globalRanking.find(r => r.email === userEmailLower);
+        rank = userGlobalRankRaw ? userGlobalRankRaw.pos : (globalRanking.length + 1);
+        totalUsersCount = globalRanking.length;
+
+        if (dept) {
+            const deptRanking = await db.query(
+                `SELECT LOWER(sd.email) as email, RANK() OVER (ORDER BY COALESCE(up.points, -1) DESC, sd.full_name ASC) as pos
+                 FROM staff_directory sd
+                 LEFT JOIN users u ON sd.email = u.email
+                 LEFT JOIN user_points up ON u.id = up.user_id
+                 WHERE sd.department = ?`,
+                [dept]
+            );
+            const userDeptRankRaw = deptRanking.find(r => r.email === userEmailLower);
+            departmentRank = userDeptRankRaw ? userDeptRankRaw.pos : null;
+        }
     }
 
     // Force refresh of levels to ensure we have the newly migrated data
@@ -104,7 +143,7 @@ const getUserProfileData = async (userId) => {
         badges: userBadges,
         rank: rank,
         departmentRank: departmentRank,
-        totalUsers: globalRanking.length
+        totalUsers: totalUsersCount
     };
 
     // 3. Resumen de progreso (Módulos completados)
@@ -175,7 +214,7 @@ const getUserProfileData = async (userId) => {
  * @desc    Obtener perfil completo de cualquier funcionario (Admin)
  * @access  Private/Admin
  */
-router.get('/:id/full-profile', authMiddleware, adminMiddleware, async (req, res) => {
+router.get('/:id/full-profile', authMiddleware, adminMiddleware, cacheMiddleware(300, true), async (req, res) => {
     try {
         console.log(`[ADMIN] Solicitando perfil completo de usuario ID: ${req.params.id} por admin: ${req.user.email}`);
         const profileData = await getUserProfileData(req.params.id);
@@ -189,7 +228,7 @@ router.get('/:id/full-profile', authMiddleware, adminMiddleware, async (req, res
     }
 });
 
-const { cacheMiddleware, clearCache } = require('../middleware/cache');
+
 
 /**
  * @route   GET /api/users/profile
