@@ -20,7 +20,9 @@ import {
     File,
     Award,
     Shield,
-    Type
+    Type,
+    List,
+    Trash
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import QuizEditorModal from '../components/QuizEditorModal';
@@ -59,7 +61,8 @@ export default function AdminLessonEditor() {
         file: null,
         video_source: 'file', // 'file' or 'url'
         is_required: false,
-        points: 0
+        points: 0,
+        bulletItems: [{ title: '', text: '' }]
     });
 
     useEffect(() => {
@@ -141,6 +144,7 @@ export default function AdminLessonEditor() {
                 title: item.title,
                 content_type: item.content_type,
                 data: dataVal,
+                bulletItems: item.content_type === 'bullets' ? (item.data?.items || [{ title: '', text: '' }]) : [{ title: '', text: '' }],
                 file: null,
                 video_source: item.data?.url ? 'url' : 'file',
                 is_required: !!item.is_required,
@@ -152,6 +156,7 @@ export default function AdminLessonEditor() {
                 title: '',
                 content_type: type,
                 data: '',
+                bulletItems: [{ title: '', text: '' }],
                 file: null,
                 video_source: 'file',
                 is_required: false,
@@ -184,10 +189,12 @@ export default function AdminLessonEditor() {
                 } else {
                     finalData = { file_url: editingItem?.data?.file_url };
                 }
-            } else if (['quiz', 'survey', 'assignment', 'note', 'heading'].includes(formData.content_type)) {
+            } else if (['quiz', 'survey', 'assignment', 'note', 'heading', 'bullets'].includes(formData.content_type)) {
                 // For simplified version, data might be description or instructions
                 if (['note', 'heading'].includes(formData.content_type)) {
                     finalData = { text: formData.data };
+                } else if (formData.content_type === 'bullets') {
+                    finalData = { items: formData.bulletItems.filter(b => b.title || b.text) };
                 } else {
                     // Prevenir pérdida de IDs de quiz/survey/assignment anteriores
                     const currentData = typeof editingItem?.data === 'string' ? JSON.parse(editingItem.data) : (editingItem?.data || {});
@@ -363,6 +370,7 @@ export default function AdminLessonEditor() {
             case 'assignment': return <Upload className="w-5 h-5 text-pink-400" />;
             case 'note': return <Shield className="w-5 h-5 text-primary-400" />;
             case 'heading': return <Type className="w-5 h-5 text-white" />;
+            case 'bullets': return <List className="w-5 h-5 text-sky-400" />;
             default: return <FileText className="w-5 h-5 text-gray-400" />;
         }
     };
@@ -378,7 +386,8 @@ export default function AdminLessonEditor() {
             survey: 'Encuesta',
             assignment: 'Tarea',
             note: 'Nota de Aprendizaje',
-            heading: 'Título de Sección'
+            heading: 'Título de Sección',
+            bullets: 'Viñetas'
         };
         return labels[type] || type;
     };
@@ -435,6 +444,7 @@ export default function AdminLessonEditor() {
                     { type: 'assignment', label: 'Tarea', icon: Upload, color: 'text-pink-400' },
                     { type: 'note', label: 'Nota', icon: Shield, color: 'text-primary-400' },
                     { type: 'heading', label: 'Título', icon: Type, color: 'text-white' },
+                    { type: 'bullets', label: 'Viñetas', icon: List, color: 'text-sky-400' },
                 ].map((action) => (
                     <button
                         key={action.type}
@@ -704,6 +714,58 @@ export default function AdminLessonEditor() {
                                         value={formData.data}
                                         onChange={e => setFormData({ ...formData, data: e.target.value })}
                                     />
+                                </div>
+                            )}
+
+                            {formData.content_type === 'bullets' && (
+                                <div className="space-y-4">
+                                    <label className="text-sm font-medium text-gray-300">Elementos de la Lista</label>
+                                    {formData.bulletItems.map((bullet, idx) => (
+                                        <div key={idx} className="flex gap-3 items-start bg-slate-900/50 p-3 rounded-xl border border-white/5">
+                                            <div className="flex-1 space-y-3">
+                                                <input
+                                                    type="text"
+                                                    placeholder="Título de la viñeta (opcional)"
+                                                    className="input-field bg-slate-950/50 border-white/10 focus:border-primary-500 font-bold"
+                                                    value={bullet.title}
+                                                    onChange={e => {
+                                                        const newItems = [...formData.bulletItems];
+                                                        newItems[idx].title = e.target.value;
+                                                        setFormData({ ...formData, bulletItems: newItems });
+                                                    }}
+                                                />
+                                                <textarea
+                                                    rows="2"
+                                                    placeholder="Descripción de la viñeta..."
+                                                    className="input-field bg-slate-950/50 border-white/10 focus:border-primary-500 text-sm"
+                                                    value={bullet.text}
+                                                    onChange={e => {
+                                                        const newItems = [...formData.bulletItems];
+                                                        newItems[idx].text = e.target.value;
+                                                        setFormData({ ...formData, bulletItems: newItems });
+                                                    }}
+                                                />
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const newItems = formData.bulletItems.filter((_, i) => i !== idx);
+                                                    if (newItems.length === 0) newItems.push({ title: '', text: '' });
+                                                    setFormData({ ...formData, bulletItems: newItems });
+                                                }}
+                                                className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg mt-1 transition-colors"
+                                            >
+                                                <Trash className="w-5 h-5" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData({ ...formData, bulletItems: [...formData.bulletItems, { title: '', text: '' }] })}
+                                        className="text-xs font-bold uppercase tracking-widest text-sky-400 hover:text-sky-300 flex items-center gap-1 mt-2"
+                                    >
+                                        <Plus className="w-3 h-3" /> Agregar viñeta
+                                    </button>
                                 </div>
                             )}
 

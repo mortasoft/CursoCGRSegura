@@ -521,6 +521,20 @@ export default function LessonView() {
                     </div>
                 );
 
+            case 'bullets':
+                return (
+                    <div className="card p-5 md:p-7 prose prose-invert prose-slate max-w-none bg-slate-800/30 border-white/5 shadow-inner">
+                        <ul className="list-disc pl-5 space-y-3 text-gray-300 marker:text-primary-500 marker:text-xl">
+                            {(data.items || []).map((bullet, idx) => (
+                                <li key={idx} className="leading-relaxed pl-1">
+                                    {bullet.title && <strong className="text-white font-bold mr-1">{bullet.title}:</strong>}
+                                    <span>{typeof bullet.text === 'string' ? bullet.text.split('\n').map((line, i) => <span key={i}>{line}<br/></span>) : bullet.text}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                );
+
             case 'note':
                 return (
                     <div className="p-6 rounded-2xl bg-primary-500/5 border border-primary-500/10 flex gap-5 items-start animate-fade-in shadow-[inset_0_0_20px_rgba(59,130,246,0.02)]">
