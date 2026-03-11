@@ -322,6 +322,8 @@ router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
             requires_previous = false
         } = req.body;
 
+        const formattedReleaseDate = release_date ? new Date(release_date).toISOString().slice(0, 19).replace('T', ' ') : null;
+
         const result = await db.query(
             `INSERT INTO modules (module_number, title, description, month, duration_minutes, is_published, generates_certificate, requires_previous, release_date, order_index, image_url)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -334,7 +336,7 @@ router.post('/', authMiddleware, adminMiddleware, async (req, res) => {
                 is_published ?? false,
                 generates_certificate ?? true,
                 requires_previous ?? false,
-                release_date ?? null,
+                formattedReleaseDate,
                 order_index ?? module_number,
                 image_url ?? null
             ]
@@ -373,6 +375,8 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
         } = req.body;
         const moduleId = req.params.id;
 
+        const formattedReleaseDate = release_date ? new Date(release_date).toISOString().slice(0, 19).replace('T', ' ') : null;
+
         // Invalida caché
         await clearCache(`cache:/api/modules/${moduleId}*`);
         await clearCache('cache:/api/modules*');
@@ -392,7 +396,7 @@ router.put('/:id', authMiddleware, adminMiddleware, async (req, res) => {
                 is_published ?? false,
                 generates_certificate ?? true,
                 requires_previous ?? false,
-                release_date ?? null,
+                formattedReleaseDate,
                 order_index ?? module_number,
                 image_url ?? null,
                 moduleId
