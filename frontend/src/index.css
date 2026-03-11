@@ -108,6 +108,19 @@
   animation: slideUp 0.4s ease-out forwards;
 }
 
+@keyframes progress-energy-flow {
+  0% { transform: translateX(-100%) skewX(-15deg); opacity: 0; }
+  20% { opacity: 0.5; }
+  50% { opacity: 0.8; }
+  80% { opacity: 0.5; }
+  100% { transform: translateX(250%) skewX(-15deg); opacity: 0; }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { filter: drop-shadow(0 0 2px rgba(56, 74, 153, 0.4)); }
+  50% { filter: drop-shadow(0 0 8px rgba(229, 123, 60, 0.6)); }
+}
+
 @keyframes skeleton-shimmer {
   0% {
     background-position: -200% 0;
@@ -241,7 +254,23 @@
   }
 
   .progress-fill {
-    @apply h-full bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full transition-all duration-1000 ease-out;
+    @apply h-full bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full transition-all duration-1000 ease-out relative overflow-hidden;
+    animation: pulse-glow 3s infinite ease-in-out;
+  }
+
+  .progress-fill::after {
+    content: "";
+    @apply absolute inset-0 w-[40%] h-full;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.2) 20%,
+      rgba(255, 255, 255, 0.6) 50%,
+      rgba(255, 255, 255, 0.2) 80%,
+      transparent
+    );
+    animation: progress-energy-flow 2.5s infinite ease-in-out;
+    filter: blur(1px);
   }
 }
 

@@ -252,9 +252,9 @@ export default function Leaderboard() {
                                 </div>
                                 <div className="col-span-3 text-right">
                                     <p className="text-xl font-black text-white">{dept.total_points.toLocaleString()} PTS</p>
-                                    <div className="h-1 w-full bg-white/5 rounded-full mt-2 overflow-hidden">
+                                    <div className="progress-bar h-1 mt-2">
                                         <div 
-                                            className="h-full bg-gradient-to-r from-primary-500 to-secondary-500" 
+                                            className="progress-fill" 
                                             style={{ width: `${(dept.total_points / (filteredDepts[0]?.total_points || 1)) * 100}%` }}
                                         ></div>
                                     </div>

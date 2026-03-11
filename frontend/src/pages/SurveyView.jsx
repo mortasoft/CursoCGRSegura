@@ -60,6 +60,15 @@ export default function SurveyView() {
     const [submitting, setSubmitting] = useState(false);
     const [completed, setCompleted] = useState(false);
     const [pointsEarned, setPointsEarned] = useState(0);
+    const [showIntro, setShowIntro] = useState(() => {
+        const saved = localStorage.getItem(`survey_intro_${id}`);
+        return saved === 'false' ? false : true;
+    });
+
+    const handleStart = () => {
+        setShowIntro(false);
+        localStorage.setItem(`survey_intro_${id}`, 'false');
+    };
 
     useEffect(() => {
         localStorage.setItem(`survey_answers_${id}`, JSON.stringify(answers));
@@ -168,13 +177,13 @@ export default function SurveyView() {
 
     if (completed) {
         return (
-            <div className="max-w-3xl mx-auto space-y-8 animate-fade-in pb-20">
+            <div className="max-w-3xl mx-auto space-y-6 animate-fade-in pb-10">
                 <div className="card overflow-hidden border-t-8 border-yellow-500 bg-yellow-500/5">
-                    <div className="p-12 text-center space-y-8">
-                        <div className="flex justify-center">
-                            <div className="w-48 h-48 rounded-full bg-yellow-500/10 flex items-center justify-center ring-[12px] ring-yellow-500/5 mb-6 backdrop-blur-md relative shadow-[0_0_50px_rgba(234,179,8,0.15)]">
+                    <div className="p-6 md:p-8 text-center space-y-4">
+                        <div className="flex justify-center -mt-2">
+                            <div className="w-32 h-32 md:w-40 md:h-40 rounded-full bg-yellow-500/10 flex items-center justify-center ring-[8px] ring-yellow-500/5 mb-4 backdrop-blur-md relative shadow-[0_0_40px_rgba(234,179,8,0.15)]">
                                 <CyberCat
-                                    className="w-32 h-32 animate-float-subtle"
+                                    className="w-24 h-24 md:w-28 md:h-28 animate-float-subtle"
                                     variant="success"
                                     color="#eab308"
                                 />
@@ -182,23 +191,23 @@ export default function SurveyView() {
                             </div>
                         </div>
 
-                        <div className="space-y-3">
-                            <h1 className="text-4xl font-black text-white uppercase tracking-tight">¡Encuesta Completada!</h1>
-                            <p className="text-gray-400 font-bold uppercase tracking-widest text-sm">
+                        <div className="space-y-1">
+                            <h1 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight">¡Encuesta Completada!</h1>
+                            <p className="text-gray-400 font-bold uppercase tracking-widest text-xs md:text-sm">
                                 Tu retroalimentación es fundamental para mejorar la plataforma.
                             </p>
                         </div>
 
                         {pointsEarned > 0 && (
-                            <div className="inline-flex items-center gap-2 px-8 py-3 bg-secondary-500/20 border border-secondary-500/30 rounded-full text-secondary-500 font-black text-sm animate-bounce">
-                                <Star className="w-5 h-5 fill-secondary-500" /> +<PointsCounter target={pointsEarned} /> Puntos
+                            <div className="inline-flex items-center gap-2 px-5 py-1.5 bg-secondary-500/20 border border-secondary-500/30 rounded-full text-secondary-500 font-black text-[11px] animate-bounce">
+                                <Star className="w-3.5 h-3.5 fill-secondary-500" /> +<PointsCounter target={pointsEarned} /> Puntos
                             </div>
                         )}
 
-                        <div className="pt-8">
+                        <div className="pt-4 flex flex-col items-center">
                             <button
                                 onClick={() => navigate(-1)}
-                                className="px-12 py-4 bg-white text-slate-900 rounded-2xl font-black uppercase tracking-widest text-xs hover:scale-105 transition-all shadow-xl"
+                                className="px-10 py-3.5 bg-white text-slate-900 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:scale-105 transition-all shadow-xl"
                             >
                                 Volver a la Lección
                             </button>
@@ -209,71 +218,132 @@ export default function SurveyView() {
         );
     }
 
+    if (showIntro) {
+        return (
+            <div className="w-full px-4 sm:px-6 lg:px-12 space-y-8 animate-fade-in py-10">
+                <div className="max-w-4xl mx-auto space-y-8">
+                    <div className="space-y-4">
+                        <button
+                            onClick={() => navigate(-1)}
+                            className="flex items-center gap-2 text-gray-500 hover:text-white transition-colors text-xs font-black uppercase tracking-widest"
+                        >
+                            <ArrowLeft className="w-4 h-4" /> Cancelar y Volver
+                        </button>
+                        <h1 className="text-4xl font-black text-white uppercase tracking-tight leading-none">
+                            {survey.title}
+                        </h1>
+                        <div className="h-1 w-24 bg-gradient-to-r from-yellow-500 to-amber-500 rounded-full"></div>
+                    </div>
+
+                    <div className="card p-10 space-y-8 border-yellow-500/20 shadow-2xl shadow-yellow-500/5 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-yellow-500/5 rounded-bl-full blur-3xl"></div>
+
+                        <div className="relative z-10 space-y-6">
+                            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-yellow-500/10 rounded-full border border-yellow-500/20">
+                                <ClipboardList className="w-4 h-4 text-yellow-500" />
+                                <span className="text-[10px] font-black text-yellow-400 uppercase tracking-widest">Instrucciones de la Encuesta</span>
+                            </div>
+
+                            <p className="text-gray-300 text-lg md:text-xl font-medium leading-relaxed italic border-l-4 border-yellow-500/40 pl-8 py-2">
+                                {survey.description || 'Tu opinión es muy valiosa para nosotros. Por favor, tómate un momento para responder estas preguntas.'}
+                            </p>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-white/5">
+                                <div className="flex items-center gap-4 text-gray-400">
+                                    <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10">
+                                        <MessageSquare className="w-6 h-6 text-yellow-400" />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">Puntos por Completar</p>
+                                        <p className="text-lg font-bold text-white">{survey.points || 0} PTS</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-4 text-gray-400">
+                                    <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10">
+                                        <Star className="w-6 h-6 text-yellow-400" />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">Total de Preguntas</p>
+                                        <p className="text-lg font-bold text-white">{questions.length} Ítems</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex justify-center pt-4">
+                        <button
+                            onClick={handleStart}
+                            className="px-12 py-5 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black rounded-2xl font-black uppercase tracking-[0.2em] text-sm hover:from-yellow-500 hover:to-yellow-400 hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-yellow-500/40 group flex items-center gap-3"
+                        >
+                            Iniciar Encuesta <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <div className="max-w-4xl mx-auto space-y-8 animate-fade-in pb-20">
+        <div className="w-full px-4 sm:px-6 lg:px-12 space-y-4 animate-fade-in pb-10">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="space-y-1">
                     <button
                         onClick={() => navigate(-1)}
-                        className="flex items-center gap-2 text-gray-500 hover:text-white transition-colors text-[10px] font-black uppercase tracking-widest mb-2"
+                        className="flex items-center gap-2 text-gray-500 hover:text-white transition-colors text-[9px] font-black uppercase tracking-widest mb-1"
                     >
-                        <ArrowLeft className="w-4 h-4" /> Salir de la encuesta
+                        <ArrowLeft className="w-3.5 h-3.5" /> Salir de la encuesta
                     </button>
-                    <h1 className="text-2xl font-black text-white uppercase tracking-tight">{survey.title}</h1>
+                    <h1 className="text-xl md:text-2xl font-black text-white uppercase tracking-tight">{survey.title}</h1>
                 </div>
-                <div className="text-right">
-                    <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Pregunta</p>
-                    <p className="text-xl font-black text-white">{currentQuestionIndex + 1} <span className="text-gray-600">/ {questions.length}</span></p>
+                <div className="text-left md:text-right">
+                    <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest">Pregunta</p>
+                    <p className="text-lg md:text-xl font-black text-white">{currentQuestionIndex + 1} <span className="text-gray-600">/ {questions.length}</span></p>
                 </div>
             </div>
 
             {/* Progress Bar */}
             <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden p-0.5 border border-white/5 shadow-inner">
                 <div
-                    className="h-full bg-gradient-to-r from-yellow-500 to-amber-500 rounded-full transition-all duration-500 shadow-[0_0_10px_rgba(234,179,8,0.3)]"
+                    className="h-full bg-gradient-to-r from-yellow-500 to-amber-500 rounded-full transition-all duration-500 shadow-[0_0_10px_rgba(234,179,8,0.2)]"
                     style={{ width: `${progress}%` }}
                 ></div>
             </div>
 
             {/* Question Card */}
-            <div className="card p-8 md:p-12 space-y-8 relative overflow-hidden">
+            <div className="card px-4 md:px-8 py-3 md:py-4 space-y-2 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-500/5 rounded-bl-full blur-2xl"></div>
 
-                <div className="space-y-6 relative z-10">
-                    <div className="flex flex-col gap-3">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-yellow-500/10 rounded-full border border-yellow-500/20 self-start">
-                            <ClipboardList className="w-3.5 h-3.5 text-yellow-500" />
-                            <span className="text-[9px] font-black text-yellow-400 uppercase tracking-widest">Formulario de retroalimentación</span>
+                <div className="space-y-3 relative z-10">
+                    <div className="flex flex-col gap-2">
+                        <div className="inline-flex items-center gap-2 px-2.5 py-0.5 bg-yellow-500/10 rounded-full border border-yellow-500/20 self-start">
+                            <ClipboardList className="w-3 h-3 text-yellow-500" />
+                            <span className="text-[8px] font-black text-yellow-400 uppercase tracking-widest">Formulario de retroalimentación</span>
                         </div>
-                        {survey.description && (
-                            <p className="text-gray-300 text-sm md:text-base font-semibold italic border-l-4 border-yellow-500/40 pl-4 py-1 max-w-2xl leading-relaxed">
-                                {survey.description}
-                            </p>
-                        )}
                     </div>
 
-                    <h2 className="text-2xl md:text-3xl font-bold text-white leading-tight">
+                    <h2 className="text-sm md:text-base font-bold text-white leading-relaxed tracking-tight">
                         {currentQuestion.question_text}
                         {currentQuestion.is_required && <span className="text-red-500 ml-1">*</span>}
                     </h2>
                 </div>
 
                 {/* Question Inputs */}
-                <div className="mt-12 relative z-10">
+                <div className="mt-2 relative z-10">
                     {currentQuestion.question_type === 'multiple_choice' && (
-                        <div className="grid gap-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             {currentQuestion.options.map((option) => (
                                 <button
                                     key={option.id}
                                     onClick={() => handleAnswerChange(currentQuestion.id, option.id, 'multiple_choice')}
-                                    className={`w-full p-6 text-left rounded-2xl border-2 transition-all duration-200 flex items-center justify-between ${answers[currentQuestion.id]?.optionId === option.id
+                                    className={`w-full p-4 md:p-6 text-left rounded-2xl border-2 transition-all duration-200 flex items-center justify-between ${answers[currentQuestion.id]?.optionId === option.id
                                         ? 'bg-yellow-500/10 border-yellow-500 text-white shadow-[0_0_30px_rgba(234,179,8,0.15)]'
                                         : 'bg-slate-900/50 border-white/5 text-gray-400 hover:border-white/10 hover:bg-slate-900'
                                         }`}
                                 >
-                                    <span className="font-bold">{option.option_text}</span>
-                                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${answers[currentQuestion.id]?.optionId === option.id
+                                    <span className="text-sm md:text-base font-bold">{option.option_text}</span>
+                                    <div className={`w-5 h-5 md:w-6 md:h-6 rounded-full border-2 flex items-center justify-center transition-all ${answers[currentQuestion.id]?.optionId === option.id
                                         ? 'border-yellow-400 bg-yellow-400'
                                         : 'border-gray-700'
                                         }`}>
@@ -324,12 +394,12 @@ export default function SurveyView() {
                 </div>
             </div>
 
-            {/* Navigation Footer */}
-            <div className="flex items-center justify-between pt-4">
+            {/* Navigation Buttons - Normal Flow */}
+            <div className="flex items-center justify-between py-6 mt-4 border-t border-white/5">
                 <button
                     onClick={() => setCurrentQuestionIndex(prev => Math.max(0, prev - 1))}
                     disabled={currentQuestionIndex === 0}
-                    className="flex items-center gap-2 px-6 py-3 text-sm font-black text-gray-500 uppercase tracking-widest hover:text-white transition-colors disabled:opacity-0"
+                    className="flex items-center gap-2 px-8 py-3 bg-slate-800 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] border border-white/10 hover:bg-slate-700 hover:border-yellow-500/50 transition-all disabled:opacity-0"
                 >
                     <ChevronLeft className="w-5 h-5" /> Anterior
                 </button>
@@ -338,7 +408,7 @@ export default function SurveyView() {
                     <button
                         onClick={handleSubmit}
                         disabled={submitting}
-                        className="px-10 py-4 bg-yellow-500 text-black rounded-2xl font-black uppercase tracking-widest text-sm hover:scale-105 active:scale-95 transition-all shadow-xl shadow-yellow-500/20 disabled:opacity-50"
+                        className="px-10 py-3.5 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black rounded-2xl font-black uppercase tracking-widest text-xs hover:from-yellow-500 hover:to-yellow-400 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-yellow-500/20 disabled:opacity-50"
                     >
                         {submitting ? 'Enviando...' : 'Finalizar Encuesta'}
                     </button>
@@ -352,9 +422,9 @@ export default function SurveyView() {
                             playNextSound();
                             setCurrentQuestionIndex(prev => prev + 1);
                         }}
-                        className="flex items-center gap-2 px-10 py-4 bg-slate-800 text-white rounded-2xl font-black uppercase tracking-widest text-xs border border-white/10 hover:bg-slate-700 transition-all group"
+                        className="flex items-center gap-2 px-10 py-3.5 bg-gradient-to-r from-yellow-600 to-yellow-500 text-black rounded-2xl font-black uppercase tracking-widest text-xs hover:from-yellow-500 hover:to-yellow-400 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-yellow-500/20 group"
                     >
-                        Siguiente <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                        Siguiente <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </button>
                 )}
             </div>

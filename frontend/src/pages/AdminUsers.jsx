@@ -367,6 +367,8 @@ export default function AdminUsers() {
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-1">Rol en Sistema</label>
                                     <select
+                                        name="role"
+                                        id="role"
                                         value={editingUser.role}
                                         onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value })}
                                         className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-primary-500"
@@ -378,6 +380,8 @@ export default function AdminUsers() {
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest px-1">Estado</label>
                                     <select
+                                        name="is_active"
+                                        id="is_active"
                                         value={editingUser.is_active}
                                         onChange={(e) => setEditingUser({ ...editingUser, is_active: e.target.value === 'true' || e.target.value === '1' })}
                                         className="w-full bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-primary-500"
@@ -393,6 +397,9 @@ export default function AdminUsers() {
                                 <div className="relative">
                                     <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" />
                                     <select
+                                        name="department"
+                                        id="department"
+                                        autoComplete="off"
                                         value={editingUser.department || ''}
                                         onChange={(e) => setEditingUser({ ...editingUser, department: e.target.value })}
                                         className="w-full bg-slate-900 border border-white/10 rounded-xl pl-12 pr-4 py-3 text-sm text-white focus:outline-none focus:border-primary-500 appearance-none"
@@ -411,6 +418,10 @@ export default function AdminUsers() {
                                     <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600" />
                                     <input
                                         type="text"
+                                        name="position"
+                                        id="position"
+                                        autoComplete="off"
+                                        data-lpignore="true"
                                         value={editingUser.position || ''}
                                         onChange={(e) => setEditingUser({ ...editingUser, position: e.target.value })}
                                         className="w-full bg-slate-900 border border-white/10 rounded-xl pl-12 pr-4 py-3 text-sm text-white focus:outline-none focus:border-primary-500"

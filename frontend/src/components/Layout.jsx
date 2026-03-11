@@ -63,8 +63,8 @@ export default function Layout() {
 
             {/* Navbar */}
             <nav className="bg-[#0d1127]/90 backdrop-blur-md border-b border-primary-500/10 sticky top-0 z-50">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex justify-between items-center h-16">
+                <div className="w-full px-4 sm:px-6 lg:px-12">
+                    <div className="flex justify-between items-center h-20">
                         {/* Logo */}
                         <div className="flex items-center gap-3 cursor-pointer group" onClick={() => navigate('/dashboard')}>
                             <div className="w-16 h-16 flex items-center justify-center transition-transform group-hover:scale-105">
@@ -219,47 +219,49 @@ export default function Layout() {
             </nav>
 
             {/* Main Content */}
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 md:py-4 flex-grow">
+            <main className="w-full px-4 sm:px-6 lg:px-12 py-2 md:py-6 flex-grow">
                 <Outlet />
             </main>
 
-            {/* Footer */}
-            <footer className="mt-auto border-t border-primary-500/10 bg-[#0d1127]/50 backdrop-blur-sm">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                    <div className="flex flex-col sm:flex-row justify-between items-center gap-6">
-                        <div className="flex items-center gap-4 opacity-70">
-                            <img src="/images/logo-cgr-blanco.webp" alt="CGR Logo" className="h-8 object-contain" />
-                            <div className="h-8 w-[1px] bg-white/10 hidden sm:block"></div>
-                            <p className="text-[10px] font-bold text-gray-400 leading-tight uppercase tracking-wider">
-                                Contraloría General de la República | Costa Rica
-                            </p>
-                        </div>
-                        <div className="text-right flex flex-col items-end gap-1">
-                            <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
-                                Version {import.meta.env.VITE_APP_VERSION}
-                            </p>
-                            {user?.role === 'admin' && (
-                                <div className="flex items-center gap-2 px-3 py-1 bg-slate-900/50 rounded-full border border-white/5 shadow-lg mt-1">
-                                    <span className={`text-[8px] font-black uppercase tracking-[0.2em] ${!viewAsStudent ? 'text-secondary-500' : 'text-gray-500'}`}>
-                                        {!viewAsStudent ? 'Panel Administrador' : 'Vista Estudiante'}
-                                    </span>
-                                    <button
-                                        onClick={() => {
-                                            const newVal = !viewAsStudent;
-                                            setViewAsStudent(newVal);
-                                            toast.success(newVal ? 'Vista de estudiante activada' : 'Vista de administrador activada');
-                                            setTimeout(() => window.location.reload(), 300);
-                                        }}
-                                        className={`relative w-8 h-4 rounded-full transition-colors duration-300 focus:outline-none ${!viewAsStudent ? 'bg-secondary-600' : 'bg-slate-700'}`}
-                                    >
-                                        <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow-sm transition-transform duration-300 ${!viewAsStudent ? 'translate-x-4.5' : 'translate-x-0.5'}`}></div>
-                                    </button>
-                                </div>
-                            )}
+            {/* Footer - Hidden in Quiz/Survey views to avoid overlap */}
+            {!location.pathname.includes('/quiz/') && !location.pathname.includes('/survey/') && (
+                <footer className="mt-auto border-t border-primary-500/10 bg-[#0d1127]/50 backdrop-blur-sm">
+                    <div className="w-full px-4 sm:px-6 lg:px-12 py-6">
+                        <div className="flex flex-col sm:flex-row justify-between items-center gap-6">
+                            <div className="flex items-center gap-4 opacity-70">
+                                <img src="/images/logo-cgr-blanco.webp" alt="CGR Logo" className="h-8 object-contain" />
+                                <div className="h-8 w-[1px] bg-white/10 hidden sm:block"></div>
+                                <p className="text-[10px] font-bold text-gray-400 leading-tight uppercase tracking-wider">
+                                    Contraloría General de la República | Costa Rica
+                                </p>
+                            </div>
+                            <div className="text-right flex flex-col items-end gap-1">
+                                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
+                                    Version {import.meta.env.VITE_APP_VERSION}
+                                </p>
+                                {user?.role === 'admin' && (
+                                    <div className="flex items-center gap-2 px-3 py-1 bg-slate-900/50 rounded-full border border-white/5 shadow-lg mt-1">
+                                        <span className={`text-[8px] font-black uppercase tracking-[0.2em] ${!viewAsStudent ? 'text-secondary-500' : 'text-gray-500'}`}>
+                                            {!viewAsStudent ? 'Panel Administrador' : 'Vista Estudiante'}
+                                        </span>
+                                        <button
+                                            onClick={() => {
+                                                const newVal = !viewAsStudent;
+                                                setViewAsStudent(newVal);
+                                                toast.success(newVal ? 'Vista de estudiante activada' : 'Vista de administrador activada');
+                                                setTimeout(() => window.location.reload(), 300);
+                                            }}
+                                            className={`relative w-8 h-4 rounded-full transition-colors duration-300 focus:outline-none ${!viewAsStudent ? 'bg-secondary-600' : 'bg-slate-700'}`}
+                                        >
+                                            <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full shadow-sm transition-transform duration-300 ${!viewAsStudent ? 'translate-x-4.5' : 'translate-x-0.5'}`}></div>
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
-                </div>
-            </footer>
+                </footer>
+            )}
 
             {/* Gamification Modals - Ordered by priority: Badge > Module > LevelUp */}
             <LevelUpModal

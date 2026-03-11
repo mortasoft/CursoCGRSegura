@@ -68,13 +68,20 @@ export default function QuizView() {
     }); // { questionId: optionId }
     const [results, setResults] = useState(null);
     const [submitting, setSubmitting] = useState(false);
-    const [startTime] = useState(() => {
+    const [showIntro, setShowIntro] = useState(true); // Siempre mostrar intro por defecto al montar el componente
+
+    const [startTime, setStartTime] = useState(() => {
         const saved = localStorage.getItem(`quiz_start_${id}`);
-        if (saved) return parseInt(saved);
-        const now = Date.now();
-        localStorage.setItem(`quiz_start_${id}`, now.toString());
-        return now;
+        return saved ? parseInt(saved) : null;
     });
+
+    const handleStart = () => {
+        const now = Date.now();
+        setStartTime(now);
+        setShowIntro(false);
+        localStorage.setItem(`quiz_start_${id}`, now.toString());
+        localStorage.setItem(`quiz_intro_${id}`, 'false');
+    };
 
     useEffect(() => {
         localStorage.setItem(`quiz_answers_${id}`, JSON.stringify(answers));
@@ -162,7 +169,8 @@ export default function QuizView() {
 
         try {
             setSubmitting(true);
-            const timeSpent = Math.round((Date.now() - startTime) / 60000);
+            const effectiveStartTime = startTime || Date.now();
+            const timeSpent = Math.round((Date.now() - effectiveStartTime) / 60000);
             const response = await axios.post(`${API_URL}/quizzes/${id}/submit`, {
                 answers,
                 timeSpent
@@ -171,7 +179,25 @@ export default function QuizView() {
             });
 
             if (response.data.success) {
-                setResults(response.data);
+                // Si el servidor solo responde que ya se aprobó antes (sin los stats),
+                // forzamos la obtención de los datos completos del último intento.
+                if (response.data.earnedPoints === undefined && response.data.passed) {
+                    try {
+                        const lastAttemptRes = await axios.get(`${API_URL}/quizzes/${id}/last-attempt`, {
+                            headers: { Authorization: `Bearer ${token}` }
+                        });
+                        if (lastAttemptRes.data.success) {
+                            setResults(lastAttemptRes.data.results);
+                        } else {
+                            setResults(response.data);
+                        }
+                    } catch (e) {
+                        setResults(response.data);
+                    }
+                } else {
+                    setResults(response.data);
+                }
+
                 // Clear persistence on success
                 localStorage.removeItem(`quiz_answers_${id}`);
                 localStorage.removeItem(`quiz_index_${id}`);
@@ -205,8 +231,9 @@ export default function QuizView() {
                     playSound('/sounds/winner.mp3');
                     toast.success('¡Felicidades! Has aprobado.', { id: 'quiz-result' });
                 } else {
-                    playSound('/sounds/failure.mp3');
                     toast.error('No has alcanzado la nota mínima.', { id: 'quiz-result' });
+                    // Limpiar persistencia de intro si falló, para que al reintentar o volver vea la intro
+                    localStorage.removeItem(`quiz_intro_${id}`);
                 }
 
                 window.scrollTo(0, 0);
@@ -227,18 +254,19 @@ export default function QuizView() {
     const { quiz, questions } = quizData;
     const currentQuestion = questions[currentQuestionIndex];
     const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
+    const totalPoints = questions.reduce((acc, q) => acc + (q.points || 0), 0);
 
     // View: Results
     if (results) {
         return (
-            <div className="max-w-4xl mx-auto space-y-8 animate-fade-in pb-20">
+            <div className="max-w-4xl mx-auto space-y-6 animate-fade-in pb-10">
                 <div className={`card overflow-hidden border-t-8 ${results.passed ? 'border-green-500 bg-green-500/5' : 'border-red-500 bg-red-500/5'}`}>
-                    <div className="p-10 text-center space-y-6">
-                        <div className="flex justify-center -mt-4">
+                    <div className="p-6 md:p-8 text-center space-y-4">
+                        <div className="flex justify-center -mt-2">
                             {results.passed ? (
-                                <div className="w-48 h-48 rounded-full bg-green-500/10 flex items-center justify-center ring-[12px] ring-green-500/5 mb-6 backdrop-blur-md relative shadow-[0_0_50px_rgba(34,197,94,0.15)]">
+                                <div className="w-32 h-32 md:w-40 md:h-40 rounded-full bg-green-500/10 flex items-center justify-center ring-[8px] ring-green-500/5 mb-4 backdrop-blur-md relative shadow-[0_0_40px_rgba(34,197,94,0.15)]">
                                     <CyberCat
-                                        className="w-32 h-32 animate-float-subtle"
+                                        className="w-24 h-24 md:w-28 md:h-28 animate-float-subtle"
                                         variant="success"
                                         color="#22c55e"
                                         showMedal={true}
@@ -247,9 +275,9 @@ export default function QuizView() {
                                     <div className="absolute inset-0 rounded-full animate-pulse bg-green-500/5 blur-xl"></div>
                                 </div>
                             ) : (
-                                <div className="w-48 h-48 rounded-full bg-red-500/10 flex items-center justify-center ring-[12px] ring-red-500/5 mb-6 backdrop-blur-md relative shadow-[0_0_50px_rgba(239,68,68,0.15)]">
+                                <div className="w-32 h-32 md:w-40 md:h-40 rounded-full bg-red-500/10 flex items-center justify-center ring-[8px] ring-red-500/5 mb-4 backdrop-blur-md relative shadow-[0_0_40px_rgba(239,68,68,0.15)]">
                                     <CyberCat
-                                        className="w-32 h-32 animate-panic"
+                                        className="w-24 h-24 md:w-28 md:h-28 animate-panic"
                                         variant="panic"
                                         color="#ef4444"
                                     />
@@ -258,8 +286,8 @@ export default function QuizView() {
                             )}
                         </div>
 
-                        <div className="space-y-2">
-                            <h1 className="text-4xl font-black text-white uppercase tracking-tight">
+                        <div className="space-y-1">
+                            <h1 className="text-2xl md:text-3xl font-black text-white uppercase tracking-tight">
                                 {results.passed ? 'Evaluación Aprobada' : 'Resultado Insuficiente'}
                             </h1>
                             <p className="text-gray-400 font-bold uppercase tracking-widest text-sm">
@@ -268,44 +296,47 @@ export default function QuizView() {
                         </div>
 
                         {results.pointsAwarded > 0 && (
-                            <div className="space-y-3 flex flex-col items-center">
-                                <div className="inline-flex items-center gap-2 px-6 py-2 bg-secondary-500/20 border border-secondary-500/30 rounded-full text-secondary-500 font-black text-sm animate-bounce">
-                                    <Star className="w-4 h-4 fill-secondary-500" /> +<PointsCounter target={results.pointsAwarded} /> PUNTOS DE EXPERIENCIA
+                            <div className="space-y-2 flex flex-col items-center">
+                                <div className="inline-flex items-center gap-2 px-5 py-1.5 bg-secondary-500/20 border border-secondary-500/30 rounded-full text-secondary-500 font-black text-[11px] animate-bounce">
+                                    <Star className="w-3.5 h-3.5 fill-secondary-500" /> +<PointsCounter target={results.pointsAwarded} /> PTS DE EXPERIENCIA
                                 </div>
                                 {results.penaltyApplied > 0 && (
-                                    <p className="text-[10px] font-black text-red-500 uppercase tracking-widest flex items-center gap-1.5 bg-red-500/5 px-3 py-1 rounded-lg border border-red-500/10">
-                                        <AlertTriangle className="w-3 h-3" /> Penalización de {(results.attemptNumber - 1) * 10}% por intentos adicionales
+                                    <p className="text-[9px] font-black text-red-500 uppercase tracking-widest flex items-center gap-1.5 bg-red-500/5 px-2.5 py-1 rounded-lg border border-red-500/10">
+                                        <AlertTriangle className="w-2.5 h-2.5" /> Penalización de {(results.attemptNumber - 1) * 10}% por intentos
                                     </p>
                                 )}
                             </div>
                         )}
 
-                        <div className="grid grid-cols-3 gap-4 max-w-lg mx-auto pt-4">
-                            <div className="bg-slate-900/50 p-4 rounded-2xl border border-white/5">
-                                <p className="text-2xl font-black text-white">{results.earnedPoints}/{results.totalPoints}</p>
+                        <div className="grid grid-cols-3 gap-3 max-w-lg mx-auto pt-2">
+                            <div className="bg-slate-900/50 p-3 md:p-4 rounded-2xl border border-white/5">
+                                <p className="text-xl md:text-2xl font-black text-white">{results.earnedPoints}/{results.totalPoints}</p>
                                 <p className="text-[10px] text-gray-500 font-bold uppercase">Puntos</p>
                             </div>
-                            <div className="bg-slate-900/50 p-4 rounded-2xl border border-white/5">
-                                <p className="text-2xl font-black text-white">{quiz.passing_score}%</p>
+                            <div className="bg-slate-900/50 p-3 md:p-4 rounded-2xl border border-white/5">
+                                <p className="text-xl md:text-2xl font-black text-white">{quiz.passing_score}%</p>
                                 <p className="text-[10px] text-gray-500 font-bold uppercase">Requerido</p>
                             </div>
-                            <div className="bg-slate-900/50 p-4 rounded-2xl border border-white/5">
-                                <p className="text-2xl font-black text-white">{results.attemptNumber}/{quiz.max_attempts}</p>
+                            <div className="bg-slate-900/50 p-3 md:p-4 rounded-2xl border border-white/5">
+                                <p className="text-xl md:text-2xl font-black text-white">{results.attemptNumber}/{quiz.max_attempts}</p>
                                 <p className="text-[10px] text-gray-500 font-bold uppercase">Intento</p>
                             </div>
                         </div>
 
-                        <div className="pt-8 flex flex-col md:flex-row gap-4 justify-center">
+                        <div className="pt-4 flex flex-col md:flex-row gap-3 justify-center">
                             <button
-                                onClick={() => navigate(-1)}
-                                className="px-10 py-4 bg-white text-slate-900 rounded-2xl font-black uppercase tracking-widest text-xs hover:scale-105 transition-all"
+                                onClick={() => {
+                                    localStorage.removeItem(`quiz_intro_${id}`);
+                                    navigate(-1);
+                                }}
+                                className="px-10 py-3.5 bg-white text-slate-900 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:scale-105 transition-all"
                             >
                                 Volver
                             </button>
                             {!results.passed && results.attemptNumber < quiz.max_attempts && (
                                 <button
                                     onClick={() => window.location.reload()}
-                                    className="px-10 py-4 bg-slate-800 text-white rounded-2xl font-black uppercase tracking-widest text-xs border border-white/10 hover:bg-slate-700 transition-all flex items-center justify-center gap-2"
+                                    className="px-10 py-3.5 bg-slate-800 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] border border-white/10 hover:bg-slate-700 transition-all flex items-center justify-center gap-2"
                                 >
                                     <RotateCcw className="w-4 h-4" /> Reintentar
                                 </button>
@@ -315,13 +346,14 @@ export default function QuizView() {
                 </div>
 
                 {/* Question Feedback */}
-                {!!results.passed && (
+                {!!results.passed && results.feedback && Array.isArray(results.feedback) && (
                     <div className="space-y-6">
                         <h2 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-3">
                             <FileText className="w-6 h-6 text-primary-400" /> Revisión de Respuestas
                         </h2>
                         {questions.map((q, idx) => {
                             const feedback = results.feedback.find(f => f.questionId === q.id);
+                            if (!feedback) return null;
                             return (
                                 <div key={q.id} className={`card p-6 border-l-4 ${feedback.isCorrect ? 'border-green-500/50' : 'border-red-500/50'}`}>
                                     <div className="flex gap-4">
@@ -378,13 +410,94 @@ export default function QuizView() {
     }
 
     // View: Taking Quiz
+    if (showIntro) {
+        return (
+            <div className="w-full px-4 sm:px-6 lg:px-12 space-y-8 animate-fade-in py-10">
+                <div className="max-w-4xl mx-auto space-y-8">
+                    <div className="space-y-4">
+                        <button
+                            onClick={() => {
+                                localStorage.removeItem(`quiz_intro_${id}`);
+                                navigate(-1);
+                            }}
+                            className="flex items-center gap-2 text-gray-500 hover:text-white transition-colors text-xs font-black uppercase tracking-widest"
+                        >
+                            <ArrowLeft className="w-4 h-4" /> Cancelar y Volver
+                        </button>
+                        <h1 className="text-4xl font-black text-white uppercase tracking-tight leading-none">
+                            {quiz.title}
+                        </h1>
+                        <div className="h-1 w-24 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-full"></div>
+                    </div>
+
+                    <div className="card p-10 space-y-8 border-primary-500/20 shadow-2xl shadow-primary-500/5 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/5 rounded-bl-full blur-3xl"></div>
+
+                        <div className="relative z-10 space-y-6">
+                            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-secondary-500/10 rounded-full border border-secondary-500/20">
+                                <Target className="w-4 h-4 text-secondary-500" />
+                                <span className="text-[10px] font-black text-secondary-400 uppercase tracking-widest">Instrucciones de Evaluación</span>
+                            </div>
+
+                            <p className="text-gray-300 text-lg md:text-xl font-medium leading-relaxed italic border-l-4 border-primary-500/40 pl-8 py-2">
+                                {quiz.description || 'Por favor, lea con atención y seleccione la respuesta correcta para cada cuestionamiento.'}
+                            </p>
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6 border-t border-white/5">
+                                <div className="flex items-center gap-4 text-gray-400">
+                                    <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10">
+                                        <Award className="w-6 h-6 text-primary-400" />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">Puntos Disponibles</p>
+                                        <p className="text-lg font-bold text-white">{totalPoints} PTS</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-4 text-gray-400">
+                                    <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10">
+                                        <CheckCircle2 className="w-6 h-6 text-green-400" />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">Nota de Aprobación</p>
+                                        <p className="text-lg font-bold text-white">{quiz.passing_score}%</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-4 text-gray-400">
+                                    <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10">
+                                        <Award className="w-6 h-6 text-secondary-400" />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">Contenido</p>
+                                        <p className="text-lg font-bold text-white">{questions.length} preguntas</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex justify-center pt-4">
+                        <button
+                            onClick={handleStart}
+                            className="px-12 py-5 bg-gradient-to-r from-orange-600 to-orange-500 text-white rounded-2xl font-black uppercase tracking-[0.2em] text-sm hover:from-orange-500 hover:to-orange-400 hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-orange-500/40 group flex items-center gap-3"
+                        >
+                            Iniciar Evaluación <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <div className="max-w-4xl mx-auto space-y-8 animate-fade-in pb-20">
+        <div className="w-full px-4 sm:px-6 lg:px-12 space-y-4 animate-fade-in pb-10">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="space-y-1">
                     <button
-                        onClick={() => navigate(-1)}
+                        onClick={() => {
+                            localStorage.removeItem(`quiz_intro_${id}`);
+                            navigate(-1);
+                        }}
                         className="flex items-center gap-2 text-gray-500 hover:text-white transition-colors text-[10px] font-black uppercase tracking-widest mb-2"
                     >
                         <ArrowLeft className="w-4 h-4" /> Salir de la evaluación
@@ -412,18 +525,15 @@ export default function QuizView() {
             </div>
 
             {/* Question Card */}
-            <div className="card p-8 md:p-12 space-y-8 relative overflow-hidden">
+            <div className="card px-4 md:px-8 py-3 md:py-4 space-y-2 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary-500/5 rounded-bl-full blur-2xl"></div>
 
-                <div className="space-y-6 relative z-10">
-                    <div className="flex flex-col gap-3">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-secondary-500/10 rounded-full border border-secondary-500/20 self-start">
-                            <Target className="w-3.5 h-3.5 text-secondary-500" />
-                            <span className="text-[9px] font-black text-secondary-400 uppercase tracking-widest">Actividad de Evaluación</span>
+                <div className="space-y-3 relative z-10">
+                    <div className="flex flex-col gap-2">
+                        <div className="inline-flex items-center gap-2 px-2.5 py-0.5 bg-secondary-500/10 rounded-full border border-secondary-500/20 self-start">
+                            <Target className="w-3 h-3 text-secondary-500" />
+                            <span className="text-[8px] font-black text-secondary-400 uppercase tracking-widest">Actividad de Evaluación</span>
                         </div>
-                        <p className="text-gray-300 text-sm md:text-base font-semibold italic border-l-4 border-primary-500/40 pl-4 py-1 max-w-2xl leading-relaxed">
-                            {quiz.description || 'Por favor, lea con atención y seleccione la respuesta correcta para cada cuestionamiento.'}
-                        </p>
                     </div>
 
                     {currentQuestion.image_url && (
@@ -435,12 +545,12 @@ export default function QuizView() {
                             />
                         </div>
                     )}
-                    <h2 className="text-2xl md:text-3xl font-bold text-white leading-tight">
+                    <h2 className="text-sm md:text-base font-bold text-white leading-relaxed tracking-tight">
                         {currentQuestion.question_text}
                     </h2>
                 </div>
 
-                <div className="grid gap-4 mt-12 relative z-10">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2 relative z-10">
                     {currentQuestion.options.map((option) => (
                         <button
                             key={option.id}
@@ -462,21 +572,21 @@ export default function QuizView() {
                 </div>
             </div>
 
-            {/* Navigation Footer */}
-            <div className="flex items-center justify-between pt-4">
+            {/* Navigation Buttons - Normal Flow */}
+            <div className="flex items-center justify-between py-6 mt-4 border-t border-white/5">
                 <button
                     onClick={() => setCurrentQuestionIndex(prev => Math.max(0, prev - 1))}
                     disabled={currentQuestionIndex === 0}
-                    className="flex items-center gap-2 px-6 py-3 text-sm font-black text-gray-500 uppercase tracking-widest hover:text-white transition-colors disabled:opacity-0"
+                    className="flex items-center gap-2 px-8 py-3 bg-slate-800 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] border border-white/10 hover:bg-slate-700 hover:border-orange-500/50 transition-all disabled:opacity-0"
                 >
-                    <ChevronLeft className="w-5 h-5" /> Anterior
+                    <ChevronLeft className="w-4 h-4" /> Anterior
                 </button>
 
                 {currentQuestionIndex === questions.length - 1 ? (
                     <button
                         onClick={handleSubmit}
                         disabled={submitting}
-                        className="px-10 py-4 bg-white text-slate-900 rounded-2xl font-black uppercase tracking-widest text-sm hover:scale-105 active:scale-95 transition-all shadow-xl disabled:opacity-50"
+                        className="px-10 py-3.5 bg-gradient-to-r from-orange-600 to-orange-500 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:from-orange-500 hover:to-orange-400 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-orange-500/20 disabled:opacity-50"
                     >
                         {submitting ? 'Calificando...' : 'Finalizar Evaluación'}
                     </button>
@@ -490,9 +600,9 @@ export default function QuizView() {
                             playNextSound();
                             setCurrentQuestionIndex(prev => prev + 1);
                         }}
-                        className="flex items-center gap-2 px-10 py-4 bg-slate-800 text-white rounded-2xl font-black uppercase tracking-widest text-xs border border-white/10 hover:bg-slate-700 transition-all group"
+                        className="flex items-center gap-2 px-10 py-3.5 bg-gradient-to-r from-orange-600 to-orange-500 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:from-orange-500 hover:to-orange-400 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-orange-500/20 group"
                     >
-                        Siguiente <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                        Siguiente <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </button>
                 )}
             </div>

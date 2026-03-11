@@ -272,10 +272,10 @@ export default function Profile() {
                                                         <Star className="w-5 h-5" />}
                                         </div>
 
-                                        <div className="flex-1 flex flex-col md:flex-row md:items-center justify-between gap-2">
-                                            <div className="space-y-0.5">
+                                        <div className="flex-1 flex flex-col md:flex-row md:items-center justify-between gap-4 overflow-hidden">
+                                            <div className="space-y-0.5 flex-1 pr-4 min-w-0">
                                                 <div className="flex items-center gap-2">
-                                                    <span className="text-[8px] font-black uppercase tracking-widest text-gray-500 px-1.5 py-0.5 bg-white/5 rounded-md border border-white/5">
+                                                    <span className="text-[8px] font-black uppercase tracking-widest text-gray-500 px-1.5 py-0.5 bg-white/5 rounded-md border border-white/5 whitespace-nowrap">
                                                         {activity.type === 'lesson_completed' ? 'LECCIÓN' :
                                                             activity.type === 'quiz_passed' ? 'EXAMEN' :
                                                                 activity.type === 'module_completed' ? 'MÓDULO' :
@@ -283,12 +283,12 @@ export default function Profile() {
                                                                         'ACTIVIDAD'}
                                                     </span>
                                                     {activity.module_id && (
-                                                        <span className="text-[8px] font-black uppercase tracking-widest text-primary-500/70">
+                                                        <span className="text-[8px] font-black uppercase tracking-widest text-primary-500/70 whitespace-nowrap">
                                                             Módulo {activity.module_id}
                                                         </span>
                                                     )}
                                                 </div>
-                                                <p className="text-white font-bold text-sm tracking-tight truncate max-w-[250px] md:max-w-md">
+                                                <p className="text-white font-bold text-sm tracking-tight">
                                                     {activity.type === 'module_completed' ? `¡Completaste el módulo: ${activity.reference_title}!` :
                                                         activity.type === 'lesson_completed' ? `¡Completaste la lección: ${activity.reference_title}!` :
                                                             activity.type === 'quiz_passed' ? `¡Aprobaste la evaluación: ${activity.reference_title}!` :

@@ -29,7 +29,7 @@ import ConfirmModal from '../components/ConfirmModal';
 import { TableSkeleton } from '../components/skeletons/TableSkeleton';
 import Skeleton from '../components/Skeleton';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL;
 
 export default function AdminDirectory() {
     const { token } = useAuthStore();

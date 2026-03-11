@@ -180,10 +180,10 @@ export default function Dashboard() {
                                             }
                                             navigate(`/modules/${module.id}`);
                                         }}
-                                        className={`group relative flex flex-col p-6 rounded-2xl border transition-all duration-300 cursor-pointer ${module.is_locked
+                                        className={`group relative flex flex-col p-4 md:p-5 rounded-2xl border transition-all duration-300 cursor-pointer ${module.is_locked
                                             ? 'bg-slate-900/20 border-white/5 opacity-60 cursor-not-allowed'
                                             : module.status === 'completed'
-                                                ? 'bg-green-500/5 border-green-500/20 shadow-[0_0_20px_rgba(34,197,94,0.05)] hover:border-green-500/40'
+                                                ? 'bg-green-50/5 border-green-500/20 shadow-[0_0_20px_rgba(34,197,94,0.05)] hover:border-green-500/40'
                                                 : 'bg-slate-900/50 border-white/5 hover:border-primary-500/30 hover:bg-slate-900'
                                             }`}
                                     >

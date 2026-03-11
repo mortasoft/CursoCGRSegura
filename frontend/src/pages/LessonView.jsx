@@ -658,7 +658,7 @@ export default function LessonView() {
     if (!lesson) return null;
 
     return (
-        <div className="max-w-[1400px] mx-auto px-4 md:px-8 py-4 min-h-screen animate-fade-in pb-20">
+        <div className="max-w-[1400px] mx-auto px-4 md:px-8 pt-0 md:pt-2 pb-20 min-h-screen animate-fade-in">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 xl:gap-12">
                 {/* Sidebar Menu */}
                 <aside className="lg:col-span-3 xl:col-span-3">
@@ -797,7 +797,7 @@ export default function LessonView() {
                 </aside>
 
                 {/* Main Content Area */}
-                <main className="lg:col-span-9 xl:col-span-9 space-y-6 animate-fade-in-up">
+                <main className="lg:col-span-9 xl:col-span-9 space-y-4 animate-fade-in-up">
                     {/* Compact Breadcrumbs / Header Mobile Only */}
                     <div className="flex lg:hidden flex-col gap-4 mb-2">
                         <div className="flex items-center justify-between">
@@ -816,7 +816,7 @@ export default function LessonView() {
                     </div>
 
                     {/* Content Header (Desktop Info) */}
-                    <div className="hidden lg:flex items-center justify-between py-4 border-b border-white/5">
+                    <div className="hidden lg:flex items-center justify-between py-2 border-b border-white/5">
                         <div className="flex items-center gap-4">
                             <div className="p-3 bg-primary-500/10 rounded-2xl border border-primary-500/20">
                                 <BookOpen className="w-6 h-6 text-primary-400" />

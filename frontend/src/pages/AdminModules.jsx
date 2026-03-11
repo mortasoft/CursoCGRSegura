@@ -28,7 +28,7 @@ import ConfirmModal from '../components/ConfirmModal';
 import Skeleton from '../components/Skeleton';
 import { ModuleCardSkeleton } from '../components/skeletons/DashboardSkeletons';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL;
 
 export default function AdminModules() {
     const navigate = useNavigate();

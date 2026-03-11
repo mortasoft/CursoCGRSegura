@@ -150,22 +150,24 @@ export default function Modules() {
                                     {/* Accent line top */}
                                     <div className={`absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r ${isLocked ? 'from-gray-600 to-gray-400' : 'from-primary-500 to-secondary-500'} opacity-60 z-20`}></div>
 
-                                    <div className="p-6 space-y-4">
+                                    <div className="flex-1 flex flex-col p-4 md:p-5">
                                         {/* Badge and Number */}
-                                        <div className="flex justify-between items-start">
-                                            <div className={`w-14 h-14 bg-slate-900 rounded-2xl border flex items-center justify-center text-2xl font-black transition-all shadow-2xl ${module.completionPercentage === 100
-                                                ? 'border-green-500/30 text-green-500 shadow-green-500/10'
-                                                : 'border-white/10 text-white group-hover:text-secondary-500'
-                                                }`}>
-                                                {module.module_number < 10 ? `0${module.module_number}` : module.module_number}
-                                            </div>
-                                            <div className="flex flex-col items-end gap-2">
-                                                <span className={`badge ${isLocked ? 'bg-slate-700 text-gray-400 border-gray-600' : 'badge-primary bg-primary-500/10 border-primary-500/20 text-primary-400'} py-1 px-3 text-[10px] uppercase font-bold tracking-widest flex items-center gap-1.5`}>
-                                                    {isLocked ? <Lock className="w-3 h-3" /> : <Calendar className="w-3 h-3" />}
+                                        <div className="flex justify-between items-center mb-4">
+                                            <div className="flex items-center gap-4">
+                                                <div className={`w-14 h-14 bg-slate-900 rounded-2xl border flex items-center justify-center text-2xl font-black transition-all shadow-2xl shrink-0 ${module.completionPercentage === 100
+                                                    ? 'border-green-500/30 text-green-500 shadow-green-500/10'
+                                                    : 'border-white/10 text-white group-hover:text-secondary-500'
+                                                    }`}>
+                                                    {module.module_number < 10 ? `0${module.module_number}` : module.module_number}
+                                                </div>
+                                                <span className={`${isLocked ? 'bg-slate-700/50 text-gray-400 border border-gray-600' : 'bg-primary-500/10 border border-primary-500/20 text-primary-400'} py-1.5 px-4 rounded-xl text-[10px] uppercase font-black tracking-widest flex items-center gap-1.5 min-w-[120px] justify-center shadow-sm`}>
+                                                    {isLocked ? <Lock className="w-3.5 h-3.5" /> : <Calendar className="w-3.5 h-3.5" />}
                                                     {formattedDate}
                                                 </span>
+                                            </div>
+                                            <div className="flex flex-col items-end gap-2">
                                                 {module.completionPercentage === 100 && (
-                                                    <div className="flex items-center gap-1.5 bg-green-500/10 border border-green-500/20 px-2 py-1 rounded-lg text-green-400 text-[10px] font-black uppercase tracking-widest shadow-[0_0_15px_rgba(34,197,94,0.1)]">
+                                                    <div className="bg-green-500/10 border border-green-500/20 py-1.5 px-4 rounded-xl text-green-400 text-[10px] font-black uppercase tracking-widest shadow-[0_0_15px_rgba(34,197,94,0.1)] flex items-center gap-1.5 min-w-[120px] justify-center">
                                                         <CheckCircle className="w-3.5 h-3.5" /> Completado
                                                     </div>
                                                 )}
@@ -173,8 +175,8 @@ export default function Modules() {
                                         </div>
 
                                         {/* Content */}
-                                        <div className="space-y-3">
-                                            <h3 className={`text-xl font-bold text-white ${!isLocked && 'group-hover:text-primary-400'} transition-colors leading-tight min-h-[3rem]`}>
+                                        <div className="mb-4">
+                                            <h3 className={`text-xl font-bold text-white mb-2 ${!isLocked && 'group-hover:text-primary-400'} transition-colors leading-tight min-h-[3rem]`}>
                                                 {module.title}
                                             </h3>
                                             <p className="text-gray-400 text-sm line-clamp-3 leading-relaxed font-medium">
@@ -183,7 +185,7 @@ export default function Modules() {
                                         </div>
 
                                         {/* Stats Footer */}
-                                        <div className="pt-6 border-t border-white/5 space-y-4">
+                                        <div className="pt-4 mt-auto border-t border-white/5 space-y-3">
                                             <div className="flex items-center gap-6">
                                                 <div className="flex items-center gap-2 text-gray-500">
                                                     <BookOpen className="w-4 h-4" />
@@ -216,12 +218,9 @@ export default function Modules() {
                                                     </motion.div>
                                                 ) : (
                                                     <>
-                                                        <div className="h-1 flex-1 bg-white/5 rounded-full overflow-hidden mr-6">
+                                                        <div className="progress-bar flex-1 mr-6">
                                                             <div
-                                                                className={`h-full transition-all duration-700 ${module.completionPercentage === 100
-                                                                    ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.4)]'
-                                                                    : 'bg-gradient-to-r from-primary-500 to-secondary-500'
-                                                                    }`}
+                                                                className={`progress-fill ${module.completionPercentage === 100 ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.4)]' : ''}`}
                                                                 style={{ width: `${module.completionPercentage || 0}%` }}
                                                             ></div>
                                                         </div>

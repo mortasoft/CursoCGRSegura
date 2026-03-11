@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL;
 
 export default function SurveyEditorModal({ isOpen, onClose, surveyId, moduleId, lessonId, title: initialTitle }) {
     const { token } = useAuthStore();
