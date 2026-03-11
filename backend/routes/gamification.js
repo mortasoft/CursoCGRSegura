@@ -57,9 +57,21 @@ const refreshLeaderboardCache = async () => {
              ORDER BY total_points DESC`
         );
 
+        // --- SINCRONIZACIÓN ZSET PARA RANKING REAL-TIME ---
+        const allPoints = await db.query('SELECT user_id, points FROM user_points WHERE points > 0');
+        if (allPoints.length > 0) {
+            const zSetData = allPoints.map(p => ({
+                score: p.points,
+                value: p.user_id.toString()
+            }));
+            // Limpiamos y repoblamos para asegurar consistencia total
+            await redisClient.del('leaderboard:points');
+            await redisClient.zAdd('leaderboard:points', zSetData);
+        }
+
         await redisClient.setEx('leaderboard:institutional', 3600, JSON.stringify(institutionalLeaderboard));
         await redisClient.setEx('leaderboard:departments', 3600, JSON.stringify(departmentRanking));
-        console.log('✅ Leaderboard cache refreshed in Redis');
+        console.log('✅ Leaderboard cache refreshed in Redis (including real-time ZSET)');
     } catch (err) {
         console.error('❌ Error refreshing leaderboard cache:', err);
     }
@@ -107,9 +119,17 @@ router.get('/leaderboard', authMiddleware, cacheMiddleware(60, true), async (req
             if (cachedDepts) departmentRanking = JSON.parse(cachedDepts);
         }
 
-        // Global Rank Position
+        // --- RANKING EN TIEMPO REAL DESDE REDIS (ZSET) ---
+        let myRealTimeRank = null;
+        if (redisClient && redisClient.isOpen) {
+            // Redis devuelve índice 0-based, sumamos 1 para posición humana
+            const rank = await redisClient.zRevRank('leaderboard:points', userId.toString());
+            if (rank !== null) myRealTimeRank = rank + 1;
+        }
+
+        // Global Rank Position (Fallback o complemento con datos de DB)
         const userGlobalRankRaw = institutionalLeaderboard.find(r => r.email === userEmailLower);
-        const myGlobalRankPos = userGlobalRankRaw ? userGlobalRankRaw.rank_position : (institutionalLeaderboard.length + 1);
+        const myGlobalRankPos = myRealTimeRank || (userGlobalRankRaw ? userGlobalRankRaw.rank_position : (institutionalLeaderboard.length + 1));
 
         // Department Leaderboard
         let departmentLeaderboard = [];

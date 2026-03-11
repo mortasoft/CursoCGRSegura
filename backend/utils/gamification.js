@@ -92,9 +92,13 @@ const syncUserLevel = async (userId) => {
         const [userData] = await db.query('SELECT points, level FROM user_points WHERE user_id = ?', [userId]);
         if (!userData) return null;
 
+        const currentPoints = userData.points;
         const oldLevel = userData.level;
-        const levelInfo = await calculateLevel(userData.points);
+        const levelInfo = await calculateLevel(currentPoints);
         const newLevel = levelInfo.name;
+
+        // Siempre sincronizamos con Redis para asegurar que el ranking sea en tiempo real
+        await updateUserScore(userId, currentPoints);
 
         if (oldLevel !== newLevel) {
             await db.query('UPDATE user_points SET level = ?, last_updated = NOW() WHERE user_id = ?', [newLevel, userId]);
@@ -191,11 +195,17 @@ const checkAndRecordModuleCompletion = async (userId, moduleId, isAdmin = false)
             );
 
             // Sumar puntos al balance
-            await db.query(
+            const [newPoints] = await db.query(
                 `INSERT INTO user_points (user_id, points) VALUES (?, ?) 
-                 ON DUPLICATE KEY UPDATE points = points + ?`,
-                [userId, bonusPoints, bonusPoints]
+                 ON DUPLICATE KEY UPDATE points = points + ?;
+                 SELECT points FROM user_points WHERE user_id = ?`,
+                [userId, bonusPoints, bonusPoints, userId]
             );
+            
+            // Sincronizar con Redis para ranking en tiempo real
+            if (newPoints && newPoints[1] && newPoints[1][0]) {
+                await updateUserScore(userId, newPoints[1][0].points);
+            }
         }
 
         return {
@@ -212,10 +222,32 @@ const checkAndRecordModuleCompletion = async (userId, moduleId, isAdmin = false)
     }
 };
 
+const redisClient = require('../config/redis');
+
+/**
+ * Actualiza el puntaje del usuario en Redis para el ranking en tiempo real
+ */
+const updateUserScore = async (userId, points) => {
+    try {
+        if (redisClient && redisClient.isOpen) {
+            // Usamos un Sorted Set para el ranking global
+            await redisClient.zAdd('leaderboard:points', {
+                score: points,
+                value: userId.toString()
+            });
+            return true;
+        }
+    } catch (error) {
+        console.error('Error updating user score in Redis:', error);
+    }
+    return false;
+};
+
 module.exports = {
     getLevels,
     calculateLevel,
     syncUserLevel,
     getSystemSettings,
-    checkAndRecordModuleCompletion
+    checkAndRecordModuleCompletion,
+    updateUserScore
 };
