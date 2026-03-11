@@ -77,15 +77,9 @@ export default function Modules() {
 
                 <div className="relative z-10 p-6 md:p-8 flex flex-col lg:flex-row justify-between items-center gap-6">
                     <div className="space-y-4 max-w-2xl text-center lg:text-left">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-primary-500/20 border border-primary-500/30 rounded-full text-primary-400 text-[10px] font-black uppercase tracking-widest animate-pulse">
-                            <Shield className="w-3.5 h-3.5" /> Programa de Capacitación 2026
-                        </div>
                         <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white tracking-tighter uppercase leading-none">
                             Ruta de <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-secondary-500">Aprendizaje</span>
                         </h1>
-                        <p className="text-gray-400 text-lg font-medium leading-relaxed">
-                            Domina la ciberseguridad y protege la información institucional a través de módulos interactivos diseñados para tu crecimiento profesional.
-                        </p>
                     </div>
 
                 </div>

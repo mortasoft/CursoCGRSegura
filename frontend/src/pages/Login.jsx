@@ -71,7 +71,7 @@ export default function Login() {
                         >
                             <div className="absolute inset-0 bg-white/5 rounded-full blur-2xl animate-pulse"></div>
                             <img
-                                src="/images/Logotipo-CGR-blanco-transp.png"
+                                src="/images/logo-cgr-blanco.webp"
                                 alt="CGR Logo"
                                 className="w-full h-full object-contain filter drop-shadow-[0_20px_50px_rgba(255,255,255,0.15)] relative z-10"
                             />
@@ -185,7 +185,7 @@ export default function Login() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8">
                     <div className="flex flex-col md:flex-row justify-between items-center gap-8">
                         <div className="flex items-center gap-5 opacity-80 group">
-                            <img src="/images/Logotipo-CGR-blanco-transp.png" alt="CGR Logo" className="h-10 w-10 object-contain transition-transform group-hover:scale-110" />
+                            <img src="/images/logo-cgr-blanco.webp" alt="CGR Logo" className="h-10 w-10 object-contain transition-transform group-hover:scale-110" />
                             <div className="h-10 w-[1px] bg-white/10 hidden md:block"></div>
                             <div className="flex flex-col">
                                 <p className="text-[10px] md:text-xs font-black text-white leading-tight uppercase tracking-[0.1em]">

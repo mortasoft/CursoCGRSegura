@@ -110,7 +110,7 @@ export default function CertificateView() {
                     {/* Header */}
                     <div className="space-y-2">
                         <div className="w-32 h-32 mx-auto mb-2">
-                            <img src="/images/Logotipo-CGR.jpg" alt="Logo CGR" className="w-full h-full object-contain" />
+                            <img src="/images/logo-cgr.webp" alt="Logo CGR" className="w-full h-full object-contain" />
                         </div>
                         <h1 className="text-5xl font-serif text-primary-900 tracking-wider font-bold">CERTIFICADO</h1>
                         <p className="text-xl font-medium text-secondary-600 uppercase tracking-[0.3em]">DE FINALIZACIÓN</p>

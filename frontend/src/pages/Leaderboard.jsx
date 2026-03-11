@@ -18,6 +18,7 @@ import {
 import toast from 'react-hot-toast';
 import LeaderboardSkeleton from '../components/skeletons/LeaderboardSkeleton';
 import Skeleton from '../components/Skeleton';
+import primaryBanner from '../assets/primary-banner.svg';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
@@ -99,33 +100,36 @@ export default function Leaderboard() {
     return (
         <div className="max-w-6xl mx-auto space-y-10 animate-fade-in pb-20">
             {/* Header / Hero Section */}
-            <div className="relative rounded-[3rem] overflow-hidden bg-slate-800/40 border border-white/5 shadow-2xl p-10 md:p-16">
-                <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-primary-500/10 to-transparent"></div>
+            <div className="relative rounded-[2rem] overflow-hidden bg-slate-800/20 border border-white/5 shadow-2xl">
+                {/* Background Image with Overlay */}
+                <div className="absolute inset-0 z-0">
+                    <img
+                        src={primaryBanner}
+                        alt="Hero Background"
+                        className="w-full h-full object-cover opacity-20"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#0d1127] via-[#0d1127]/80 to-transparent"></div>
+                </div>
 
-                <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-12">
+                <div className="relative z-10 p-6 md:p-10 flex flex-col md:flex-row justify-between items-center gap-12">
                     <div className="space-y-6 text-center md:text-left">
-                        <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter leading-tight">
-                            <span className="bg-gradient-to-r from-primary-400 to-secondary-500 bg-clip-text text-transparent italic">Ranking</span>
+                        <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter uppercase leading-[1.3]">
+                            <span className="inline-block bg-gradient-to-r from-primary-400 to-secondary-500 bg-clip-text text-transparent italic py-2 pr-4">Ranking</span>
                         </h1>
-                        <p className="text-gray-400 text-lg font-medium max-w-xl">
-                            {isAdmin
-                                ? "Panel de control de excelencia institucional. Supervise el desempeño por áreas y funcionarios."
-                                : `Progreso de ciberseguridad para ${currentUser?.department || 'su unidad'}.`}
-                        </p>
                     </div>
 
                     <div className="flex gap-6">
                         {/* Institutional Rank (Fixed info card) */}
-                        <div className="w-32 h-32 bg-slate-900/60 rounded-[2rem] border border-white/5 flex flex-col items-center justify-center shadow-xl relative group">
+                        <div className="w-28 h-28 md:w-32 md:h-32 bg-slate-900/60 rounded-[2rem] border border-white/5 flex flex-col items-center justify-center shadow-xl relative group">
                             <Trophy className="w-6 h-6 text-primary-400 absolute -top-3 opacity-50" />
-                            <span className="text-4xl font-black text-white">#{currentUser?.globalRank || '--'}</span>
+                            <span className="text-3xl md:text-4xl font-black text-white">#{currentUser?.globalRank || '--'}</span>
                             <span className="text-[9px] font-bold text-gray-500 tracking-widest uppercase text-center px-4">Rango CGR</span>
                         </div>
 
                         {/* Dept Rank (Focus of the list) */}
-                        <div className="w-32 h-32 bg-slate-900 rounded-[2rem] border-4 border-secondary-500/30 flex flex-col items-center justify-center shadow-2xl relative">
+                        <div className="w-28 h-28 md:w-32 md:h-32 bg-slate-900 rounded-[2rem] border-4 border-secondary-500/30 flex flex-col items-center justify-center shadow-2xl relative">
                             <Crown className="w-8 h-8 text-secondary-500 absolute -top-4 -rotate-12 drop-shadow-[0_0_10px_rgba(229,123,60,0.5)]" />
-                            <span className="text-4xl font-black text-white">#{currentUser?.deptRank || '--'}</span>
+                            <span className="text-3xl md:text-4xl font-black text-white">#{currentUser?.deptRank || '--'}</span>
                             <span className="text-[9px] font-bold text-secondary-500 tracking-widest uppercase text-center px-4">Rango Área</span>
                         </div>
                     </div>
@@ -149,14 +153,12 @@ export default function Leaderboard() {
                     >
                         Mi Área
                     </button>
-                    {isAdmin && (
-                        <button
-                            onClick={() => setView('strategic')}
-                            className={`flex-1 md:flex-none px-2 md:px-6 py-3 rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all ${view === 'strategic' ? 'bg-secondary-500 text-white shadow-lg' : 'text-gray-500 hover:text-white'}`}
-                        >
-                            Comparativa
-                        </button>
-                    )}
+                    <button
+                        onClick={() => setView('strategic')}
+                        className={`flex-1 md:flex-none px-2 md:px-6 py-3 rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest transition-all ${view === 'strategic' ? 'bg-secondary-500 text-white shadow-lg' : 'text-gray-500 hover:text-white'}`}
+                    >
+                        Por Áreas
+                    </button>
                 </div>
 
                 <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto relative">
@@ -217,35 +219,45 @@ export default function Leaderboard() {
             </div>
 
             {/* Main Content Area */}
-            {view === 'strategic' && isAdmin ? (
-                /* ADMIN STRATEGIC VIEW: Comparison by Department */
+            {view === 'strategic' ? (
+                /* STRATEGIC VIEW: Comparison by Department */
                 <div className="space-y-6">
                     <div className="space-y-3">
                         <div className="grid grid-cols-12 px-8 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">
                             <div className="col-span-1 text-center">Pos</div>
-                            <div className="col-span-4 italic">Mejor Funcionario (Líder)</div>
                             <div className="col-span-4">Área / Unidad</div>
+                            <div className="col-span-4 italic">Mejor Funcionario (Líder)</div>
                             <div className="col-span-3 text-right">Puntaje Total</div>
                         </div>
                         {filteredDepts.map((dept, index) => (
                             <div key={index} className="grid grid-cols-12 items-center px-8 py-6 rounded-3xl border bg-slate-800/20 border-white/5 hover:border-primary-500/30 transition-all group cursor-default">
                                 <div className="col-span-1 text-center font-black text-lg text-gray-500">{index + 1}</div>
                                 <div className="col-span-4 flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-lg bg-secondary-500/10 flex items-center justify-center text-secondary-500">
-                                        <Star className="w-4 h-4 fill-secondary-500" />
+                                    <div className="w-10 h-10 rounded-xl bg-secondary-500/10 flex items-center justify-center text-secondary-500 shadow-lg shadow-secondary-500/10">
+                                        <Building2 className="w-5 h-5" />
                                     </div>
                                     <div>
-                                        <p className="text-sm font-bold text-white group-hover:text-secondary-500 transition-colors uppercase tracking-tight">{dept.top_performer}</p>
-                                        <p className="text-[9px] text-gray-600 font-bold uppercase">Mejor Puntuación: {dept.top_points} pts</p>
+                                        <p className="text-sm font-black text-white group-hover:text-secondary-500 transition-colors uppercase tracking-tight">{dept.department}</p>
+                                        <p className="text-[10px] text-gray-400 font-bold uppercase">{dept.staff_count} Funcionarios</p>
                                     </div>
                                 </div>
-                                <div className="col-span-4 text-sm font-black text-gray-300 uppercase tracking-tighter">
-                                    <Building2 className="w-4 h-4 inline mr-2 text-gray-600" />
-                                    {dept.department}
+                                <div className="col-span-4 flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-lg bg-primary-500/10 flex items-center justify-center text-primary-400">
+                                        <Star className="w-4 h-4 fill-primary-400" />
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-bold text-gray-300 uppercase tracking-tight">{dept.top_performer}</p>
+                                        <p className="text-[9px] text-gray-500 font-bold uppercase italic">Líder: {dept.top_points} pts</p>
+                                    </div>
                                 </div>
                                 <div className="col-span-3 text-right">
-                                    <p className="text-xl font-black text-white">{dept.total_points.toLocaleString()}</p>
-                                    <p className="text-[9px] text-gray-600 font-black uppercase tracking-widest">{dept.staff_count} Funcionarios</p>
+                                    <p className="text-xl font-black text-white">{dept.total_points.toLocaleString()} PTS</p>
+                                    <div className="h-1 w-full bg-white/5 rounded-full mt-2 overflow-hidden">
+                                        <div 
+                                            className="h-full bg-gradient-to-r from-primary-500 to-secondary-500" 
+                                            style={{ width: `${(dept.total_points / (filteredDepts[0]?.total_points || 1)) * 100}%` }}
+                                        ></div>
+                                    </div>
                                 </div>
                             </div>
                         ))}

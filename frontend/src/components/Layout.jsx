@@ -69,7 +69,7 @@ export default function Layout() {
                         <div className="flex items-center gap-3 cursor-pointer group" onClick={() => navigate('/dashboard')}>
                             <div className="w-16 h-16 flex items-center justify-center transition-transform group-hover:scale-105">
                                 <img
-                                    src="/images/Logotipo-CGR-blanco-transp.png"
+                                    src="/images/logo-cgr-blanco.webp"
                                     alt="CGR Logo"
                                     className="w-full h-full object-contain filter drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]"
                                 />
@@ -228,7 +228,7 @@ export default function Layout() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                     <div className="flex flex-col sm:flex-row justify-between items-center gap-6">
                         <div className="flex items-center gap-4 opacity-70">
-                            <img src="/images/Logotipo-CGR-blanco-transp.png" alt="CGR Logo" className="h-8 object-contain" />
+                            <img src="/images/logo-cgr-blanco.webp" alt="CGR Logo" className="h-8 object-contain" />
                             <div className="h-8 w-[1px] bg-white/10 hidden sm:block"></div>
                             <p className="text-[10px] font-bold text-gray-400 leading-tight uppercase tracking-wider">
                                 Contraloría General de la República | Costa Rica

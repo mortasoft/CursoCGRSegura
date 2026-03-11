@@ -156,7 +156,7 @@ router.get('/leaderboard', authMiddleware, cacheMiddleware(60, true), async (req
             },
             institutionalLeaderboard: isAdmin ? institutionalLeaderboard : [],
             departmentLeaderboard,
-            departmentRanking: isAdmin ? departmentRanking : [],
+            departmentRanking,
             scope: isAdmin ? 'institutional' : 'department'
         });
     } catch (error) {
