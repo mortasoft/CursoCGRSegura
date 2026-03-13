@@ -315,6 +315,7 @@ export default function AdminModules() {
             if (data.success) {
                 setModuleLessons(prev => prev.map(l => l.id === lessonId ? { ...l, is_optional: !l.is_optional } : l));
                 toast.success('Estado de lección actualizado');
+                fetchAdminModules();
             }
         } catch (error) {
             toast.error('Error al actualizar lección');
@@ -377,6 +378,7 @@ export default function AdminModules() {
                 // Refresh lessons without toggling
                 if (lessonFormData.module_id) {
                     fetchModuleLessons(lessonFormData.module_id);
+                    fetchAdminModules();
                 }
             } else {
                 toast.error(data.error || 'Error al guardar lección');
@@ -399,6 +401,7 @@ export default function AdminModules() {
             if (response.ok) {
                 toast.success("Lección eliminada");
                 fetchModuleLessons(moduleId);
+                fetchAdminModules();
             } else {
                 toast.error("Error al eliminar");
             }
