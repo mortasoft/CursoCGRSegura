@@ -64,6 +64,9 @@ app.use(helmet({
     crossOriginEmbedderPolicy: false,
 }));
 
+// Enable trust proxy before setting up rate limiters
+app.set('trust proxy', 1);
+
 // Rate limiting
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutos

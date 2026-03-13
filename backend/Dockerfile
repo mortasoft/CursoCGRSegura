@@ -21,7 +21,7 @@ EXPOSE 5000
 RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
 
 # Crear directorio de logs y asignar permisos
-RUN mkdir -p logs && chown -R nodejs:nodejs /app
+RUN mkdir -p logs && mkdir -p uploads/course_content && chown -R nodejs:nodejs /app
 
 USER nodejs
 
