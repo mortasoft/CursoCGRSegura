@@ -103,9 +103,11 @@ app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
+    proxy: process.env.NODE_ENV === 'production', // Confía en el encabezado X-Forwarded-Proto en producción
     cookie: {
         secure: process.env.NODE_ENV === 'production',
         httpOnly: true,
+        sameSite: process.env.NODE_ENV === 'production' ? 'lax' : 'lax', // Lax es seguro y compatible
         maxAge: 24 * 60 * 60 * 1000 // 24 horas
     }
 }));
