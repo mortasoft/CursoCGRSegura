@@ -48,6 +48,14 @@ const PORT = process.env.PORT || 5000;
 
 const redisClient = require('./config/redis');
 
+// Middleware de emergencia: Forzar HTTPS para que las cookies funcionen tras el proxy de la CGR
+app.use((req, res, next) => {
+    if (process.env.NODE_ENV === 'production') {
+        req.headers['x-forwarded-proto'] = 'https';
+    }
+    next();
+});
+
 // Middlewares generales (CORS debe ir primero)
 app.use(cors({
     origin: process.env.FRONTEND_URL || 'http://localhost:3000',
