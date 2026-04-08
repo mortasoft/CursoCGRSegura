@@ -65,10 +65,10 @@ const BadgeAwardModal = ({ isOpen, onClose, badge }) => {
         }
     }, [isOpen, badge]);
 
-    // Nota: Las imágenes dinámicas deben estar en /public/assets/badges/
+    // Nota: Las imágenes dinámicas deben estar en /public/images/badges/
     // ya que /src/assets no es accesible directamente vía URL en build de producción.
     const badgeImageUrl = badge?.image_url
-        ? (badge.image_url.startsWith('http') ? badge.image_url : `/assets/badges/${badge.image_url}`)
+        ? (badge.image_url.startsWith('http') ? badge.image_url : `/images/badges/${badge.image_url}`)
         : null;
 
     return (
