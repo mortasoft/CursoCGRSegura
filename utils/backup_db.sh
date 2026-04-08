@@ -13,10 +13,17 @@ MAX_BACKUPS=30
 mkdir -p $BACKUP_PATH
 
 # 2. Cargar variables desde el archivo .env si existe
-if [ -f .env ]; then
-    export $(grep -v '^#' .env | xargs)
-elif [ -f ../.env ]; then
-    export $(grep -v '^#' ../.env | xargs)
+ENV_FILE=""
+if [ -f .env ]; then ENV_FILE=".env"; elif [ -f ../.env ]; then ENV_FILE="../.env"; fi
+
+if [ -n "$ENV_FILE" ]; then
+    while IFS= read -r line || [ -n "$line" ]; do
+        [[ "$line" =~ ^#.*$ ]] && continue
+        [[ -z "$line" ]] && continue
+        if [[ "$line" =~ ^[a-zA-Z_][a-zA-Z0-9_]*=.*$ ]]; then
+            export "$line"
+        fi
+    done < "$ENV_FILE"
 fi
 
 # Variables de la BD (deben estar en .env)
