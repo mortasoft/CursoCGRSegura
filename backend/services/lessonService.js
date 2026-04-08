@@ -232,6 +232,21 @@ class LessonService {
     async deleteLesson(lessonId) {
         return await db.query('DELETE FROM lessons WHERE id = ?', [lessonId]);
     }
+
+    async reorderLessons(moduleId, orderedIds) {
+        if (!moduleId || !Array.isArray(orderedIds)) {
+            throw new Error('Parámetros de reordenamiento inválidos');
+        }
+
+        // Ejecutar actualizaciones en serie para evitar deadlocks y asegurar el orden
+        for (let i = 0; i < orderedIds.length; i++) {
+            await db.query(
+                'UPDATE lessons SET order_index = ? WHERE id = ? AND module_id = ?',
+                [i + 1, orderedIds[i], moduleId]
+            );
+        }
+        return true;
+    }
 }
 
 module.exports = new LessonService();

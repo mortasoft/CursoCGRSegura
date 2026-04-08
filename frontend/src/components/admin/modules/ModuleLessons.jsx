@@ -1,4 +1,4 @@
-import { Plus, CheckCircle2, Clock, Award, Target, Edit2, Trash2, ExternalLink, BookOpen } from 'lucide-react';
+import { Plus, CheckCircle2, Clock, Award, Target, Edit2, Trash2, ExternalLink, BookOpen, ChevronUp, ChevronDown } from 'lucide-react';
 
 export default function ModuleLessons({
     lessons,
@@ -7,8 +7,23 @@ export default function ModuleLessons({
     onDeleteLesson,
     onToggleOptional,
     onOpenEditor,
+    onReorderLessons,
     loading
 }) {
+    const handleMoveLesson = (index, direction) => {
+        const newLessons = [...lessons];
+        const targetIndex = direction === 'up' ? index - 1 : index + 1;
+        
+        if (targetIndex < 0 || targetIndex >= newLessons.length) return;
+        
+        // Swap elements
+        [newLessons[index], newLessons[targetIndex]] = [newLessons[targetIndex], newLessons[index]];
+        
+        const orderedIds = newLessons.map(l => l.id);
+        const moduleId = lessons[0].module_id;
+        
+        onReorderLessons(moduleId, orderedIds);
+    };
     return (
         <div className="animate-slide-up bg-slate-950/20 p-6 md:p-8 rounded-3xl border border-white/5">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
@@ -45,8 +60,29 @@ export default function ModuleLessons({
                                 className="group/item flex flex-col lg:flex-row items-start lg:items-center justify-between p-5 bg-slate-900/60 border border-white/5 rounded-[2rem] hover:border-primary-500/30 transition-all hover:bg-slate-900 shadow-xl"
                             >
                                 <div className="flex items-center gap-5 w-full lg:w-auto mb-4 lg:mb-0">
-                                    <div className="relative w-14 h-14 bg-slate-950 rounded-2xl flex items-center justify-center text-lg font-black text-gray-600 border border-white/10 shadow-inner group-hover/item:text-primary-400 transition-colors group-hover/item:scale-105 duration-500">
+                                    <div className="relative group/idx w-14 h-14 bg-slate-950 rounded-2xl flex items-center justify-center text-lg font-black text-gray-600 border border-white/10 shadow-inner group-hover/item:text-primary-400 transition-colors group-hover/item:scale-105 duration-500">
+                                        <div className="absolute inset-x-0 -top-6 flex justify-center opacity-0 group-hover/idx:opacity-100 transition-opacity">
+                                            <button 
+                                                onClick={() => handleMoveLesson(lessons.indexOf(lesson), 'up')}
+                                                disabled={lessons.indexOf(lesson) === 0}
+                                                className="p-1 bg-slate-800 rounded-lg text-gray-400 hover:text-primary-400 disabled:opacity-30 disabled:hover:text-gray-400"
+                                            >
+                                                <ChevronUp className="w-4 h-4" />
+                                            </button>
+                                        </div>
+
                                         {lesson.order_index}
+                                        
+                                        <div className="absolute inset-x-0 -bottom-6 flex justify-center opacity-0 group-hover/idx:opacity-100 transition-opacity">
+                                            <button 
+                                                onClick={() => handleMoveLesson(lessons.indexOf(lesson), 'down')}
+                                                disabled={lessons.indexOf(lesson) === lessons.length - 1}
+                                                className="p-1 bg-slate-800 rounded-lg text-gray-400 hover:text-primary-400 disabled:opacity-30 disabled:hover:text-gray-400"
+                                            >
+                                                <ChevronDown className="w-4 h-4" />
+                                            </button>
+                                        </div>
+
                                         <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-primary-500 rounded-xl flex items-center justify-center text-white shadow-xl shadow-primary-500/20 border-2 border-slate-900">
                                             {lesson.is_published ? <CheckCircle2 className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
                                         </div>

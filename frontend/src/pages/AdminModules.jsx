@@ -52,7 +52,8 @@ export default function AdminModules() {
         setResourceFormData,
         handleOpenResourceModal,
         handleSaveResource,
-        confirmDeleteResource
+        confirmDeleteResource,
+        handleReorderLessons
     } = useAdminModules();
 
     const [deleteType, setDeleteType] = useState(null); // 'module', 'lesson', 'resource'
@@ -116,6 +117,7 @@ export default function AdminModules() {
                             onDeleteLesson={(l) => handleDeleteClick(l, 'lesson')}
                             onToggleLessonOptional={toggleLessonOptional}
                             onOpenLessonEditor={(id) => navigate(`/admin/lessons/${id}/editor`)}
+                            onReorderLessons={handleReorderLessons}
                             onNewResource={handleOpenResourceModal}
                             onEditResource={(mid, r) => handleOpenResourceModal(mid, r)}
                             onDeleteResource={(r) => handleDeleteClick(r, 'resource')}

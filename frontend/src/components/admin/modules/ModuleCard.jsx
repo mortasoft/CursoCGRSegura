@@ -16,10 +16,10 @@ export default function ModuleCard({
     onEditLesson,
     onDeleteLesson,
     onToggleLessonOptional,
-    onOpenLessonEditor,
     onNewResource,
     onEditResource,
-    onDeleteResource
+    onDeleteResource,
+    onReorderLessons
 }) {
     const isExpanded = expandedModule === module.id;
 
@@ -152,6 +152,7 @@ export default function ModuleCard({
                         onDeleteLesson={(lesson) => onDeleteLesson(lesson)}
                         onToggleOptional={onToggleLessonOptional}
                         onOpenEditor={onOpenLessonEditor}
+                        onReorderLessons={onReorderLessons}
                         loading={contentLoading}
                     />
 
