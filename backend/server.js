@@ -43,6 +43,10 @@ const surveyRoutes = require('./routes/surveys');
 const certificateRoutes = require('./routes/certificates');
 const { authMiddleware, adminMiddleware } = require('./middleware/auth');
 const maintenanceMiddleware = require('./middleware/maintenance');
+const { initializeDatabase } = require('./services/dbInitService');
+
+// Inicializar esquemas de base de datos sync/async
+initializeDatabase();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
