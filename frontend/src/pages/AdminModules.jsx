@@ -91,14 +91,14 @@ export default function AdminModules() {
 
             {/* Modules Grid */}
             {loading ? (
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 gap-8">
                     <ModuleCardSkeleton />
                     <ModuleCardSkeleton />
                     <ModuleCardSkeleton />
                     <ModuleCardSkeleton />
                 </div>
             ) : (
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 gap-8">
                     {modules.map((module) => (
                         <ModuleCard 
                             key={module.id}
