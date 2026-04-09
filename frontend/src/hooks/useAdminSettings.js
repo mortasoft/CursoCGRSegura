@@ -101,30 +101,38 @@ export function useAdminSettings() {
     };
 
     const saveSettings = async () => {
-        try {
-            setSaving(true);
-            const payload = {
-                levels: settings.levels.map(l => ({
-                    name: l.name,
-                    minPoints: l.minPoints,
-                    icon: l.iconName || 'Award'
-                }))
-            };
+        const payload = {
+            levels: settings.levels.map(l => ({
+                name: l.name,
+                minPoints: l.minPoints,
+                icon: l.iconName || 'Award'
+            }))
+        };
 
-            await Promise.all([
+        toast.promise(
+            Promise.all([
                 axios.put(`${API_URL}/gamification/settings`, payload),
                 axios.put(`${API_URL}/system/settings`, {
                     maintenance_mode: settings.maintenanceMode
                 })
-            ]);
+            ]),
+            {
+                loading: 'Guardando configuraciones...',
+                success: 'Configuraciones guardadas permanentemente',
+                error: 'Error al salvar cambios'
+            }
+        ).finally(() => setSaving(false));
+    };
 
-            toast.success('Configuraciones guardadas permanentemente');
-        } catch (error) {
-            console.error('Error saving settings:', error);
-            toast.error('Error al guardar configuraciones');
-        } finally {
-            setSaving(false);
-        }
+    const refreshLeaderboard = async () => {
+        toast.promise(
+            axios.post(`${API_URL}/gamification/leaderboard/refresh`),
+            {
+                loading: 'Recalculando ranking global...',
+                success: 'Ranking recalculado con éxito',
+                error: 'Error al sincronizar ranking'
+            }
+        ).finally(() => setSaving(false));
     };
 
     return {
@@ -134,6 +142,7 @@ export function useAdminSettings() {
         updateLevel,
         toggleMaintenance,
         saveSettings,
+        refreshLeaderboard,
         refresh: fetchSettings
     };
 }

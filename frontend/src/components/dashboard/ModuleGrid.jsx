@@ -7,7 +7,7 @@ import CyberCat from '../CyberCat';
 export default function ModuleGrid({ modules, filterCompleted, onToggleFilter }) {
     const navigate = useNavigate();
 
-    const filteredModules = modules.filter(m => 
+    const filteredModules = modules.filter(m =>
         filterCompleted ? m.status === 'completed' : m.status !== 'completed'
     );
 
@@ -38,7 +38,7 @@ export default function ModuleGrid({ modules, filterCompleted, onToggleFilter })
                 ) : (
                     <div className="col-span-full py-24 text-center bg-[#0B0F1C] rounded-[2rem] border border-dashed border-white/5">
                         <p className="text-gray-500 font-bold uppercase tracking-widest text-xs opacity-60">
-                            {filterCompleted ? 'Aún no has completado hitos académicos.' : 'No se detectan módulos en esta región de datos.'}
+                            {filterCompleted ? 'Aún no has completado módulos.' : 'No se detectan módulos en esta región de datos.'}
                         </p>
                     </div>
                 )}
@@ -53,7 +53,7 @@ function ModuleCard({ module, navigate }) {
 
     const handleNavigation = () => {
         if (isLocked) {
-            toast.error(module.lock_reason || 'Requisito de precedencia no cumplido.');
+            toast.error(module.lock_reason || 'Requisito de precedencia no cumplido.', { id: 'module-locked-warning' });
             return;
         }
         navigate(`/modules/${module.id}`);

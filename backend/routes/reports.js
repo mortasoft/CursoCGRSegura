@@ -29,8 +29,9 @@ const refreshReportsCache = async () => {
             LEFT JOIN (
                 SELECT 
                     user_id, 
-                    (COUNT(CASE WHEN status = 'completed' THEN 1 END) / ${totalModules}) * 100 as completion_rate
+                    (COUNT(DISTINCT module_id) / ${totalModules}) * 100 as completion_rate
                 FROM user_progress
+                WHERE status = 'completed'
                 GROUP BY user_id
             ) up_agg ON u.id = up_agg.user_id
             WHERE u.is_active = TRUE AND u.role = 'student'
@@ -41,7 +42,6 @@ const refreshReportsCache = async () => {
             SELECT 
                 d.name as department,
                 COUNT(u.id) as staff_count,
-                SUM(CASE WHEN COALESCE(up_agg.completion_rate, 0) >= 100 THEN 1 ELSE 0 END) as completed_count,
                 AVG(COALESCE(up_agg.completion_rate, 0)) as avg_completion
             FROM departments d
             LEFT JOIN users u ON u.department = d.name AND u.is_active = TRUE AND u.role = 'student'
@@ -77,7 +77,7 @@ const refreshReportsCache = async () => {
             LIMIT 50
         `);
 
-        // 4. Listado Detallado (Limitado a 500 para el cache, el resto paginado si fuera necesario, pero aquí guardamos todo)
+        // 4. Listado Detallado
         const detailedUsers = await db.query(`
             SELECT 
                 u.id, u.first_name, u.last_name, u.email, u.department, u.position,
@@ -98,18 +98,38 @@ const refreshReportsCache = async () => {
             ORDER BY progress DESC
         `);
 
+        // 5. Cumplimiento por Módulo
+        const moduleCompliance = await db.query(`
+            SELECT 
+                m.id,
+                m.title,
+                (SELECT COUNT(*) FROM users WHERE role = 'student' AND is_active = TRUE) as total_students,
+                COUNT(DISTINCT up.user_id) as completed_count
+            FROM modules m
+            LEFT JOIN user_progress up ON up.module_id = m.id AND up.status = 'completed'
+            LEFT JOIN users u ON up.user_id = u.id AND u.role = 'student' AND u.is_active = TRUE
+            WHERE m.is_published = TRUE
+            GROUP BY m.id
+        `);
+
         const [certsCount] = await db.query('SELECT COUNT(*) as count FROM certificates');
 
         const reportData = {
             summary: {
-                totalStaff: globalStats.total_staff,
+                totalStaff: globalStats.total_staff || 0,
                 avgCompletion: Math.round(globalStats.avg_completion_rate || 0),
-                totalCerts: certsCount.count,
+                totalCerts: certsCount.count || 0,
                 activeModules: totalModules
             },
             departments: deptCompliance.map(d => ({
                 ...d,
-                avg_completion: Math.round(d.avg_completion)
+                avg_completion: Math.round(d.avg_completion || 0)
+            })),
+            moduleCompliance: moduleCompliance.map(m => ({
+                ...m,
+                avg_completion: m.total_students > 0 
+                    ? Math.round((m.completed_count / m.total_students) * 100) 
+                    : 0
             })),
             atRisk: usersAtRisk,
             detailedUsers: detailedUsers.map(u => ({
@@ -120,7 +140,10 @@ const refreshReportsCache = async () => {
         };
 
         // Guardar en Redis por 2 horas (7200 segundos)
-        await redisClient.setEx('reports:compliance', 7200, JSON.stringify(reportData));
+        if (redisClient && redisClient.isOpen) {
+            await redisClient.setEx('reports:compliance', 7200, JSON.stringify(reportData));
+        }
+        
         logger.info('✅ Caché de reportes actualizada correctamente.');
         return reportData;
     } catch (error) {
@@ -128,6 +151,28 @@ const refreshReportsCache = async () => {
         return null;
     }
 };
+
+// Programar actualización cada 2 horas (opcional: primera ejecución tras 30s)
+setTimeout(refreshReportsCache, 30000);
+setInterval(refreshReportsCache, 2 * 60 * 60 * 1000);
+
+/**
+ * @route   POST /api/reports/compliance/refresh
+ * @desc    Forzar actualización del caché de reportes
+ * @access  Private/Admin
+ */
+router.post('/compliance/refresh', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        const reportData = await refreshReportsCache();
+        if (!reportData) {
+            return res.status(500).json({ error: 'Error al refrescar los reportes de cumplimiento' });
+        }
+        res.json({ success: true, message: 'Reportes actualizados correctamente', ...reportData });
+    } catch (error) {
+        logger.error('Error refreshing reports manually:', error);
+        res.status(500).json({ error: 'Error al refrescar los reportes' });
+    }
+});
 
 // Programar actualización cada 2 horas (opcional: primera ejecución tras 30s)
 setTimeout(refreshReportsCache, 30000);

@@ -1,8 +1,11 @@
 import { BarChart3 } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList } from 'recharts';
 
 export default function ComplianceCharts({ chartType, onTypeChange, data }) {
     const yDataKey = chartType === 'departments' ? 'department' : 'title';
+    
+    // Dynamic height based on data length (min 400px, max 1000px)
+    const chartHeight = Math.max(400, Math.min(data.length * 40, 1000));
     
     const getColorForName = (name) => {
         if (!name) return '#cbd5e1';
@@ -29,20 +32,20 @@ export default function ComplianceCharts({ chartType, onTypeChange, data }) {
                     <option value="modules">Por Módulo Educativo</option>
                 </select>
             </div>
-            <div className="h-[1000px] w-full">
+            <div style={{ height: `${chartHeight}px` }} className="w-full">
                 <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                         layout="vertical"
                         data={data}
-                        margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                        margin={{ top: 5, right: 60, left: -20, bottom: 5 }}
                     >
                         <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" horizontal={false} />
                         <XAxis type="number" domain={[0, 100]} hide />
                         <YAxis
                             dataKey={yDataKey}
                             type="category"
-                            width={260}
-                            tick={{ fill: '#94a3b8', fontSize: 9, width: 250 }}
+                            width={180}
+                            tick={{ fill: '#94a3b8', fontSize: 9, width: 170 }}
                             interval={0}
                         />
                         <Tooltip
@@ -56,6 +59,12 @@ export default function ComplianceCharts({ chartType, onTypeChange, data }) {
                                     fill={getColorForName(entry[yDataKey])}
                                 />
                             ))}
+                            <LabelList 
+                                dataKey="avg_completion" 
+                                position="right" 
+                                formatter={(val) => `${val}%`}
+                                style={{ fill: '#ffffff60', fontSize: '10px', fontWeight: 'bold' }}
+                            />
                         </Bar>
                     </BarChart>
                 </ResponsiveContainer>

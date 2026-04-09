@@ -7,6 +7,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 export function useReports() {
     const [reportData, setReportData] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [syncing, setSyncing] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [view, setView] = useState('summary');
     const [chartType, setChartType] = useState('departments');
@@ -28,6 +29,23 @@ export function useReports() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const refreshReports = async () => {
+        toast.promise(
+            axios.post(`${API_URL}/reports/compliance/refresh`),
+            {
+                loading: 'Sincronizando analytics...',
+                success: (res) => {
+                    if (res.data.success) {
+                        setReportData(res.data);
+                        return 'Reportes actualizados correctamente';
+                    }
+                    throw new Error('Sync failed');
+                },
+                error: 'Error al sincronizar reportes'
+            }
+        ).finally(() => setSyncing(false));
     };
 
     const handleExportCSV = () => {
@@ -88,12 +106,10 @@ export function useReports() {
         let sortableItems = [...reportData.departments];
         if (sortConfig.key) {
             sortableItems.sort((a, b) => {
-                if (a[sortConfig.key] < b[sortConfig.key]) {
-                    return sortConfig.direction === 'asc' ? -1 : 1;
-                }
-                if (a[sortConfig.key] > b[sortConfig.key]) {
-                    return sortConfig.direction === 'asc' ? 1 : -1;
-                }
+                const valA = a[sortConfig.key];
+                const valB = b[sortConfig.key];
+                if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
+                if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
                 return 0;
             });
         }
@@ -103,6 +119,7 @@ export function useReports() {
     return {
         reportData,
         loading,
+        syncing,
         searchTerm,
         setSearchTerm,
         view,
@@ -114,6 +131,7 @@ export function useReports() {
         handleExportCSV,
         handleSendReminders,
         filteredUsers,
-        sortedDepartments
+        sortedDepartments,
+        refreshReports
     };
 }

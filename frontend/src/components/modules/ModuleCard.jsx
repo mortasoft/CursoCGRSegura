@@ -9,6 +9,7 @@ import {
     Lock, 
     Calendar 
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import CyberCat from '../CyberCat';
 
 export default function ModuleCard({ module, user, viewAsStudent }) {
@@ -28,7 +29,12 @@ export default function ModuleCard({ module, user, viewAsStudent }) {
         <div className="relative h-full">
             <Link
                 to={isLocked ? '#' : `/modules/${module.id}`}
-                onClick={(e) => isLocked && e.preventDefault()}
+                onClick={(e) => {
+                    if (isLocked) {
+                        e.preventDefault();
+                        toast.error(module.lock_reason || 'Módulo Bloqueado', { id: 'module-locked-warning' });
+                    }
+                }}
                 className={`group relative flex flex-col h-full bg-slate-800/20 border border-white/5 rounded-[1.5rem] overflow-hidden transition-all duration-500 ${isLocked
                     ? 'grayscale-[0.5] opacity-80 cursor-not-allowed'
                     : module.completionPercentage === 100

@@ -53,7 +53,7 @@ export default function DashboardSidebar({ user, stats }) {
                     <Award className="w-8 h-8 text-[#EF8843]" />
                     <span className="text-[10px] font-bold text-white uppercase tracking-widest">INSIGNIAS</span>
                 </Link>
-                <Link to="/certificates" className="bg-[#111627] rounded-3xl p-6 border border-white/5 flex flex-col items-center justify-center gap-3 hover:bg-slate-800 transition-colors">
+                <Link to="/profile" className="bg-[#111627] rounded-3xl p-6 border border-white/5 flex flex-col items-center justify-center gap-3 hover:bg-slate-800 transition-colors">
                     <CheckCircle className="w-8 h-8 text-[#6D71F9]" />
                     <span className="text-[10px] font-bold text-white uppercase tracking-widest">DIPLOMAS</span>
                 </Link>

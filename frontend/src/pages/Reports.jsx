@@ -15,6 +15,7 @@ export default function Reports() {
     const {
         reportData,
         loading,
+        syncing,
         searchTerm,
         setSearchTerm,
         view,
@@ -26,7 +27,8 @@ export default function Reports() {
         handleExportCSV,
         handleSendReminders,
         filteredUsers,
-        sortedDepartments
+        sortedDepartments,
+        refreshReports
     } = useReports();
 
     if (loading) {
@@ -45,6 +47,8 @@ export default function Reports() {
                 onToggleView={() => setView(view === 'summary' ? 'detailed' : 'summary')}
                 onExport={handleExportCSV}
                 onBack={() => navigate('/admin')}
+                onRefresh={refreshReports}
+                syncing={syncing}
             />
 
             {view === 'summary' ? (
@@ -52,19 +56,11 @@ export default function Reports() {
                     <ComplianceSummary summary={summary} />
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-                        <div className="lg:col-span-2 space-y-10">
+                        <div className="lg:col-span-2">
                             <ComplianceCharts 
                                 chartType={chartType}
                                 onTypeChange={setChartType}
                                 data={activeChartData}
-                            />
-
-                            <PerformanceTable 
-                                departments={sortedDepartments}
-                                searchTerm={searchTerm}
-                                onSearchChange={setSearchTerm}
-                                onSort={requestSort}
-                                sortConfig={sortConfig}
                             />
                         </div>
 
@@ -77,6 +73,16 @@ export default function Reports() {
                             <RiskAlerts 
                                 atRisk={atRisk}
                                 onSendReminders={handleSendReminders}
+                            />
+                        </div>
+
+                        <div className="lg:col-span-3">
+                            <PerformanceTable 
+                                departments={sortedDepartments}
+                                searchTerm={searchTerm}
+                                onSearchChange={setSearchTerm}
+                                onSort={requestSort}
+                                sortConfig={sortConfig}
                             />
                         </div>
                     </div>

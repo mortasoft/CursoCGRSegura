@@ -37,12 +37,12 @@ export default function UserTable({ users, currentUserId, onEdit, onReset, onDel
                 <table className="w-full text-left border-collapse">
                     <thead>
                         <tr className="bg-white/5 border-b border-white/5">
-                            <th className="pl-4 md:pl-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] text-left">Funcionario</th>
-                            <th className="px-3 py-4 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] text-left">Unidad / Cargo</th>
-                            <th className="hidden md:table-cell px-3 py-4 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] text-center">Protocolo de Acceso</th>
-                            <th className="px-3 py-4 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] text-center">Nivel Académico</th>
-                            <th className="hidden lg:table-cell px-3 py-4 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] text-center">Disponibilidad</th>
-                            <th className="pr-4 md:pr-5 py-4 text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] text-right">Comandos</th>
+                            <th className="pl-4 md:pl-5 py-4 text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] text-left">Funcionario</th>
+                            <th className="px-3 py-4 text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] text-left">Unidad / Cargo</th>
+                            <th className="hidden md:table-cell px-3 py-4 text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] text-center">Protocolo de Acceso</th>
+                            <th className="px-3 py-4 text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] text-center">Nivel Académico</th>
+                            <th className="hidden lg:table-cell px-3 py-4 text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] text-center">Disponibilidad</th>
+                            <th className="pr-4 md:pr-5 py-4 text-[10px] font-black text-gray-300 uppercase tracking-[0.2em] text-right">Acciones</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-white/[0.03]">
@@ -66,17 +66,17 @@ export default function UserTable({ users, currentUserId, onEdit, onReset, onDel
                                         </div>
                                         <div className="text-left">
                                             <p className="text-sm font-black text-white uppercase tracking-tight group-hover/row:text-primary-400 transition-colors leading-tight">{u.first_name} {u.last_name}</p>
-                                            <p className="text-[10px] text-gray-500 font-bold lowercase flex items-center gap-1.5 mt-0.5">
-                                                <Mail className="w-3 h-3 opacity-30" /> {u.email}
+                                            <p className="text-[10px] text-white/60 font-bold lowercase flex items-center gap-1.5 mt-0.5">
+                                                <Mail className="w-3 h-3 opacity-50" /> {u.email}
                                             </p>
                                         </div>
                                     </div>
                                 </td>
                                 <td className="px-3 py-4">
                                     <div className="space-y-1 text-left max-w-[200px]">
-                                        <p className="text-[11px] font-black text-gray-300 uppercase leading-tight">{u.department || 'SIN UNIDAD'}</p>
-                                        <p className="text-[9px] text-gray-600 font-black uppercase tracking-tighter flex items-center gap-1.5 leading-tight">
-                                            <Briefcase className="w-3 h-3 opacity-40 flex-shrink-0" /> <span className="truncate">{u.position || 'SIN CARGO ASIGNADO'}</span>
+                                        <p className="text-[11px] font-black text-white uppercase leading-tight">{u.department || 'SIN UNIDAD'}</p>
+                                        <p className="text-[9px] text-white/60 font-black uppercase tracking-tighter flex items-center gap-1.5 leading-tight">
+                                            <Briefcase className="w-3 h-3 opacity-60 flex-shrink-0" /> <span className="truncate">{u.position || 'SIN CARGO ASIGNADO'}</span>
                                         </p>
                                     </div>
                                 </td>
@@ -87,14 +87,14 @@ export default function UserTable({ users, currentUserId, onEdit, onReset, onDel
                                                 {u.role === 'admin' ? 'ADMINISTRADOR' : 'ESTUDIANTE'}
                                             </div>
                                         </div>
-                                        <div className="flex flex-col items-center text-[9px] font-bold text-gray-600 uppercase tracking-tighter w-full max-w-[120px]">
+                                        <div className="flex flex-col items-center text-[9px] font-bold text-white/50 uppercase tracking-tighter w-full max-w-[120px]">
                                             <div className="flex justify-between items-center w-full">
-                                                <span className="flex items-center gap-1 opacity-50"><XCircle className="w-3 h-3" /> REGISTRO:</span>
-                                                <span className="text-gray-400">{u.created_at ? new Date(u.created_at).toLocaleDateString() : 'N/A'}</span>
+                                                <span className="flex items-center gap-1 opacity-100 text-white"><XCircle className="w-3 h-3" /> REGISTRO:</span>
+                                                <span className="text-white/80">{u.created_at ? new Date(u.created_at).toLocaleDateString() : 'N/A'}</span>
                                             </div>
                                             <div className="flex justify-between items-center w-full mt-1">
-                                                <span className="flex items-center gap-1 opacity-50"><Clock className="w-3 h-3" /> ÚLTIMA VEZ:</span>
-                                                <span className={u.last_login ? 'text-white' : 'text-gray-700 italic'}>{formatRelativeTime(u.last_login)}</span>
+                                                <span className="flex items-center gap-1 opacity-100 text-white"><Clock className="w-3 h-3" /> ÚLTIMA VEZ:</span>
+                                                <span className={u.last_login ? 'text-white' : 'text-white/30 italic'}>{formatRelativeTime(u.last_login)}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -104,7 +104,7 @@ export default function UserTable({ users, currentUserId, onEdit, onReset, onDel
                                         <div className="text-center group-hover/row:scale-105 transition-transform">
                                             <p className="text-sm font-black text-white">{u.points || 0} PTS</p>
                                             <div className="flex items-center gap-1 mx-auto justify-center">
-                                                <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest">{u.level || 'NOVATO'}</span>
+                                                <span className="text-[9px] font-black text-white/60 uppercase tracking-widest">{u.level || 'NOVATO'}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -169,7 +169,7 @@ export default function UserTable({ users, currentUserId, onEdit, onReset, onDel
             {(totalPages > 1 || users.length > 10) && (
                 <div className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 bg-slate-900/40 border-t border-white/5 gap-4">
                     <div className="flex items-center gap-3">
-                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Mostrar</span>
+                        <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">Mostrar</span>
                         <div className="relative">
                             <button
                                 onClick={() => setIsPerPageOpen(!isPerPageOpen)}

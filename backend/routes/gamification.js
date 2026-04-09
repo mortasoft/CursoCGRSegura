@@ -37,7 +37,7 @@ const refreshLeaderboardCache = async () => {
         const departmentRanking = await db.query(
             `SELECT 
                 sd.department, 
-                SUM(COALESCE(up.points, 0)) as total_points, 
+                SUM(COALESCE(up.points, 0)) as total_points, ROUND(SUM(COALESCE(up.points, 0)) / COUNT(sd.email), 1) as average_points, 
                 COUNT(sd.email) as staff_count,
                 (SELECT sd2.full_name 
                  FROM staff_directory sd2
@@ -56,7 +56,7 @@ const refreshLeaderboardCache = async () => {
              LEFT JOIN user_points up ON u.id = up.user_id
              WHERE sd.department IS NOT NULL
              GROUP BY sd.department
-             ORDER BY total_points DESC`
+             ORDER BY average_points DESC, total_points DESC`
         );
 
         // --- SINCRONIZACIÓN ZSET PARA RANKING REAL-TIME ---
@@ -221,6 +221,21 @@ router.put('/settings', authMiddleware, adminMiddleware, async (req, res) => {
     } catch (error) {
         logger.error('Error actualizando settings de gamificación:', error);
         res.status(500).json({ error: 'Error al actualizar configuración' });
+    }
+});
+
+/**
+ * @route   POST /api/gamification/leaderboard/refresh
+ * @desc    Refrescar manualmente el caché del leaderboard (Admin)
+ * @access  Private/Admin
+ */
+router.post('/leaderboard/refresh', authMiddleware, adminMiddleware, async (req, res) => {
+    try {
+        await refreshLeaderboardCache();
+        res.json({ success: true, message: 'Ranking actualizado correctamente' });
+    } catch (error) {
+        logger.error('Error refrescando leaderboard manualmente:', error);
+        res.status(500).json({ error: 'Error al actualizar el ranking' });
     }
 });
 

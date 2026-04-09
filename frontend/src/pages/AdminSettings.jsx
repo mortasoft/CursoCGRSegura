@@ -2,8 +2,7 @@ import { useState } from 'react';
 import {
     Settings,
     Trophy,
-    Loader2,
-    ShieldCheck
+    Loader2
 } from 'lucide-react';
 import { useAdminSettings } from '../hooks/useAdminSettings';
 
@@ -11,7 +10,6 @@ import { useAdminSettings } from '../hooks/useAdminSettings';
 import AdminSettingsHeader from '../components/admin/settings/AdminSettingsHeader';
 import LevelsConfigTab from '../components/admin/settings/LevelsConfigTab';
 import SecurityTab from '../components/admin/settings/SecurityTab';
-import AuditTab from '../components/admin/settings/AuditTab';
 
 export default function AdminSettings() {
     const { 
@@ -20,7 +18,8 @@ export default function AdminSettings() {
         saving, 
         updateLevel, 
         toggleMaintenance, 
-        saveSettings 
+        saveSettings,
+        refreshLeaderboard
     } = useAdminSettings();
     const [activeTab, setActiveTab] = useState('levels');
 
@@ -39,8 +38,7 @@ export default function AdminSettings() {
 
     const tabs = [
         { id: 'levels', label: 'Estructura de Niveles', icon: Trophy },
-        { id: 'general', label: 'Ajustes Generales', icon: Settings },
-        { id: 'logs', label: 'Auditoría', icon: ShieldCheck }
+        { id: 'general', label: 'Ajustes Generales', icon: Settings }
     ];
 
     return (
@@ -56,10 +54,13 @@ export default function AdminSettings() {
 
             {/* Content Area Rendering focused tab content */}
             <main className="min-h-[500px]">
-                {activeTab === 'levels' && (
+                    {activeTab === 'levels' && (
                     <LevelsConfigTab 
                         levels={settings.levels}
                         onUpdateLevel={updateLevel}
+                        onRefreshRanking={refreshLeaderboard}
+                        onSave={saveSettings}
+                        saving={saving}
                     />
                 )}
 
@@ -68,10 +69,6 @@ export default function AdminSettings() {
                         maintenanceMode={settings.maintenanceMode}
                         onToggleMaintenance={toggleMaintenance}
                     />
-                )}
-
-                {activeTab === 'logs' && (
-                    <AuditTab />
                 )}
             </main>
         </div>
