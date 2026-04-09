@@ -17,6 +17,31 @@ async function awardBadge(userId, badgeId) {
 
         if (result.affectedRows > 0) {
             logger.info(`Insignia otorgada: ${badge.name} al usuario ${userId}`);
+            
+            // Otorgar 10 puntos extra por insignia ganada
+            await db.query(
+                `INSERT INTO gamification_activities (user_id, activity_type, points_earned, reference_id) 
+                 VALUES (?, 'badge_earned', 10, ?)`,
+                [userId, badgeId]
+            );
+
+            await db.query(
+                `INSERT INTO user_points (user_id, points) VALUES (?, 10) 
+                 ON DUPLICATE KEY UPDATE points = points + 10`,
+                [userId]
+            );
+
+            // Sincronizar con Redis para ranking (obtener puntos totales primero)
+            try {
+                const [newPoints] = await db.query('SELECT points FROM user_points WHERE user_id = ?', [userId]);
+                if (newPoints) {
+                    const { updateUserScore } = require('./gamification');
+                    await updateUserScore(userId, newPoints.points);
+                }
+            } catch (syncError) {
+                logger.error('Error sincronizando puntos tras insignia:', syncError);
+            }
+
             return { awarded: true, badge };
         }
 

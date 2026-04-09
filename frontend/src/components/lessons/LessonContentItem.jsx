@@ -5,12 +5,12 @@ import YouTubePlayer from './YouTubePlayer';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-export default function LessonContentItem({ 
-    item, 
-    ytApiLoaded, 
-    markVideoAsWatched, 
-    markLinkAsVisited, 
-    handleResourceDownload, 
+export default function LessonContentItem({
+    item,
+    ytApiLoaded,
+    markVideoAsWatched,
+    markLinkAsVisited,
+    handleResourceDownload,
     handleAssignmentUpload,
     uploadingAssignment,
     watchedVideos,
@@ -50,9 +50,9 @@ export default function LessonContentItem({
             return (
                 <div className="card p-5 md:p-7 prose prose-invert prose-slate max-w-none bg-slate-800/30 border-white/5 shadow-inner">
                     {isHtml ? (
-                        <div 
-                            className="whitespace-pre-wrap" 
-                            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(textContent) }} 
+                        <div
+                            className="whitespace-pre-wrap"
+                            dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(textContent) }}
                         />
                     ) : (
                         <div className="text-gray-300">
@@ -106,7 +106,7 @@ export default function LessonContentItem({
                             </div>
                         )}
                     </div>
-                    
+
                     <div className="flex justify-between items-center px-2">
                         <div className="flex flex-col gap-2">
                             <h3 className={`text-lg font-bold flex items-center gap-3 transition-all duration-500 ${isWatched ? 'text-green-400' : 'text-white'}`}>
@@ -115,14 +115,14 @@ export default function LessonContentItem({
                                 </div>
                                 {item.title}
                             </h3>
-                            
+
                             <div className="flex items-center gap-2">
                                 {!!item.is_required && !isWatched && (
                                     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-orange-500/10 text-orange-400 text-[10px] font-black uppercase tracking-widest border border-orange-500/20">
                                         <Clock className="w-3.5 h-3.5" /> Requerido
                                     </span>
                                 )}
-                                
+
                                 {isWatched ? (
                                     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-green-500/20 text-green-400 text-[10px] font-black uppercase tracking-widest border border-green-500/30 animate-fade-in">
                                         <CheckCircle className="w-3.5 h-3.5" /> ¡Video Completado!
@@ -206,14 +206,14 @@ export default function LessonContentItem({
                         <div className={`w-16 h-16 rounded-2xl transition-all duration-500 flex items-center justify-center flex-shrink-0 ${isVisited ? 'bg-green-500 text-white shadow-lg shadow-green-500/30 rotate-0' : 'bg-green-500/10 text-green-400 group-hover:scale-110'}`}>
                             <LinkIcon className="w-8 h-8" />
                         </div>
-                        
+
                         <div className="flex-1 min-w-0 text-center md:text-left">
                             <h4 className={`text-lg font-bold flex items-center justify-center md:justify-start gap-2 transition-colors ${isVisited ? 'text-green-400' : 'text-white'}`}>
                                 {item.title}
                                 {isVisited && <CheckCircle className="w-4 h-4 text-green-400 animate-pulse" />}
                             </h4>
                             <p className="text-sm text-gray-500 truncate mt-1">{data.url}</p>
-                            
+
                             <div className="flex items-center justify-center md:justify-start gap-2 mt-3">
                                 {!!item.is_required && !isVisited && (
                                     <span className="px-3 py-1 rounded-lg bg-orange-500/10 text-orange-400 text-[10px] font-black uppercase tracking-widest border border-orange-500/20">
@@ -244,7 +244,7 @@ export default function LessonContentItem({
                                 )}
                             </div>
                         )}
-                        
+
                         <div className={`w-12 h-12 rounded-full hidden md:flex items-center justify-center transition-all ${isVisited ? 'bg-green-500 text-white' : 'bg-white/5 text-gray-400 group-hover:bg-green-500 group-hover:text-white'}`}>
                             {isVisited ? <CheckCircle className="w-6 h-6" /> : <Zap className="w-6 h-6 animate-pulse" />}
                         </div>
@@ -270,7 +270,7 @@ export default function LessonContentItem({
                         {(data.items || []).map((bullet, idx) => (
                             <li key={idx} className="leading-relaxed pl-1">
                                 {bullet.title && <strong className="text-white font-bold mr-1">{bullet.title}:</strong>}
-                                <span>{typeof bullet.text === 'string' ? bullet.text.split('\n').map((line, i) => <span key={i}>{line}<br/></span>) : bullet.text}</span>
+                                <span>{typeof bullet.text === 'string' ? bullet.text.split('\n').map((line, i) => <span key={i}>{line}<br /></span>) : bullet.text}</span>
                             </li>
                         ))}
                     </ul>
@@ -389,12 +389,12 @@ export default function LessonContentItem({
                     )}
                 </div>
             );
-        
+
         case 'confirmation':
             const isConfirmed = visitedLinks.has(item.id);
             const handleConfirmation = (optNum) => {
                 if (isConfirmed || revealing) return;
-                
+
                 if (optNum === data.correctOption) {
                     setRevealing(true);
                     markLinkAsVisited(item.id, { selectedOption: optNum, answeredAt: new Date().toISOString() });
@@ -406,21 +406,19 @@ export default function LessonContentItem({
             };
 
             return (
-                <div className={`p-8 rounded-[2.5rem] transition-all duration-700 border-2 ${
-                    isConfirmed 
-                    ? 'bg-emerald-500/5 border-emerald-500/30' 
+                <div className={`p-8 rounded-[2.5rem] transition-all duration-700 border-2 ${isConfirmed
+                    ? 'bg-emerald-500/5 border-emerald-500/30'
                     : 'bg-slate-800/20 border-white/5'
-                }`}>
+                    }`}>
                     <div className="flex flex-col md:flex-row gap-8 items-center">
-                        <div className={`w-20 h-20 rounded-3xl flex items-center justify-center flex-shrink-0 transition-all duration-500 ${
-                            isConfirmed ? 'bg-emerald-500 text-white shadow-xl shadow-emerald-500/20' : 'bg-emerald-500/10 text-emerald-400'
-                        }`}>
+                        <div className={`w-20 h-20 rounded-3xl flex items-center justify-center flex-shrink-0 transition-all duration-500 ${isConfirmed ? 'bg-emerald-500 text-white shadow-xl shadow-emerald-500/20' : 'bg-emerald-500/10 text-emerald-400'
+                            }`}>
                             {isConfirmed ? <CheckCircle2 className="w-10 h-10" /> : <HelpCircle className="w-10 h-10" />}
                         </div>
 
                         <div className="flex-1 space-y-4 text-center md:text-left">
                             <div>
-                                <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-500 mb-2">Comprobación de Concepto</h4>
+
                                 <h3 className="text-xl font-bold text-white leading-tight">
                                     {data.description || 'Por favor confirma la siguiente información:'}
                                 </h3>
@@ -437,13 +435,12 @@ export default function LessonContentItem({
                                             key={num}
                                             onClick={() => handleConfirmation(num)}
                                             disabled={isConfirmed || revealing}
-                                            className={`flex-1 group relative p-5 rounded-2xl border-2 transition-all duration-300 transform active:scale-95 ${
-                                                isConfirmed
+                                            className={`flex-1 group relative p-5 rounded-2xl border-2 transition-all duration-300 transform active:scale-95 ${isConfirmed
                                                 ? (isThisCorrect ? 'bg-emerald-500 border-emerald-400 text-white shadow-lg' : 'bg-slate-900/50 border-white/5 text-gray-600 opacity-60')
                                                 : isSelectedIncorrect
-                                                ? 'bg-red-500 border-red-400 text-white animate-shake shadow-lg shadow-red-500/20'
-                                                : 'bg-slate-900/40 border-white/10 text-gray-300 hover:border-emerald-500/50 hover:bg-slate-800'
-                                            }`}
+                                                    ? 'bg-red-500 border-red-400 text-white animate-shake shadow-lg shadow-red-500/20'
+                                                    : 'bg-slate-900/40 border-white/10 text-gray-300 hover:border-emerald-500/50 hover:bg-slate-800'
+                                                }`}
                                         >
                                             <div className="flex items-center justify-center gap-3">
                                                 {isConfirmed && isThisCorrect && <CheckCircle2 className="w-5 h-5 animate-bounce" />}
@@ -452,7 +449,7 @@ export default function LessonContentItem({
                                                     {optionText || `Opción ${num}`}
                                                 </span>
                                             </div>
-                                            
+
                                             {!isConfirmed && !isSelectedIncorrect && (
                                                 <div className="absolute inset-0 rounded-2xl bg-emerald-500/0 group-hover:bg-emerald-500/5 transition-colors" />
                                             )}
@@ -473,9 +470,8 @@ export default function LessonContentItem({
                                 )}
 
                                 {item.points > 0 && (
-                                    <span className={`px-3 py-1 rounded-full border transition-all ${
-                                        isConfirmed ? 'bg-yellow-500 border-yellow-400 text-slate-950 px-4 scale-110 shadow-lg shadow-yellow-500/20' : 'bg-slate-950 border-white/5 text-yellow-500'
-                                    }`}>
+                                    <span className={`px-3 py-1 rounded-full border transition-all ${isConfirmed ? 'bg-yellow-500 border-yellow-400 text-slate-950 px-4 scale-110 shadow-lg shadow-yellow-500/20' : 'bg-slate-950 border-white/5 text-yellow-500'
+                                        }`}>
                                         +{item.points} XP {isConfirmed ? 'GANADOS' : ''}
                                     </span>
                                 )}

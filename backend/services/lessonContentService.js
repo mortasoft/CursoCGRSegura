@@ -58,12 +58,12 @@ class LessonContentService {
                 isCompleted = passedQuizIds.includes(qId);
                 attemptsMade = attemptsMap[qId] || 0;
                 maxAttempts = maxAttemptsMap[qId] || 3;
-            } else if (itemData.survey_id && item.content_type === 'survey') {
+            } else if (item.content_type === 'survey' && itemData.survey_id) {
                 const sId = parseInt(itemData.survey_id);
                 isCompleted = completedSurveyIds.includes(sId);
             } else if (item.content_type === 'assignment') {
                 isCompleted = item.asub_status === 'approved';
-            } else if (item.content_type === 'video' || item.content_type === 'link') {
+            } else if (item.content_type === 'video' || item.content_type === 'link' || item.content_type === 'confirmation') {
                 isCompleted = !!item.completed_at;
             }
 

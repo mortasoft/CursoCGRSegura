@@ -169,7 +169,7 @@ class LessonService {
             `SELECT lc.id, lc.title, lc.content_type, ucp.completed_at 
              FROM lesson_contents lc 
              LEFT JOIN user_content_progress ucp ON ucp.content_id = lc.id AND ucp.user_id = ? 
-             WHERE lc.lesson_id = ? AND lc.is_required = TRUE AND lc.content_type IN ('video', 'link', 'confirmation')`,
+             WHERE lc.lesson_id = ? AND lc.is_required = 1 AND lc.content_type IN ('video', 'link', 'confirmation')`,
             [userId, lessonId]
         );
 

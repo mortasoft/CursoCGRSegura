@@ -258,6 +258,7 @@ class UserService {
             await connection.beginTransaction();
 
             await connection.query('DELETE FROM user_progress WHERE user_id = ?', [userId]);
+            await connection.query('DELETE FROM user_content_progress WHERE user_id = ?', [userId]);
             await connection.query('DELETE FROM gamification_activities WHERE user_id = ?', [userId]);
             await connection.query('DELETE FROM quiz_attempts WHERE user_id = ?', [userId]);
             await connection.query(
