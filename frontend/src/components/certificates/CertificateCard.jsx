@@ -40,10 +40,10 @@ export default function CertificateCard({ certificate, user }) {
                     <p className="text-gray-500 font-serif italic text-xl">Se otorga el presente reconocimiento a:</p>
 
                     <div className="relative inline-block w-full max-w-2xl mx-auto">
-                        <h2 className="text-5xl font-bold text-slate-900 font-serif border-b-2 border-slate-200 pb-4 px-12 block w-full uppercase tracking-tight">
+                        <h2 className="text-5xl font-bold text-slate-900 font-serif border-b-2 border-slate-200 pb-6 px-12 block w-full uppercase tracking-tight">
                             {certificate.first_name || user.first_name} {certificate.last_name || user.last_name}
                         </h2>
-                        <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-white px-3">
+                        <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 bg-white px-3">
                             <Award className="w-10 h-10 text-secondary-500 fill-secondary-100" />
                         </div>
                     </div>
