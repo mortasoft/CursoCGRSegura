@@ -32,6 +32,7 @@ const ModuleCompletionModal = ({ isOpen, onClose, data }) => {
     const navigate = useNavigate();
     const { playSound } = useSoundStore();
     const isAnimatingRef = React.useRef(false);
+    const audioRefs = React.useRef([]);
 
     useEffect(() => {
         if (isOpen) {
@@ -39,8 +40,11 @@ const ModuleCompletionModal = ({ isOpen, onClose, data }) => {
             isAnimatingRef.current = true;
 
             // Reproducir sonidos de celebracion
-            playSound('/sounds/celebrate.mp3');
-            playSound('/sounds/completed.mp3');
+            const celebrateAudio = playSound('/sounds/celebrate.mp3');
+            const completedAudio = playSound('/sounds/completed.mp3');
+            
+            if (celebrateAudio) audioRefs.current.push(celebrateAudio);
+            if (completedAudio) audioRefs.current.push(completedAudio);
 
             // Launch confetti
             const duration = 3000;
@@ -77,11 +81,33 @@ const ModuleCompletionModal = ({ isOpen, onClose, data }) => {
 
             // Detener confeti inmediatamente
             confetti.reset();
+            
+            // Detener sonidos
+            audioRefs.current.forEach(audio => {
+                try {
+                    audio.pause();
+                    audio.currentTime = 0;
+                } catch (e) {
+                    console.error('Error al pausar el sonido', e);
+                }
+            });
+            audioRefs.current = [];
         }
 
         return () => {
             isAnimatingRef.current = false;
             confetti.reset();
+            
+            // Detener sonidos al desmontar
+            audioRefs.current.forEach(audio => {
+                try {
+                    audio.pause();
+                    audio.currentTime = 0;
+                } catch (e) {
+                    console.error('Error al pausar el sonido durante unmount', e);
+                }
+            });
+            audioRefs.current = [];
         };
     }, [isOpen]);
 

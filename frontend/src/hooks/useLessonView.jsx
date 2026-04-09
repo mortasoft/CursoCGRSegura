@@ -80,15 +80,18 @@ export function useLessonView() {
     };
 
     const handleComplete = async () => {
+        const toastId = 'lesson-completion-toast';
         try {
             setCompleting(true);
             setCompletionError(null);
+            toast.loading('Finalizando lección...', { id: toastId });
+
             const response = await axios.post(`${API_URL}/lessons/${id}/complete`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (response.data.success) {
                 playAlert();
-                toast.success(`Lección completada! +${response.data.pointsAwarded || 0} puntos`);
+                toast.success(`LECCIÓN COMPLETADA! +${response.data.pointsAwarded || 0} PUNTOS`, { id: toastId });
 
                 if (response.data.newBalance !== undefined) {
                     updateUser({
@@ -120,7 +123,7 @@ export function useLessonView() {
             playAlert();
             const errorMsg = error.response?.data?.error || error.response?.data?.message || 'Error al completar lección';
             setCompletionError(errorMsg);
-            toast.error(errorMsg, { id: 'lesson-completion-error' });
+            toast.error(errorMsg, { id: toastId });
         } finally {
             setCompleting(false);
         }

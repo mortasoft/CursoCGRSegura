@@ -115,7 +115,7 @@ export function useLessonEditor(lessonId) {
                 bulletItems: [{ title: '', text: '' }],
                 file: null,
                 video_source: 'file',
-                is_required: false,
+                is_required: ['video', 'link', 'quiz', 'survey', 'assignment'].includes(type),
                 points: 0
             });
         }

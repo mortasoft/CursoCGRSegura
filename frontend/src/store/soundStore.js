@@ -10,11 +10,12 @@ export const useSoundStore = create(
             setVolume: (volume) => set({ volume }),
             playSound: (soundPath) => {
                 const { isMuted, volume } = useSoundStore.getState();
-                if (isMuted) return;
+                if (isMuted) return null;
 
                 const audio = new Audio(soundPath);
                 audio.volume = volume;
                 audio.play().catch(e => console.log('Audio play blocked or failed:', e));
+                return audio;
             }
         }),
         {

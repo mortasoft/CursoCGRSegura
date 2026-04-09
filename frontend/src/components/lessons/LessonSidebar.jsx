@@ -1,8 +1,19 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CheckCircle, Lock, PlayCircle, HelpCircle, Zap, FileText, ImageIcon, Award, Clock } from 'lucide-react';
+import { useEffect, useRef } from 'react';
 
 export default function LessonSidebar({ lesson, moduleLessons, currentLessonId, user, viewAsStudent }) {
     const navigate = useNavigate();
+    const activeRef = useRef(null);
+
+    useEffect(() => {
+        if (activeRef.current) {
+            // Un pequeño retraso para permitir que la vista se dibuje adecuadamente
+            setTimeout(() => {
+                activeRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
+        }
+    }, [currentLessonId]);
 
     return (
         <aside className="lg:col-span-3 xl:col-span-3">
@@ -50,6 +61,7 @@ export default function LessonSidebar({ lesson, moduleLessons, currentLessonId, 
                             return (
                                 <button
                                     key={ml.id}
+                                    ref={isCurrent ? activeRef : null}
                                     onClick={() => !isLocked && navigate(`/lessons/${ml.id}`)}
                                     disabled={isLocked}
                                     className={`w-full flex items-start gap-3 p-2.5 rounded-xl transition-all duration-300 group
