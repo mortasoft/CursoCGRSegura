@@ -133,7 +133,7 @@ export default function ContentEditorModal({
                     <div className="grid grid-cols-2 gap-6 bg-slate-950/30 p-6 rounded-2xl border border-white/5">
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-bold text-yellow-500/80 uppercase tracking-widest flex items-center gap-2 mb-1">
-                                <Award className="w-4 h-4" /> Puntos XP
+                                <Award className="w-4 h-4" /> Puntos
                             </label>
                             <div className="relative">
                                 <input

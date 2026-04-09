@@ -29,7 +29,7 @@ export default function StrategicView({ filteredDepts }) {
                             </div>
                             <div className="min-w-0">
                                 <p className="text-sm font-bold text-gray-300 uppercase tracking-tight line-clamp-1">{dept.top_performer}</p>
-                                <p className="text-[9px] text-gray-400 font-bold uppercase italic">Líder: {dept.top_points} pts</p>
+                                <p className="text-[9px] text-gray-400 font-bold uppercase italic">Líder: {dept.top_points} PTS</p>
                             </div>
                         </div>
                         <div className="col-span-2 text-right">

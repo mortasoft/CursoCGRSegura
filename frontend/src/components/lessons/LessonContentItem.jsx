@@ -138,7 +138,7 @@ export default function LessonContentItem({
                         {item.points > 0 && (
                             <div className="flex flex-col items-end gap-1.5">
                                 <div className={`relative px-5 py-2.5 rounded-2xl font-black text-sm transition-all duration-500 transform ${isWatched ? 'bg-yellow-500 text-slate-950 scale-110 shadow-[0_0_20px_rgba(234,179,8,0.4)]' : 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20'}`}>
-                                    +{item.points} XP
+                                    +{item.points} PTS
                                     {isWatched && (
                                         <div className="absolute -top-1 -right-1 w-3 h-3 bg-white rounded-full animate-ping"></div>
                                     )}
@@ -235,7 +235,7 @@ export default function LessonContentItem({
                         {item.points > 0 && (
                             <div className="flex flex-col items-center md:items-end gap-1.5">
                                 <div className={`relative px-5 py-2.5 rounded-2xl font-black text-sm transition-all duration-500 transform ${isVisited ? 'bg-yellow-500 text-slate-950 scale-110 shadow-[0_0_20px_rgba(234,179,8,0.4)]' : 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20'}`}>
-                                    +{item.points} XP
+                                    +{item.points} PTS
                                 </div>
                                 {isVisited && (
                                     <span className="text-[10px] text-yellow-500 font-black uppercase tracking-widest animate-pulse flex items-center gap-1">
@@ -333,7 +333,7 @@ export default function LessonContentItem({
                             {item.points > 0 && (
                                 <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-900 rounded-lg text-xs font-bold text-gray-300 border border-white/10">
                                     <Award className="w-3 h-3 text-yellow-500" />
-                                    <span>Valor: <span className="text-white">{item.points} puntos</span></span>
+                                    <span>Valor: <span className="text-white">{item.points} PTS</span></span>
                                 </div>
                             )}
 
@@ -472,7 +472,7 @@ export default function LessonContentItem({
                                 {item.points > 0 && (
                                     <span className={`px-3 py-1 rounded-full border transition-all ${isConfirmed ? 'bg-yellow-500 border-yellow-400 text-slate-950 px-4 scale-110 shadow-lg shadow-yellow-500/20' : 'bg-slate-950 border-white/5 text-yellow-500'
                                         }`}>
-                                        +{item.points} XP {isConfirmed ? 'GANADOS' : ''}
+                                        +{item.points} PTS {isConfirmed ? 'GANADOS' : ''}
                                     </span>
                                 )}
                             </div>

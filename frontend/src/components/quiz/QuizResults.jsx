@@ -42,7 +42,7 @@ export default function QuizResults({ results, quiz, onBack, onRetry }) {
                 {results.pointsAwarded > 0 && (
                     <div className="space-y-2 flex flex-col items-center">
                         <div className="inline-flex items-center gap-2 px-5 py-1.5 bg-secondary-500/20 border border-secondary-500/30 rounded-full text-secondary-500 font-black text-[11px] animate-bounce">
-                            <Star className="w-3.5 h-3.5 fill-secondary-500" /> +<PointsCounter target={results.pointsAwarded} /> PTS DE EXPERIENCIA
+                            <Star className="w-3.5 h-3.5 fill-secondary-500" /> +<PointsCounter target={results.pointsAwarded} /> PTS
                         </div>
                         {results.penaltyApplied > 0 && (
                             <p className="text-[9px] font-black text-red-500 uppercase tracking-widest flex items-center gap-1.5 bg-red-500/5 px-2.5 py-1 rounded-lg border border-red-500/10">
