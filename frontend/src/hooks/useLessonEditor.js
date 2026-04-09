@@ -32,7 +32,10 @@ export function useLessonEditor(lessonId) {
         video_source: 'file',
         is_required: false,
         points: 0,
-        bulletItems: [{ title: '', text: '' }]
+        bulletItems: [{ title: '', text: '' }],
+        option1: '',
+        option2: '',
+        correctOption: 1
     });
 
     const fetchLessonAndContents = useCallback(async () => {
@@ -104,7 +107,10 @@ export function useLessonEditor(lessonId) {
                 file: null,
                 video_source: item.data?.url ? 'url' : 'file',
                 is_required: !!item.is_required,
-                points: item.points || 0
+                points: item.points || 0,
+                option1: item.content_type === 'confirmation' ? (item.data?.option1 || '') : '',
+                option2: item.content_type === 'confirmation' ? (item.data?.option2 || '') : '',
+                correctOption: item.content_type === 'confirmation' ? (item.data?.correctOption || 1) : 1
             });
         } else {
             setEditingItem(null);
@@ -115,8 +121,11 @@ export function useLessonEditor(lessonId) {
                 bulletItems: [{ title: '', text: '' }],
                 file: null,
                 video_source: 'file',
-                is_required: ['video', 'link', 'quiz', 'survey', 'assignment'].includes(type),
-                points: 0
+                is_required: ['video', 'link', 'quiz', 'survey', 'assignment', 'confirmation'].includes(type),
+                points: 0,
+                option1: '',
+                option2: '',
+                correctOption: 1
             });
         }
         setIsModalOpen(true);
@@ -144,15 +153,20 @@ export function useLessonEditor(lessonId) {
                 } else {
                     finalData = { file_url: editingItem?.data?.file_url };
                 }
-            } else if (['quiz', 'survey', 'assignment', 'note', 'heading', 'bullets'].includes(formData.content_type)) {
-                if (['note', 'heading'].includes(formData.content_type)) {
-                    finalData = { text: formData.data };
-                } else if (formData.content_type === 'bullets') {
-                    finalData = { items: formData.bulletItems.filter(b => b.title || b.text) };
-                } else {
-                    const currentData = typeof editingItem?.data === 'string' ? JSON.parse(editingItem.data) : (editingItem?.data || {});
-                    finalData = { ...currentData, description: formData.data };
-                }
+            } else if (formData.content_type === 'bullets') {
+                finalData = { items: formData.bulletItems.filter(b => b.title || b.text) };
+            } else if (formData.content_type === 'confirmation') {
+                finalData = { 
+                    description: formData.data,
+                    option1: formData.option1,
+                    option2: formData.option2,
+                    correctOption: formData.correctOption
+                };
+            } else if (['note', 'heading'].includes(formData.content_type)) {
+                finalData = { text: formData.data };
+            } else {
+                const currentData = typeof editingItem?.data === 'string' ? JSON.parse(editingItem.data) : (editingItem?.data || {});
+                finalData = { ...currentData, description: formData.data };
             }
 
             dataToSubmit.append('data', JSON.stringify(finalData));

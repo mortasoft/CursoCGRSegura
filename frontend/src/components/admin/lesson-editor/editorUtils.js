@@ -9,7 +9,8 @@ import {
     Shield, 
     Type, 
     List,
-    File 
+    File,
+    CheckCircle2
 } from 'lucide-react';
 
 export const CONTENT_TYPES_CONFIG = [
@@ -24,6 +25,7 @@ export const CONTENT_TYPES_CONFIG = [
     { type: 'note', label: 'Nota', icon: Shield, color: 'text-primary-400' },
     { type: 'heading', label: 'Título', icon: Type, color: 'text-white' },
     { type: 'bullets', label: 'Viñetas', icon: List, color: 'text-sky-400' },
+    { type: 'confirmation', label: 'Confirmación', icon: CheckCircle2, color: 'text-emerald-400' },
 ];
 
 export const getIconForType = (type) => {
@@ -48,7 +50,8 @@ export const getTypeLabel = (type) => {
         assignment: 'Tarea',
         note: 'Nota de Aprendizaje',
         heading: 'Título de Sección',
-        bullets: 'Viñetas'
+        bullets: 'Viñetas',
+        confirmation: 'Confirmación Interactiva'
     };
     return labels[type] || type;
 };

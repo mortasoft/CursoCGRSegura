@@ -6,6 +6,7 @@ import VideoEditor from './editors/VideoEditor.jsx';
 import FileEditor from './editors/FileEditor.jsx';
 import TaskEditor from './editors/TaskEditor.jsx';
 import BulletsEditor from './editors/BulletsEditor.jsx';
+import ConfirmationEditor from './editors/ConfirmationEditor.jsx';
 
 export default function ContentEditorModal({
     isOpen,
@@ -62,6 +63,19 @@ export default function ContentEditorModal({
                     <BulletsEditor
                         bulletItems={formData.bulletItems}
                         onChange={(items) => setFormData({ ...formData, bulletItems: items })}
+                    />
+                );
+            case 'confirmation':
+                return (
+                    <ConfirmationEditor
+                        description={formData.data}
+                        onChangeDescription={(val) => setFormData({ ...formData, data: val })}
+                        option1={formData.option1}
+                        onChangeOption1={(val) => setFormData({ ...formData, option1: val })}
+                        option2={formData.option2}
+                        onChangeOption2={(val) => setFormData({ ...formData, option2: val })}
+                        correctOption={formData.correctOption}
+                        onChangeCorrectOption={(val) => setFormData({ ...formData, correctOption: val })}
                     />
                 );
             default:

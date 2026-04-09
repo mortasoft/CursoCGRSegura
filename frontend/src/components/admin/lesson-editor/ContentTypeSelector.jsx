@@ -9,7 +9,8 @@ import {
     Shield, 
     Type, 
     List,
-    File 
+    File,
+    CheckCircle2
 } from 'lucide-react';
 
 export const CONTENT_TYPES = [
@@ -24,6 +25,7 @@ export const CONTENT_TYPES = [
     { type: 'note', label: 'Nota', icon: Shield, color: 'text-primary-400' },
     { type: 'heading', label: 'Título', icon: Type, color: 'text-white' },
     { type: 'bullets', label: 'Viñetas', icon: List, color: 'text-sky-400' },
+    { type: 'confirmation', label: 'Confirmación', icon: CheckCircle2, color: 'text-emerald-400' },
 ];
 
 export default function ContentTypeSelector({ onSelect }) {
