@@ -106,15 +106,6 @@ export default function ModuleHero({ module, onBack, onStart, onCelebrate }) {
                         {module.completionPercentage === 100 ? 'Repasar Módulo' : module.completionPercentage > 0 ? 'Continuar Módulo' : 'Empezar Módulo'}
                     </button>
 
-                    {module.completionPercentage === 100 && (
-                        <button
-                            onClick={onCelebrate}
-                            className="w-full py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg font-black uppercase tracking-widest text-xs shadow-lg hover:shadow-green-500/25 transition-all transform hover:-translate-y-0.5 flex items-center justify-center gap-2 group"
-                        >
-                            <Trophy className="w-4 h-4 text-yellow-300 group-hover:scale-110 transition-transform" />
-                            ¡Ver Celebración!
-                        </button>
-                    )}
                 </div>
             </div>
         </div>
