@@ -339,7 +339,7 @@ class LessonContentService {
         }
 
         // Ensure numeric fields are correctly handled (especially when coming from FormData as strings)
-        const cleanOrderIndex = (order_index === 'undefined' || order_index === 'null' || order_index === '') ? null : order_index;
+        const cleanOrderIndex = (order_index === 'undefined' || order_index === 'null' || order_index === '' || order_index === undefined) ? null : order_index;
         const cleanPoints = (points === 'undefined' || points === 'null' || points === '') ? null : points;
 
         await db.query(
