@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CheckCircle2, HelpCircle, XCircle, Zap, Clock } from 'lucide-react';
+import { CheckCircle2, HelpCircle, XCircle, Zap, Clock, Eye } from 'lucide-react';
 import DOMPurify from 'dompurify';
 import { linkify } from '../../../utils/textUtils';
 
@@ -83,20 +83,24 @@ export default function ConfirmationActivity({ item, data, visitedLinks, markLin
                         })}
                     </div>
 
-                    <div className="flex items-center justify-center md:justify-start gap-4 text-[10px] font-black uppercase tracking-[0.1em]">
+                    <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mt-4">
+                        {!!item.is_required && !isConfirmed && (
+                            <span className="px-3 py-1.5 rounded-lg bg-orange-500/10 text-orange-400 text-[10px] font-black uppercase tracking-widest border border-orange-500/20 flex items-center gap-1.5 shadow-lg shadow-orange-500/5">
+                                <Clock className="w-3.5 h-3.5" /> Requerido
+                            </span>
+                        )}
                         {isConfirmed ? (
-                            <span className="text-emerald-400 flex items-center gap-2">
-                                <Zap className="w-4 h-4 fill-emerald-400" /> ¡Completado Correctamente!
+                            <span className="px-3 py-1.5 rounded-lg bg-green-500/20 text-green-400 text-[10px] font-black uppercase tracking-widest border border-green-500/30 flex items-center gap-1.5 shadow-lg shadow-green-500/5">
+                                <CheckCircle2 className="w-3.5 h-3.5" /> Completado
                             </span>
                         ) : (
-                            <span className="text-gray-500 flex items-center gap-2">
-                                <Clock className="w-4 h-4" /> Selecciona la respuesta adecuada
+                            <span className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all flex items-center gap-1.5 shadow-lg ${item.is_required ? 'bg-white/5 text-gray-500 border-white/5' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'}`}>
+                                <Eye className="w-3.5 h-3.5" /> {item.is_required ? 'Pendiente' : 'Opcional'}
                             </span>
                         )}
 
                         {item.points > 0 && (
-                            <span className={`px-3 py-1 rounded-full border transition-all ${isConfirmed ? 'bg-yellow-500 border-yellow-400 text-slate-950 px-4 scale-110 shadow-lg shadow-yellow-500/20' : 'bg-slate-950 border border-white/5 text-yellow-500'
-                                }`}>
+                            <span className={`px-3 py-1.5 rounded-full border transition-all font-black text-[11px] ${isConfirmed ? 'bg-yellow-500 border-yellow-400 text-slate-950 scale-105 shadow-lg shadow-yellow-500/20' : 'bg-slate-950 border border-white/5 text-yellow-500'}`}>
                                 +{item.points} PTS {isConfirmed ? 'GANADOS' : ''}
                             </span>
                         )}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Type, CheckCircle, Search, MessageSquare } from 'lucide-react';
+import { Type, CheckCircle, Search, MessageSquare, AlignLeft } from 'lucide-react';
 
 export default function InteractiveInputEditor({ 
     description, 
@@ -11,7 +11,9 @@ export default function InteractiveInputEditor({
     correctAnswer,
     onChangeCorrectAnswer,
     regexPattern,
-    onChangeRegexPattern
+    onChangeRegexPattern,
+    inputSize = 'single',
+    onChangeInputSize
 }) {
     return (
         <div className="space-y-6 animate-fade-in">
@@ -61,6 +63,34 @@ export default function InteractiveInputEditor({
                             <div>
                                 <p className="text-[10px] font-black uppercase tracking-widest">{type.label}</p>
                                 <p className="text-[9px] text-gray-500 font-medium">{type.sub}</p>
+                            </div>
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* Input Size/Type Selector */}
+            <div className="space-y-3">
+                <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider ml-1">Diseño de Entrada</label>
+                <div className="grid grid-cols-2 gap-3">
+                    {[
+                        { id: 'single', label: 'Línea Única', sub: 'Input de texto simple', icon: Type },
+                        { id: 'multi', label: 'Multilínea', sub: 'Cuadro de texto extendido', icon: AlignLeft }
+                    ].map((sizeOpt) => (
+                        <button
+                            key={sizeOpt.id}
+                            type="button"
+                            onClick={() => onChangeInputSize(sizeOpt.id)}
+                            className={`flex items-center gap-3 p-4 rounded-2xl border transition-all text-left ${
+                                inputSize === sizeOpt.id 
+                                    ? 'bg-primary-500/10 border-primary-500 text-white shadow-lg shadow-primary-500/10' 
+                                    : 'bg-slate-900/50 border-white/5 text-gray-400 hover:border-white/10'
+                            }`}
+                        >
+                            <sizeOpt.icon className={`w-5 h-5 ${inputSize === sizeOpt.id ? 'text-primary-400' : 'text-gray-600'} shrink-0`} />
+                            <div>
+                                <p className="text-[10px] font-black uppercase tracking-widest">{sizeOpt.label}</p>
+                                <p className="text-[9px] text-gray-500 font-medium">{sizeOpt.sub}</p>
                             </div>
                         </button>
                     ))}
