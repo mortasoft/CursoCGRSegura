@@ -1,6 +1,8 @@
 const lessonService = require('../services/lessonService');
+const lessonMigrationService = require('../services/lessonMigrationService');
 const { clearCache } = require('../middleware/cache');
 const logger = require('../config/logger');
+const fs = require('fs');
 
 class LessonController {
     async getLessonById(req, res) {
@@ -116,6 +118,50 @@ class LessonController {
         } catch (error) {
             logger.error('Error eliminando lección:', error);
             res.status(500).json({ error: 'Error al eliminar lección' });
+        }
+    }
+
+    async exportLesson(req, res) {
+        try {
+            const lessonId = req.params.id;
+            const zipBuffer = await lessonMigrationService.exportLesson(lessonId);
+            res.setHeader('Content-Type', 'application/zip');
+            res.setHeader('Content-Disposition', `attachment; filename=lesson-${lessonId}-export.zip`);
+            res.send(zipBuffer);
+        } catch (error) {
+            logger.error('Error al exportar lección:', error);
+            res.status(500).json({ error: 'Error al exportar lección' });
+        }
+    }
+
+    async importLesson(req, res) {
+        try {
+            const { module_id } = req.body;
+            if (!module_id) {
+                return res.status(400).json({ error: 'El ID del módulo es requerido' });
+            }
+            if (!req.file) {
+                return res.status(400).json({ error: 'El archivo ZIP es requerido' });
+            }
+
+            const newLessonId = await lessonMigrationService.importLesson(req.file.path, parseInt(module_id));
+
+            // Eliminar archivo temporal
+            try {
+                fs.unlinkSync(req.file.path);
+            } catch (err) {
+                logger.error('Error al eliminar archivo temporal de importación:', err);
+            }
+
+            res.status(201).json({ success: true, message: 'Lección importada con éxito', lessonId: newLessonId });
+        } catch (error) {
+            logger.error('Error al importar lección:', error);
+            if (req.file && fs.existsSync(req.file.path)) {
+                try {
+                    fs.unlinkSync(req.file.path);
+                } catch (err) {}
+            }
+            res.status(500).json({ error: 'Error al importar lección', details: error.message });
         }
     }
 }
