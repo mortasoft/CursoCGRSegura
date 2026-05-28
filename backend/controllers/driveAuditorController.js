@@ -60,7 +60,8 @@ exports.getLatestAudit = async (req, res) => {
 exports.getAuditReport = async (req, res) => {
     try {
         const reportId = req.params.reportId;
-        const userId = req.user.id;
+        const isAdmin = req.user.role === 'admin' || req.user.role === 'instructor';
+        const userId = isAdmin ? null : req.user.id;
         
         const reportData = await driveAuditorService.getReportDetails(reportId, userId);
         
@@ -216,6 +217,18 @@ exports.deleteReport = async (req, res) => {
     } catch (error) {
         logger.error('Error en deleteReport:', error);
         res.status(500).json({ error: 'Error al eliminar el reporte' });
+    }
+};
+
+exports.getAdminReportsHistory = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page, 10) || 1;
+        const limit = Math.min(parseInt(req.query.limit, 10) || 10, 50);
+        const result = await driveAuditorService.getAllReports(page, limit);
+        res.json({ data: result });
+    } catch (error) {
+        logger.error('Error en getAdminReportsHistory:', error);
+        res.status(500).json({ error: 'Error al obtener historial general de reportes' });
     }
 };
 

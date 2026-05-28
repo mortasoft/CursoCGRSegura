@@ -307,13 +307,19 @@ class DriveAuditorService {
         return rows.length > 0 ? rows[0] : null;
     }
 
-    async getReportDetails(reportUuid, userId) {
+    async getReportDetails(reportUuid, userId = null) {
         const isNumeric = /^\d+$/.test(reportUuid);
         const queryField = isNumeric ? 'id' : 'uuid';
-        const [reportRows] = await db.pool.execute(
-            `SELECT * FROM drive_audit_reports WHERE ${queryField} = ? AND user_id = ?`,
-            [reportUuid, userId]
-        );
+        
+        let query = `SELECT * FROM drive_audit_reports WHERE ${queryField} = ?`;
+        const params = [reportUuid];
+        
+        if (userId) {
+            query += ` AND user_id = ?`;
+            params.push(userId);
+        }
+        
+        const [reportRows] = await db.pool.execute(query, params);
         
         if (reportRows.length === 0) return null;
         const report = reportRows[0];
@@ -408,6 +414,29 @@ class DriveAuditorService {
         const [[countRow]] = await db.pool.execute(
             `SELECT COUNT(*) AS total FROM drive_audit_reports WHERE user_id = ?`,
             [userId]
+        );
+        return {
+            reports: rows,
+            total: countRow.total,
+            page,
+            limit,
+            totalPages: Math.ceil(countRow.total / limit)
+        };
+    }
+
+    async getAllReports(page = 1, limit = 10) {
+        const offset = (page - 1) * limit;
+        const [rows] = await db.pool.execute(
+            `SELECT d.uuid AS id, d.status, d.started_at, d.completed_at, d.total_scanned, d.risk_count, d.error_message,
+                    u.first_name, u.last_name, u.email
+             FROM drive_audit_reports d
+             JOIN users u ON d.user_id = u.id
+             ORDER BY d.started_at DESC
+             LIMIT ? OFFSET ?`,
+            [limit, offset]
+        );
+        const [[countRow]] = await db.pool.execute(
+            `SELECT COUNT(*) AS total FROM drive_audit_reports`
         );
         return {
             reports: rows,

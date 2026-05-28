@@ -18,6 +18,7 @@ router.post('/send-warning', driveAuditorController.sendWarningEmail);
 
 const { adminMiddleware } = require('../middleware/auth');
 router.get('/admin/running', adminMiddleware, driveAuditorController.getRunningAudits);
+router.get('/admin/history', adminMiddleware, driveAuditorController.getAdminReportsHistory);
 router.get('/admin/report/:reportId', adminMiddleware, driveAuditorController.getAdminAuditReport);
 router.post('/admin/cancel', adminMiddleware, driveAuditorController.cancelAdminAudit);
 
