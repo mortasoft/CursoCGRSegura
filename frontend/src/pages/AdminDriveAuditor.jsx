@@ -268,8 +268,9 @@ export default function AdminDriveAuditor() {
                                 </tbody>
                             </table>
                         </div>
-                        </>
                     )}
+                </>
+            )}
 
                     {activeTab === 'history' && (
                         <>
