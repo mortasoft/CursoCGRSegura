@@ -1,4 +1,5 @@
-import { Plus, CheckCircle2, Clock, Award, Target, Edit2, Trash2, Eye, EyeOff, ExternalLink, BookOpen, ChevronUp, ChevronDown, BarChart2 } from 'lucide-react';
+import { useRef } from 'react';
+import { Plus, CheckCircle2, Clock, Award, Target, Edit2, Trash2, Eye, EyeOff, ExternalLink, BookOpen, ChevronUp, ChevronDown, BarChart2, Upload, Download } from 'lucide-react';
 
 export default function ModuleLessons({
     lessons,
@@ -8,8 +9,19 @@ export default function ModuleLessons({
     onTogglePublish,
     onOpenEditor,
     onReorderLessons,
+    onExportLesson,
+    onImportLesson,
     loading
 }) {
+    const fileInputRef = useRef(null);
+
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            onImportLesson(file);
+            e.target.value = null; // Reset input
+        }
+    };
     const handleMoveLesson = (index, direction) => {
         const newLessons = [...lessons];
         const targetIndex = direction === 'up' ? index - 1 : index + 1;
@@ -34,13 +46,29 @@ export default function ModuleLessons({
                         <p className="text-[10px] font-bold text-gray-600 uppercase tracking-widest">{lessons.length} UNIDADES PROGRAMADAS</p>
                     </div>
                 </div>
-                <button
-                    onClick={onNewLesson}
-                    className="group w-full sm:w-auto flex items-center justify-center gap-2 bg-primary-500/10 hover:bg-primary-500 text-primary-400 hover:text-white py-2.5 px-6 rounded-xl transition-all border border-primary-500/20 hover:shadow-xl hover:shadow-primary-500/20 active:scale-95"
-                >
-                    <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">Añadir Lección</span>
-                </button>
+                <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        accept=".zip"
+                        onChange={handleFileChange}
+                        className="hidden"
+                    />
+                    <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="group w-full sm:w-auto flex items-center justify-center gap-2 bg-blue-500/10 hover:bg-blue-600 text-blue-400 hover:text-white py-2.5 px-6 rounded-xl transition-all border border-blue-500/20 hover:shadow-xl hover:shadow-blue-500/20 active:scale-95"
+                    >
+                        <Upload className="w-4 h-4 group-hover:-translate-y-0.5 transition-transform" />
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em]">Importar Lección</span>
+                    </button>
+                    <button
+                        onClick={onNewLesson}
+                        className="group w-full sm:w-auto flex items-center justify-center gap-2 bg-primary-500/10 hover:bg-primary-500 text-primary-400 hover:text-white py-2.5 px-6 rounded-xl transition-all border border-primary-500/20 hover:shadow-xl hover:shadow-primary-500/20 active:scale-95"
+                    >
+                        <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform" />
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em]">Añadir Lección</span>
+                    </button>
+                </div>
             </div>
 
             {loading ? (
@@ -142,6 +170,13 @@ export default function ModuleLessons({
                                             title="Destruir Unidad"
                                         >
                                             <Trash2 className="w-4 h-4 group-hover/btn:scale-110" />
+                                        </button>
+                                        <button
+                                            onClick={() => onExportLesson(lesson.id, lesson.title)}
+                                            className="p-2 text-gray-600 hover:text-blue-400 hover:bg-blue-500/10 rounded-xl transition-all group/btn"
+                                            title="Exportar Lección"
+                                        >
+                                            <Download className="w-4 h-4 group-hover/btn:scale-110" />
                                         </button>
                                         <div className="w-px h-5 bg-white/10 mx-2"></div>
                                         <button

@@ -20,7 +20,9 @@ export default function ModuleCard({
     onNewResource,
     onEditResource,
     onDeleteResource,
-    onReorderLessons
+    onReorderLessons,
+    onExportLesson,
+    onImportLesson
 }) {
     const isExpanded = expandedModule === module.id;
 
@@ -155,6 +157,8 @@ export default function ModuleCard({
                         onOpenEditor={onOpenLessonEditor}
                         onReorderLessons={(orderedIds) => onReorderLessons(module.id, orderedIds)}
                         loading={contentLoading}
+                        onExportLesson={onExportLesson}
+                        onImportLesson={(file) => onImportLesson(module.id, file)}
                     />
 
                     <ModuleResources 
