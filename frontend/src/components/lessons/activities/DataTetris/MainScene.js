@@ -100,9 +100,9 @@ export default class MainScene extends Phaser.Scene {
         const difficulty = data.difficulty || this.game.registry.get('difficulty') || 'medium';
 
         const speeds = {
-            easy: 0.5,
-            medium: 0.8,
-            hard: 1.5
+            easy: 0.30,
+            medium: 0.50,
+            hard: 0.85
         };
         this.baseFallSpeed = speeds[difficulty] || 1.5;
         this.fallSpeed = this.baseFallSpeed;
