@@ -424,20 +424,37 @@ class DriveAuditorService {
         };
     }
 
-    async getAllReports(page = 1, limit = 10) {
+    async getAllReports(page = 1, limit = 10, search = '') {
         const offset = (page - 1) * limit;
-        const [rows] = await db.pool.execute(
-            `SELECT d.uuid AS id, d.status, d.started_at, d.completed_at, d.total_scanned, d.risk_count, d.error_message,
-                    u.first_name, u.last_name, u.email
-             FROM drive_audit_reports d
-             JOIN users u ON d.user_id = u.id
-             ORDER BY d.started_at DESC
-             LIMIT ? OFFSET ?`,
-            [limit, offset]
-        );
-        const [[countRow]] = await db.pool.execute(
-            `SELECT COUNT(*) AS total FROM drive_audit_reports`
-        );
+        let query = `
+            SELECT d.uuid AS id, d.status, d.started_at, d.completed_at, d.total_scanned, d.risk_count, d.error_message,
+                   u.first_name, u.last_name, u.email
+            FROM drive_audit_reports d
+            JOIN users u ON d.user_id = u.id
+        `;
+        let countQuery = `
+            SELECT COUNT(*) AS total 
+            FROM drive_audit_reports d
+            JOIN users u ON d.user_id = u.id
+        `;
+        const params = [];
+        const countParams = [];
+
+        if (search && search.trim() !== '') {
+            const searchVal = `%${search.trim()}%`;
+            const whereClause = ` WHERE u.first_name LIKE ? OR u.last_name LIKE ? OR u.email LIKE ?`;
+            query += whereClause;
+            countQuery += whereClause;
+            params.push(searchVal, searchVal, searchVal);
+            countParams.push(searchVal, searchVal, searchVal);
+        }
+
+        query += ` ORDER BY d.started_at DESC LIMIT ? OFFSET ?`;
+        params.push(limit, offset);
+
+        const [rows] = await db.pool.execute(query, params);
+        const [[countRow]] = await db.pool.execute(countQuery, countParams);
+
         return {
             reports: rows,
             total: countRow.total,

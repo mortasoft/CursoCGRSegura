@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { Shield, RefreshCw, Loader2, HardDrive, StopCircle, FileText, History, User, Calendar, ChevronLeft, ChevronRight, Eye, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
+import { Shield, RefreshCw, Loader2, HardDrive, StopCircle, FileText, History, User, Calendar, ChevronLeft, ChevronRight, Eye, AlertTriangle, CheckCircle, XCircle, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import AdminHeader from '../components/admin/AdminHeader';
@@ -23,6 +23,7 @@ export default function AdminDriveAuditor() {
     const [historyPage, setHistoryPage] = useState(1);
     const [historyTotalPages, setHistoryTotalPages] = useState(1);
     const [historyTotalCount, setHistoryTotalCount] = useState(0);
+    const [search, setSearch] = useState('');
 
     const [selectedAuditId, setSelectedAuditId] = useState(null);
     const [auditDetails, setAuditDetails] = useState(null);
@@ -42,10 +43,10 @@ export default function AdminDriveAuditor() {
         }
     };
 
-    const fetchHistory = useCallback(async (page = 1) => {
+    const fetchHistory = useCallback(async (page = 1, searchQuery = '') => {
         setHistoryLoading(true);
         try {
-            const response = await axios.get(`${API_URL}/drive-auditor/admin/history?page=${page}&limit=10`, { withCredentials: true });
+            const response = await axios.get(`${API_URL}/drive-auditor/admin/history?page=${page}&limit=10&search=${encodeURIComponent(searchQuery)}`, { withCredentials: true });
             const { reports, total, totalPages } = response.data.data;
             setHistoryReports(reports || []);
             setHistoryTotalCount(total || 0);
@@ -108,10 +109,18 @@ export default function AdminDriveAuditor() {
                 }
             }, 10000);
             return () => clearInterval(interval);
-        } else {
-            fetchHistory(historyPage);
         }
-    }, [selectedAuditId, activeTab, historyPage, fetchHistory]);
+    }, [selectedAuditId, activeTab]);
+
+    // Efecto para la búsqueda con debounce
+    useEffect(() => {
+        if (activeTab === 'history') {
+            const delayDebounceFn = setTimeout(() => {
+                fetchHistory(1, search);
+            }, 400);
+            return () => clearTimeout(delayDebounceFn);
+        }
+    }, [search, activeTab, fetchHistory]);
 
     const handleRefresh = () => {
         if (activeTab === 'running') {
@@ -120,7 +129,7 @@ export default function AdminDriveAuditor() {
                 fetchAuditDetails(selectedAuditId);
             }
         } else {
-            fetchHistory(historyPage);
+            fetchHistory(historyPage, search);
         }
     };
 
@@ -274,7 +283,7 @@ export default function AdminDriveAuditor() {
 
                     {activeTab === 'history' && (
                         <>
-                            <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
+                            <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-slate-50 dark:bg-slate-900/50">
                                 <div>
                                     <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center">
                                         <History className="w-5 h-5 mr-2 text-indigo-500" />
@@ -284,14 +293,26 @@ export default function AdminDriveAuditor() {
                                         Historial completo de reportes de auditoría generados por los usuarios del sistema.
                                     </p>
                                 </div>
-                                <button 
-                                    onClick={handleRefresh}
-                                    disabled={historyLoading}
-                                    className="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
-                                >
-                                    <RefreshCw className={`w-4 h-4 mr-2 ${historyLoading ? 'animate-spin' : ''}`} />
-                                    Actualizar
-                                </button>
+                                <div className="flex items-center gap-3 w-full md:w-auto">
+                                    <div className="relative w-full md:w-64">
+                                        <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                                        <input
+                                            type="text"
+                                            value={search}
+                                            onChange={(e) => setSearch(e.target.value)}
+                                            placeholder="Buscar por funcionario o correo..."
+                                            className="w-full pl-10 pr-4 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-slate-800 dark:text-slate-200 placeholder-slate-400"
+                                        />
+                                    </div>
+                                    <button 
+                                        onClick={handleRefresh}
+                                        disabled={historyLoading}
+                                        className="inline-flex items-center px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                                    >
+                                        <RefreshCw className={`w-4 h-4 mr-2 ${historyLoading ? 'animate-spin' : ''}`} />
+                                        Actualizar
+                                    </button>
+                                </div>
                             </div>
 
                             {historyLoading && historyReports.length === 0 ? (
@@ -303,9 +324,13 @@ export default function AdminDriveAuditor() {
                                     <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
                                         <FileText className="w-8 h-8 text-slate-400" />
                                     </div>
-                                    <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-1">Sin reportes generados</h3>
+                                    <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-1">
+                                        {search.trim() !== '' ? 'No se encontraron resultados' : 'Sin reportes generados'}
+                                    </h3>
                                     <p className="text-slate-500 dark:text-slate-400">
-                                        Aún no se han generado reportes de auditoría en la plataforma.
+                                        {search.trim() !== '' 
+                                            ? `No hay coincidencias para "${search}" en la base de datos.` 
+                                            : 'Aún no se han generado reportes de auditoría en la plataforma.'}
                                     </p>
                                 </div>
                             ) : (

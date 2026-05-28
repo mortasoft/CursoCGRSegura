@@ -224,7 +224,8 @@ exports.getAdminReportsHistory = async (req, res) => {
     try {
         const page = parseInt(req.query.page, 10) || 1;
         const limit = Math.min(parseInt(req.query.limit, 10) || 10, 50);
-        const result = await driveAuditorService.getAllReports(page, limit);
+        const search = req.query.search || '';
+        const result = await driveAuditorService.getAllReports(page, limit, search);
         res.json({ data: result });
     } catch (error) {
         logger.error('Error en getAdminReportsHistory:', error);
