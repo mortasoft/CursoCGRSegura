@@ -144,7 +144,7 @@ CREATE TABLE IF NOT EXISTS lesson_contents (
     id INT AUTO_INCREMENT PRIMARY KEY,
     lesson_id INT NOT NULL,
     title VARCHAR(255),
-    content_type ENUM('text', 'video', 'image', 'file', 'link', 'quiz', 'survey', 'assignment', 'note', 'heading', 'bullets', 'confirmation', 'interactive_input', 'password_tester', 'multiple_choice', 'mfa_defender', 'hack_neighbor', 'dork_search', 'categorization', 'data_tetris', 'forum', 'terms_trap') NOT NULL,
+    content_type ENUM('text', 'video', 'image', 'file', 'link', 'quiz', 'survey', 'assignment', 'note', 'heading', 'bullets', 'confirmation', 'interactive_input', 'password_tester', 'multiple_choice', 'mfa_defender', 'hack_neighbor', 'dork_search', 'categorization', 'data_tetris', 'forum', 'terms_trap', 'drive_auditor') NOT NULL,
     data JSON COMMENT 'Almacena contenido HTML, URLs, ID de quiz, config de archivo, etc.',
     order_index INT NOT NULL,
     points INT DEFAULT 0,
@@ -498,4 +498,41 @@ CREATE TABLE IF NOT EXISTS user_content_progress (
     UNIQUE KEY unique_user_content (user_id, content_id),
     INDEX idx_user_id (user_id),
     INDEX idx_content_id (content_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tabla de reportes de auditoría de Drive
+CREATE TABLE IF NOT EXISTS drive_audit_reports (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    uuid VARCHAR(36) NOT NULL UNIQUE,
+    user_id INT NOT NULL,
+    status ENUM('running', 'completed', 'failed') DEFAULT 'running',
+    started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    completed_at TIMESTAMP NULL,
+    total_scanned INT DEFAULT 0,
+    risk_count INT DEFAULT 0,
+    sharing_map_json JSON COMMENT 'Mapa de compartición (private, restricted, domain, link, public)',
+    external_domains_json JSON COMMENT 'Lista y conteo de dominios externos',
+    error_message TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_user_id (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tabla de archivos de auditoría de Drive
+CREATE TABLE IF NOT EXISTS drive_audit_files (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    report_id INT NOT NULL,
+    file_id VARCHAR(255) NOT NULL,
+    file_name VARCHAR(500) NOT NULL,
+    mime_type VARCHAR(100),
+    size_kb INT DEFAULT 0,
+    owner_name VARCHAR(255),
+    owner_email VARCHAR(255),
+    sharing_level ENUM('Privado', 'Restringido', 'Dominio con Enlace', 'Dominio Publico', 'Con Enlace', 'Publico', 'Desconocido') DEFAULT 'Desconocido',
+    shared_with_emails TEXT,
+    file_link TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (report_id) REFERENCES drive_audit_reports(id) ON DELETE CASCADE,
+    INDEX idx_report_id (report_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -113,7 +113,7 @@ const initializeDatabase = async () => {
             ALTER TABLE lesson_contents MODIFY COLUMN content_type ENUM(
                 'text','video','image','file','link','quiz','survey','assignment','note',
                 'heading','bullets','confirmation','interactive_input','password_tester',
-                'multiple_choice','mfa_defender','hack_neighbor','dork_search','categorization','data_tetris','forum','terms_trap'
+                'multiple_choice','mfa_defender','hack_neighbor','dork_search','categorization','data_tetris','forum','terms_trap','drive_auditor'
             ) NOT NULL;
         `);
 
@@ -148,6 +148,89 @@ const initializeDatabase = async () => {
                 UNIQUE KEY unique_user_post_upvote (user_id, post_id)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         `);
+
+        // Tablas de Auditoría de Drive
+        await db.query(`
+            CREATE TABLE IF NOT EXISTS drive_audit_reports (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                uuid VARCHAR(36) NOT NULL UNIQUE,
+                user_id INT NOT NULL,
+                status ENUM('running', 'completed', 'failed') DEFAULT 'running',
+                started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                completed_at TIMESTAMP NULL,
+                total_scanned INT DEFAULT 0,
+                risk_count INT DEFAULT 0,
+                sharing_map_json JSON COMMENT 'Mapa de compartición',
+                external_domains_json JSON COMMENT 'Lista y conteo de dominios externos',
+                error_message TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                INDEX idx_user_id (user_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `);
+
+        await db.query(`
+            CREATE TABLE IF NOT EXISTS drive_audit_files (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                report_id INT NOT NULL,
+                file_id VARCHAR(255) NOT NULL,
+                file_name VARCHAR(500) NOT NULL,
+                mime_type VARCHAR(100),
+                size_kb INT DEFAULT 0,
+                owner_name VARCHAR(255),
+                owner_email VARCHAR(255),
+                sharing_level ENUM('Privado', 'Restringido', 'Dominio con Enlace', 'Dominio Publico', 'Con Enlace', 'Publico', 'Desconocido') DEFAULT 'Desconocido',
+                shared_with_emails TEXT,
+                file_link TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (report_id) REFERENCES drive_audit_reports(id) ON DELETE CASCADE,
+                INDEX idx_report_id (report_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `);
+
+        // Migración para añadir columna UUID en drive_audit_reports si no existe
+        const columns = await db.query(`SHOW COLUMNS FROM drive_audit_reports LIKE 'uuid'`);
+        if (columns && columns.length === 0) {
+            logger.info('Añadiendo columna uuid a drive_audit_reports...');
+            await db.query(`ALTER TABLE drive_audit_reports ADD COLUMN uuid VARCHAR(36) NULL AFTER id`);
+            
+            // Generar UUIDs para los registros existentes
+            const existing = await db.query(`SELECT id FROM drive_audit_reports`);
+            const crypto = require('crypto');
+            for (const row of existing) {
+                const u = crypto.randomUUID();
+                await db.query(`UPDATE drive_audit_reports SET uuid = ? WHERE id = ?`, [u, row.id]);
+            }
+            
+            // Hacer la columna NOT NULL y agregar la restricción UNIQUE
+            await db.query(`ALTER TABLE drive_audit_reports MODIFY COLUMN uuid VARCHAR(36) NOT NULL`);
+            await db.query(`ALTER TABLE drive_audit_reports ADD UNIQUE KEY idx_drive_audit_reports_uuid (uuid)`);
+            logger.info('Columna UUID añadida e inicializada con éxito.');
+        }
+
+        // Asegurar que todas las filas tengan un UUID generado (por si la columna ya existía vacía)
+        const nullUuids = await db.query(`SELECT id FROM drive_audit_reports WHERE uuid IS NULL OR uuid = ''`);
+        if (nullUuids && nullUuids.length > 0) {
+            logger.info(`Generando UUIDs para ${nullUuids.length} reportes con UUID nulo...`);
+            const crypto = require('crypto');
+            for (const row of nullUuids) {
+                const u = crypto.randomUUID();
+                await db.query(`UPDATE drive_audit_reports SET uuid = ? WHERE id = ?`, [u, row.id]);
+            }
+            logger.info('UUIDs generados con éxito para los reportes existentes.');
+        }
+
+        // Limpiar auditorías "zombies" que hayan quedado corriendo antes de reiniciar el servidor
+        const updateResult = await db.query(`
+            UPDATE drive_audit_reports 
+            SET status = 'failed', error_message = 'El servidor se reinició inesperadamente, por lo que el proceso fue interrumpido.' 
+            WHERE status = 'running'
+        `);
+        
+        if (updateResult && updateResult.affectedRows > 0) {
+            logger.warn(`Se limpiaron ${updateResult.affectedRows} auditorías de Drive que quedaron "zombies" por un reinicio del servidor.`);
+        }
 
         logger.info('✅ Estructura de base de datos verificada y actualizada.');
     } catch (error) {

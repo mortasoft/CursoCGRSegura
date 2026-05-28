@@ -45,7 +45,7 @@ const announcementRoutes = require('./routes/announcements');
 const forumRoutes = require('./routes/forumRoutes');
 const gameRoutes = require('./routes/gameRoutes');
 const notificationRoutes = require('./routes/notifications');
-
+const driveAuditorRoutes = require('./routes/driveAuditorRoutes');
 
 const { authMiddleware, adminMiddleware } = require('./middleware/auth');
 const maintenanceMiddleware = require('./middleware/maintenance');
@@ -195,7 +195,7 @@ app.use('/api/announcements', announcementRoutes);
 app.use('/api/forums', authMiddleware, maintenanceMiddleware, forumRoutes);
 app.use('/api/games', gameRoutes);
 app.use('/api/notifications', authMiddleware, maintenanceMiddleware, notificationRoutes);
-
+app.use('/api/drive-auditor', authMiddleware, maintenanceMiddleware, driveAuditorRoutes);
 
 
 // Ruta para obtener configuraciones globales del sistema (Admin)
