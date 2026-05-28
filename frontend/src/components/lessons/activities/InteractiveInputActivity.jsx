@@ -64,7 +64,7 @@ export default function InteractiveInputActivity({ item, data, visitedLinks, mar
                     </div>
                 </div>
 
-                <div className="relative group max-w-2xl">
+                <div className={`relative group ${data.input_size === 'multi' ? 'w-full' : 'max-w-2xl'}`}>
                     {data.input_size === 'multi' ? (
                         <div className="relative w-full">
                             <textarea

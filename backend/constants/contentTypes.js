@@ -1,6 +1,7 @@
 const TRACEABLE_CONTENT_TYPES = [
     'video', 
     'link', 
+    'file',
     'confirmation', 
     'interactive_input', 
     'multiple_choice', 

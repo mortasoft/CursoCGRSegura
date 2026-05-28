@@ -184,6 +184,17 @@ router.post('/:id/track-download', authMiddleware, async (req, res) => {
             [userId, 0, resourceId, `Descargó recurso: ${resource.title}`]
         );
 
+        // 2b. Si el recurso es un contenido de lección (tipo file), registrar progreso en user_content_progress
+        const [isLessonContent] = await db.query('SELECT id FROM lesson_contents WHERE id = ?', [resourceId]);
+        if (isLessonContent) {
+            await db.query(
+                `INSERT INTO user_content_progress (user_id, content_id) 
+                 VALUES (?, ?) 
+                 ON DUPLICATE KEY UPDATE completed_at = NOW()`,
+                [userId, resourceId]
+            );
+        }
+
         // 3. Verificar insignias
         const badgeResult = await checkAllBadges(userId);
 

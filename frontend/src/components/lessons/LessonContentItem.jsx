@@ -92,7 +92,7 @@ export default function LessonContentItem({
             return <ImageActivity item={item} data={data} API_URL={API_URL} />;
 
         case 'file':
-            return <FileActivity item={item} data={data} API_URL={API_URL} handleResourceDownload={handleResourceDownload} />;
+            return <FileActivity item={item} data={data} API_URL={API_URL} handleResourceDownload={handleResourceDownload} visitedLinks={visitedLinks} />;
 
         case 'link':
             return <LinkActivity {...commonProps} />;

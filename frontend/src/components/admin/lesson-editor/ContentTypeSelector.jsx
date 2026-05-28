@@ -47,13 +47,13 @@ export const CONTENT_TYPES = [
 
 export default function ContentTypeSelector({ onSelect }) {
     return (
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 xl:grid-cols-12 gap-3">
+        <div className="flex flex-wrap gap-3 justify-start">
             {CONTENT_TYPES.map((action) => (
                 <button
                     key={action.type}
                     onClick={() => onSelect(action.type)}
                     title={action.label}
-                    className="flex flex-col items-center justify-center gap-2 p-3 bg-slate-800/40 hover:bg-slate-800 border border-white/5 hover:border-primary-500/30 rounded-2xl transition-all group shadow-sm"
+                    className="flex-1 min-w-[98px] max-w-[120px] flex flex-col items-center justify-center gap-2 p-3 bg-slate-800/40 hover:bg-slate-800 border border-white/5 hover:border-primary-500/30 rounded-2xl transition-all group shadow-sm"
                 >
                     <action.icon className={`w-5 h-5 ${action.color} group-hover:scale-110 transition-transform`} />
                     <span className="text-[8px] font-black uppercase tracking-wider text-gray-500 group-hover:text-white text-center line-clamp-1">{action.label}</span>
