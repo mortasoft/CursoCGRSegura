@@ -305,17 +305,29 @@ class QuizService {
         }
 
         if (passed) {
-            let potentialPoints = Math.round((score / 100) * basePoints);
-            const failedAttempts = attempts.count;
-            if (failedAttempts > 0) {
-                const penaltyFactor = Math.max(0, 1 - (failedAttempts * 0.1));
-                const originalPoints = potentialPoints;
-                potentialPoints = Math.round(potentialPoints * penaltyFactor);
-                penaltyApplied = originalPoints - potentialPoints;
-            }
+            const hasDataTetris = questions.some(q => q.question_type === 'data_tetris');
+            let potentialPoints;
 
-            if (!isCustomPoints && score === 100 && failedAttempts === 0) {
-                potentialPoints += settings.bonus_perfect_score;
+            if (hasDataTetris) {
+                // Para Data Tetris, los puntos ya vienen calculados con los multiplicadores
+                // de dificultad y rango desde _calculateQuestionScore. Usar ese valor directamente.
+                const tetrisFeedback = feedback.find(f => {
+                    const q = questions.find(qq => qq.id === f.questionId);
+                    return q && q.question_type === 'data_tetris';
+                });
+                potentialPoints = tetrisFeedback ? tetrisFeedback.earnedPoints : earnedPoints;
+            } else {
+                potentialPoints = Math.round((score / 100) * basePoints);
+                const failedAttempts = attempts.count;
+                if (failedAttempts > 0) {
+                    const penaltyFactor = Math.max(0, 1 - (failedAttempts * 0.1));
+                    const originalPoints = potentialPoints;
+                    potentialPoints = Math.round(potentialPoints * penaltyFactor);
+                    penaltyApplied = originalPoints - potentialPoints;
+                }
+                if (!isCustomPoints && score === 100 && attempts.count === 0) {
+                    potentialPoints += settings.bonus_perfect_score;
+                }
             }
 
             // Query points already awarded to user for this quiz

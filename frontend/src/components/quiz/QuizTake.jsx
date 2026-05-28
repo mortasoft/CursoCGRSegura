@@ -81,7 +81,7 @@ function HackNeighborQuestion({ question, isAnswered, onWin, sessionSeed }) {
             }
         } catch (error) {
             console.error('Error verificando contraseña:', error);
-            toast.error('Error al verificar la contraseña');
+            toast.error('Error al verificar la contraseña', { id: `quiz-hack-neighbor-${question.id}` });
         }
     };
 
@@ -1084,7 +1084,7 @@ export default function QuizTake({
                             onWin={(data) => onOptionSelect(currentQuestion.id, data)}
                             onRetry={() => {
                                 if ((localAttempts + 1) >= quiz.max_attempts) {
-                                    toast.error("Has alcanzado el limite de intentos para esta evaluacion.");
+                                    toast.error("Has alcanzado el limite de intentos para esta evaluacion.", { id: `quiz-attempts-${quiz.id}` });
                                     return;
                                 }
                                 setLocalAttempts(prev => prev + 1);

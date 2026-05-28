@@ -87,7 +87,7 @@ export default function QuizResults({ results, quiz, questions, userAnswers, onB
                                     ¡Incluye bonificación por dificultad y desempeño en Data Tetris!
                                 </p>
                             )}
-                            {results.penaltyApplied > 0 && (
+                            {results.penaltyApplied > 0 && !tetrisQuestion && (
                                 <p className="text-[9px] font-black text-red-500 uppercase tracking-widest flex items-center gap-1.5 bg-red-500/5 px-2.5 py-1 rounded-lg border border-red-500/10">
                                     <AlertTriangle className="w-2.5 h-2.5" /> Penalización de {(results.attemptNumber - 1) * 10}% por intentos
                                 </p>

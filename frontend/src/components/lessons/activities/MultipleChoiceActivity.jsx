@@ -36,15 +36,15 @@ export default function MultipleChoiceActivity({ item, data, playSuccess, playEr
                 if (isCorrect) {
                     setStatus_mc('completed');
                     playSuccess();
-                    if (hasCorrectAnswer) toast.success('¡Correcto!');
+                    if (hasCorrectAnswer) toast.success('¡Correcto!', { id: `mc-activity-${item.id}` });
                 } else {
                     setStatus_mc('incorrect');
                     playError();
-                    toast.error('Respuesta incorrecta. Inténtalo de nuevo.');
+                    toast.error('Respuesta incorrecta. Inténtalo de nuevo.', { id: `mc-activity-${item.id}` });
                 }
             }
         } catch (error) {
-            toast.error('Error al procesar respuesta');
+            toast.error('Error al procesar respuesta', { id: `mc-activity-${item.id}` });
         } finally {
             setSubmitting_mc(false);
         }

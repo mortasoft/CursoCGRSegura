@@ -76,7 +76,7 @@ export default function PasswordTesterActivity({ item, data, visitedLinks, markL
             const response = await fetch(`https://api.pwnedpasswords.com/range/${prefix}`);
 
             if (response.status === 429) {
-                toast.error('Demasiadas solicitudes. Inténtalo más tarde.');
+                toast.error('Demasiadas solicitudes. Inténtalo más tarde.', { id: `pwd-tester-${item.id}` });
                 return;
             }
 
@@ -96,7 +96,7 @@ export default function PasswordTesterActivity({ item, data, visitedLinks, markL
             }
         } catch (error) {
             console.error('Error checking pwned:', error);
-            toast.error('Error al verificar filtraciones');
+            toast.error('Error al verificar filtraciones', { id: `pwd-tester-${item.id}` });
         } finally {
             setCheckingPwned(false);
         }

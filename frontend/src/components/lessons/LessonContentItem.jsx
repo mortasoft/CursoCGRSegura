@@ -47,8 +47,8 @@ export default function LessonContentItem({
         onEndedRef.current = onEnded;
     }, [onEnded]);
 
-    const playSuccess = useCallback(() => playSound('/sounds/success.mp3'), [playSound]);
-    const playError = useCallback(() => playSound('/sounds/error.mp3'), [playSound]);
+    const playSuccess = useCallback(() => playSound('/sounds/exito.mp3'), [playSound]);
+    const playError = useCallback(() => playSound('/sounds/gato-error.mp3'), [playSound]);
 
     let data = item.data || {};
 
