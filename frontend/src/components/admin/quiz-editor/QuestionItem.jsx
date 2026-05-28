@@ -1,5 +1,5 @@
 import React from 'react';
-import { Target, ImageIcon, MessageSquare, Trash2, CheckCircle2, XCircle } from 'lucide-react';
+import { Target, ImageIcon, MessageSquare, Trash2, CheckCircle2, XCircle, PlayCircle } from 'lucide-react';
 import PremiumSelect from '../../PremiumSelect';
 
 export default function QuestionItem({ 
@@ -18,10 +18,12 @@ export default function QuestionItem({
         { value: 'multiple_select', label: 'Selección Múltiple (Varias)' },
         { value: 'mfa_defender', label: 'Simulador MFA' },
         { value: 'hack_neighbor', label: 'Hackea al Vecino (Juego)' },
-        { value: 'data_tetris', label: 'Data Tetris (Juego)' }
+        { value: 'data_tetris', label: 'Data Tetris (Juego)' },
+        { value: 'video', label: 'Video (Solo Visualización)' }
     ];
 
     const isInteractiveGame = INTERACTIVE_GAME_TYPES.includes(question.question_type);
+    const hasOptionsAndExplanation = !['mfa_defender', 'hack_neighbor', 'data_tetris', 'video'].includes(question.question_type);
 
     return (
         <div className="card p-8 bg-slate-900/40 border-white/5 relative group hover:border-primary-500/20 transition-all text-left">
@@ -50,7 +52,33 @@ export default function QuestionItem({
 
                 {/* Settings & Actions Row */}
                 <div className="flex flex-col md:flex-row md:items-end gap-4">
-                    {!isInteractiveGame && (
+                    {question.question_type === 'video' ? (
+                        <div className="flex-1 min-w-[200px] space-y-2">
+                            <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-1.5 text-left">
+                                <PlayCircle className="w-3 h-3 text-secondary-500" /> Video URL (mp4 o YouTube)
+                            </label>
+                            <input
+                                type="text"
+                                className="input-field bg-slate-950/50 border-white/10 text-[11px] py-3.5"
+                                placeholder="https://www.youtube.com/watch?v=... o https://ejemplo.com/video.mp4"
+                                value={question.image_url || ''}
+                                onChange={e => onUpdateQuestion(question.id, 'image_url', e.target.value)}
+                            />
+                            {question.image_url && (
+                                <div className="mt-2 relative group aspect-video w-full max-h-32 overflow-hidden rounded-lg border border-white/5 bg-black flex items-center justify-center">
+                                    {question.image_url.includes('youtube.com') || question.image_url.includes('youtu.be') ? (
+                                        <iframe
+                                            src={`https://www.youtube.com/embed/${question.image_url.split('v=')[1]?.split('&')[0] || question.image_url.split('/').pop()}`}
+                                            className="w-full h-full border-0"
+                                            title="Vista previa del video"
+                                        />
+                                    ) : (
+                                        <video src={question.image_url} className="w-full h-full object-contain" controls />
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    ) : !isInteractiveGame ? (
                         <div className="flex-1 min-w-[200px] space-y-2">
                             <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-1.5 text-left">
                                 <ImageIcon className="w-3 h-3 text-secondary-500" /> Imagen (URL)
@@ -71,7 +99,7 @@ export default function QuestionItem({
                                 </div>
                             )}
                         </div>
-                    )}
+                    ) : null}
 
                     <div className="flex-1 min-w-[200px] space-y-2">
                         <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest text-left block">Puntos</label>
@@ -103,7 +131,7 @@ export default function QuestionItem({
                     </button>
                 </div>
 
-                {!isInteractiveGame ? (
+                {hasOptionsAndExplanation ? (
                     <>
                         {/* Options Grid */}
                         <div className="space-y-4 pt-4 border-t border-white/5 text-left">
@@ -157,7 +185,7 @@ export default function QuestionItem({
                             />
                         </div>
                     </>
-                ) : (
+                ) : isInteractiveGame ? (
                     <div className="pt-4 border-t border-white/5 space-y-4 text-left">
                         <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">
                             Configuración de {
@@ -261,7 +289,7 @@ export default function QuestionItem({
                             )}
                         </div>
                     </div>
-                )}
+                ) : null}
             </div>
         </div>
     );

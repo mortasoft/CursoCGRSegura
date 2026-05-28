@@ -57,7 +57,10 @@ class QuizService {
         let earnedPoints = 0;
         let penaltyApplied = 0;
 
-        if (GAME_QUESTION_TYPES.includes(q.question_type)) {
+        if (q.question_type === 'video') {
+            isCorrect = true;
+            earnedPoints = q.points || 0;
+        } else if (GAME_QUESTION_TYPES.includes(q.question_type)) {
             console.log(`[QuizScore] Scrutinizing ${q.question_type} Q#${q.id}:`, { userAnswer });
             
             if (typeof userAnswer === 'object' && userAnswer !== null) {
@@ -144,7 +147,10 @@ class QuizService {
             let earnedPoints = 0;
             let penaltyApplied = 0;
 
-            if (GAME_QUESTION_TYPES.includes(q.question_type)) {
+            if (q.question_type === 'video') {
+                isCorrect = true;
+                earnedPoints = q.points || 0;
+            } else if (GAME_QUESTION_TYPES.includes(q.question_type)) {
                 const scoring = this._calculateQuestionScore(q, userAnswer);
                 isCorrect = scoring.isCorrect;
                 earnedPoints = scoring.earnedPoints;
@@ -190,16 +196,6 @@ class QuizService {
             [userId, quizId]
         );
 
-        const [lastAttempt] = await db.query(
-            'SELECT passed FROM quiz_attempts WHERE user_id = ? AND quiz_id = ? ORDER BY attempt_number DESC LIMIT 1',
-            [userId, quizId]
-        );
-
-        // If it's not a replay and already passed, we return that status
-        if (!is_replay && lastAttempt?.passed) {
-            return { alreadyPassed: true, passed: true };
-        }
-
         // Only check max attempts if not replaying
         if (!is_replay && attempts.count >= quiz.max_attempts) {
             throw new Error('Máximo de intentos alcanzado');
@@ -225,7 +221,10 @@ class QuizService {
             let earnedPointsForThisQ = 0;
             let penaltyApplied = 0;
 
-            if (GAME_QUESTION_TYPES.includes(q.question_type)) {
+            if (q.question_type === 'video') {
+                isCorrect = true;
+                earnedPointsForThisQ = q.points || 0;
+            } else if (GAME_QUESTION_TYPES.includes(q.question_type)) {
                 const scoring = this._calculateQuestionScore(q, userAnswer);
                 isCorrect = scoring.isCorrect;
                 earnedPointsForThisQ = scoring.earnedPoints;
@@ -306,18 +305,28 @@ class QuizService {
         }
 
         if (passed) {
-            pointsAwarded = Math.round((score / 100) * basePoints);
+            let potentialPoints = Math.round((score / 100) * basePoints);
             const failedAttempts = attempts.count;
             if (failedAttempts > 0) {
                 const penaltyFactor = Math.max(0, 1 - (failedAttempts * 0.1));
-                const originalPoints = pointsAwarded;
-                pointsAwarded = Math.round(pointsAwarded * penaltyFactor);
-                penaltyApplied = originalPoints - pointsAwarded;
+                const originalPoints = potentialPoints;
+                potentialPoints = Math.round(potentialPoints * penaltyFactor);
+                penaltyApplied = originalPoints - potentialPoints;
             }
 
             if (!isCustomPoints && score === 100 && failedAttempts === 0) {
-                pointsAwarded += settings.bonus_perfect_score;
+                potentialPoints += settings.bonus_perfect_score;
             }
+
+            // Query points already awarded to user for this quiz
+            const [pointsEarnedRows] = await db.query(
+                "SELECT COALESCE(SUM(points_earned), 0) as total FROM gamification_activities WHERE user_id = ? AND activity_type = 'quiz_passed' AND reference_id = ?",
+                [userId, quizId]
+            );
+            const pointsAlreadyAwarded = parseInt(pointsEarnedRows?.[0]?.total) || 0;
+
+            // Only award the difference if this attempt yields more points
+            pointsAwarded = Math.max(0, potentialPoints - pointsAlreadyAwarded);
 
             if (pointsAwarded > 0) {
                 await db.query(

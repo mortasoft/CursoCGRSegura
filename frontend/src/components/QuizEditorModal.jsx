@@ -5,7 +5,7 @@ import { useQuizEditor } from '../hooks/useQuizEditor';
 import QuizBasicSettings from './admin/quiz-editor/QuizBasicSettings';
 import QuestionItem from './admin/quiz-editor/QuestionItem';
 
-export default function QuizEditorModal({ isOpen, onClose, quizId, moduleId, lessonId, title: initialTitle }) {
+export default function QuizEditorModal({ isOpen, onClose, onQuizCreated, quizId, moduleId, lessonId, title: initialTitle }) {
     const { token } = useAuthStore();
     const {
         loading,
@@ -26,7 +26,8 @@ export default function QuizEditorModal({ isOpen, onClose, quizId, moduleId, les
         lessonId, 
         initialTitle, 
         token, 
-        onClose 
+        onClose,
+        onQuizCreated
     });
 
     if (!isOpen) return null;

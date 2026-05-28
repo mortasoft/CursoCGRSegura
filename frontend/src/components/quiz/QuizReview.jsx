@@ -10,7 +10,7 @@ export default function QuizReview({ results, questions, userAnswers }) {
             <h2 className="text-xl font-black text-white uppercase tracking-tight flex items-center gap-3">
                 <FileText className="w-6 h-6 text-primary-400" /> Revisión de Respuestas
             </h2>
-            {questions.map((q, idx) => {
+            {questions.filter(q => q.question_type !== 'video').map((q, idx) => {
                 const feedback = results.feedback.find(f => f.questionId === q.id);
                 if (!feedback) return null;
                 return (
@@ -55,6 +55,22 @@ export default function QuizReview({ results, questions, userAnswers }) {
                                                 <div className="text-indigo-400 font-bold text-[11px] mb-1">¿Cómo protegerte mejor?</div>
                                                 <div className="text-[10px] text-slate-400">
                                                     Evita usar información que alguien pueda encontrar en tus redes sociales. Una frase aleatoria como "MiElefanteAzulComePizza22!" es mucho más segura y fácil de recordar.
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : q.question_type === 'data_tetris' ? (
+                                        <div className={`p-4 rounded-xl text-left border ${feedback.isCorrect ? 'bg-indigo-900/10 border-indigo-500/30' : 'bg-red-900/10 border-red-500/30'}`}>
+                                            <div className={`flex items-center gap-2 font-bold mb-2 ${feedback.isCorrect ? 'text-indigo-400' : 'text-red-400'}`}>
+                                                {feedback.isCorrect ? <CheckCircle2 className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
+                                                {feedback.isCorrect ? '¡Clasificación de Datos Completada!' : 'No alcanzaste el puntaje mínimo de clasificación'}
+                                            </div>
+                                            <div className="text-xs text-slate-300 font-medium leading-relaxed mb-3">
+                                                A través de Data Tetris has puesto en práctica la identificación y clasificación de la información en sus niveles respectivos (Pública, Confidencial y Restringida). Una mala clasificación puede exponer datos sensibles a filtraciones destructivas.
+                                            </div>
+                                            <div className="bg-slate-950 p-3 rounded-lg border border-white/5">
+                                                <div className="text-indigo-400 font-bold text-[11px] mb-1">Importancia de proteger tus datos</div>
+                                                <div className="text-[10px] text-slate-400">
+                                                    La ciberseguridad efectiva empieza por saber qué datos manejas. Resguardar y limitar el acceso a la información confidencial reduce la superficie de ataque y previene el robo de identidad y propiedad intelectual.
                                                 </div>
                                             </div>
                                         </div>

@@ -297,7 +297,7 @@ export function useLessonEditor(lessonId) {
         }
     };
 
-    const handleLinkResource = async (resourceId, type) => {
+    const handleLinkResource = async (resourceId, type, shouldClose = true) => {
         const item = type === 'quiz' ? activeQuizItem : activeSurveyItem;
         if (!item) return;
 
@@ -316,18 +316,22 @@ export function useLessonEditor(lessonId) {
             const res = await axios.put(`${API_URL}/content/${item.id}`, dataToSubmit);
 
             if (res.data.success) {
-                toast.success(`Contenido vinculado al ${type}`);
+                if (shouldClose) {
+                    toast.success(`Contenido vinculado al ${type}`);
+                }
                 fetchLessonAndContents();
             }
         } catch (error) {
             toast.error(`Error vinculando ${type} al contenido`);
         } finally {
-            if (type === 'quiz') {
-                setIsQuizEditorOpen(false);
-                setActiveQuizItem(null);
-            } else {
-                setIsSurveyEditorOpen(false);
-                setActiveSurveyItem(null);
+            if (shouldClose) {
+                if (type === 'quiz') {
+                    setIsQuizEditorOpen(false);
+                    setActiveQuizItem(null);
+                } else {
+                    setIsSurveyEditorOpen(false);
+                    setActiveSurveyItem(null);
+                }
             }
         }
     };

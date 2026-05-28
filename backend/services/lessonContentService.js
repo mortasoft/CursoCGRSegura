@@ -38,6 +38,28 @@ class LessonContentService {
         const completedSurveys = await db.query('SELECT survey_id FROM survey_responses WHERE user_id = ?', [userId]);
         const completedSurveyIds = completedSurveys.map(s => s.survey_id);
 
+        // Puntos ganados por el usuario en quizzes (reference_id = quiz_id)
+        const quizPointsEarned = await db.query(
+            `SELECT reference_id as quiz_id, COALESCE(SUM(points_earned), 0) as total
+             FROM gamification_activities
+             WHERE user_id = ? AND activity_type = 'quiz_passed'
+             GROUP BY reference_id`,
+            [userId]
+        );
+        const quizPointsMap = {};
+        quizPointsEarned.forEach(r => { quizPointsMap[r.quiz_id] = parseInt(r.total) || 0; });
+
+        // Puntos ganados en surveys y tareas aprobadas (reference_id = content_id)
+        const otherPointsEarned = await db.query(
+            `SELECT reference_id as content_id, COALESCE(SUM(points_earned), 0) as total
+             FROM gamification_activities
+             WHERE user_id = ? AND activity_type IN ('survey_completed', 'task_approved')
+             GROUP BY reference_id`,
+            [userId]
+        );
+        const otherPointsMap = {};
+        otherPointsEarned.forEach(r => { otherPointsMap[r.content_id] = parseInt(r.total) || 0; });
+
         return contents.map(item => {
             let userSubmission = null;
             if (item.asub_id) {
@@ -70,6 +92,14 @@ class LessonContentService {
                 isCompleted = !!item.completed_at;
             }
 
+            // Calcular puntos ganados por el usuario en esta actividad
+            let pointsEarned = 0;
+            if (item.content_type === 'quiz' && itemData.quiz_id) {
+                pointsEarned = quizPointsMap[parseInt(itemData.quiz_id)] || 0;
+            } else if (item.content_type === 'survey' || item.content_type === 'assignment') {
+                pointsEarned = otherPointsMap[item.id] || 0;
+            }
+
             return {
                 id: item.id,
                 lesson_id: item.lesson_id,
@@ -78,6 +108,7 @@ class LessonContentService {
                 data: itemData,
                 order_index: item.order_index,
                 points: item.points,
+                pointsEarned,
                 is_required: item.is_required,
                 submission: userSubmission,
                 interactionData: item.interaction_data ? (typeof item.interaction_data === 'string' ? JSON.parse(item.interaction_data) : item.interaction_data) : null,
@@ -87,6 +118,7 @@ class LessonContentService {
             };
         });
     }
+
 
     async trackContentProgress(contentId, userId, responseData = null) {
         const data = responseData && Object.keys(responseData).length > 0 ? JSON.stringify(responseData) : null;

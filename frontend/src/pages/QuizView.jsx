@@ -18,6 +18,7 @@ export default function QuizView() {
         sessionSeed,
         handleStart,
         handleReplay,
+        handleRetry,
         handleOptionSelect,
         nextQuestion,
         prevQuestion,
@@ -42,11 +43,13 @@ export default function QuizView() {
                 <QuizResults 
                     results={results}
                     quiz={quiz}
+                    questions={questions}
+                    userAnswers={answers}
                     onBack={() => {
                         localStorage.removeItem(`quiz_intro_${id}`);
                         navigate(-1);
                     }}
-                    onRetry={() => window.location.reload()}
+                    onRetry={handleRetry}
                     onReplay={handleReplay}
                 />
                 

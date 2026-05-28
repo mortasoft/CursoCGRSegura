@@ -20,26 +20,26 @@ export function useQuiz() {
 
     const [quizData, setQuizData] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(() => {
-        const saved = localStorage.getItem(`quiz_index_${id}`);
-        return saved ? parseInt(saved) : 0;
-    });
-    const [answers, setAnswers] = useState(() => {
-        const saved = localStorage.getItem(`quiz_answers_${id}`);
-        return saved ? JSON.parse(saved) : {};
-    });
+    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+    const [answers, setAnswers] = useState({});
     const [results, setResults] = useState(null);
     const [submitting, setSubmitting] = useState(false);
     const [showIntro, setShowIntro] = useState(true);
     const [isReplaySession, setIsReplaySession] = useState(false);
-    const [sessionSeed, setSessionSeed] = useState(() => {
-        const saved = localStorage.getItem(`quiz_seed_${id}`);
-        return saved ? parseInt(saved) : Math.floor(Math.random() * 1000);
-    });
-    const [startTime, setStartTime] = useState(() => {
-        const saved = localStorage.getItem(`quiz_start_${id}`);
-        return saved ? parseInt(saved) : null;
-    });
+    const [sessionSeed, setSessionSeed] = useState(() => Math.floor(Math.random() * 1000));
+    const [startTime, setStartTime] = useState(null);
+
+    // Limpiar estado previo del localStorage al montar en modo normal (reintento)
+    useEffect(() => {
+        if (!isReviewMode) {
+            localStorage.removeItem(`quiz_answers_${id}`);
+            localStorage.removeItem(`quiz_index_${id}`);
+            localStorage.removeItem(`quiz_start_${id}`);
+            localStorage.removeItem(`quiz_seed_${id}`);
+            localStorage.removeItem(`quiz_intro_${id}`);
+        }
+    }, [id, isReviewMode]);
+
 
     useEffect(() => {
         localStorage.setItem(`quiz_answers_${id}`, JSON.stringify(answers));
@@ -52,6 +52,22 @@ export function useQuiz() {
     useEffect(() => {
         localStorage.setItem(`quiz_seed_${id}`, sessionSeed.toString());
     }, [sessionSeed, id]);
+
+    useEffect(() => {
+        if (quizData && quizData.questions) {
+            let hasChanged = false;
+            setAnswers(prev => {
+                const newAnswers = { ...prev };
+                quizData.questions.forEach(q => {
+                    if (q.question_type === 'video' && !newAnswers[q.id]) {
+                        newAnswers[q.id] = true;
+                        hasChanged = true;
+                    }
+                });
+                return hasChanged ? newAnswers : prev;
+            });
+        }
+    }, [quizData, currentQuestionIndex]);
 
     useEffect(() => {
         fetchQuiz();
@@ -116,7 +132,18 @@ export function useQuiz() {
     const handleReplay = () => {
         const newSeed = Math.floor(Math.random() * 1000);
         setResults(null);
-        setAnswers({});
+        
+        // Pre-populate video questions in the new empty answers object
+        const initialAnswers = {};
+        if (quizData && quizData.questions) {
+            quizData.questions.forEach(q => {
+                if (q.question_type === 'video') {
+                    initialAnswers[q.id] = true;
+                }
+            });
+        }
+        setAnswers(initialAnswers);
+        
         setCurrentQuestionIndex(0);
         setShowIntro(false);
         setIsReplaySession(true);
@@ -124,6 +151,31 @@ export function useQuiz() {
         setStartTime(Date.now());
         localStorage.setItem(`quiz_seed_${id}`, newSeed.toString());
         window.scrollTo(0, 0);
+    };
+
+    const handleRetry = () => {
+        setResults(null);
+        
+        // Pre-populate video questions in the new empty answers object
+        const initialAnswers = {};
+        if (quizData && quizData.questions) {
+            quizData.questions.forEach(q => {
+                if (q.question_type === 'video') {
+                    initialAnswers[q.id] = true;
+                }
+            });
+        }
+        setAnswers(initialAnswers);
+        
+        setCurrentQuestionIndex(0);
+        setShowIntro(true);
+        setIsReplaySession(false); // New official attempt
+        
+        localStorage.removeItem(`quiz_answers_${id}`);
+        localStorage.removeItem(`quiz_index_${id}`);
+        localStorage.removeItem(`quiz_start_${id}`);
+        
+        navigate(`/quizzes/${id}`, { replace: true });
     };
 
     const handleOptionSelect = (questionId, optionId) => {
@@ -233,6 +285,7 @@ export function useQuiz() {
         sessionSeed,
         handleStart,
         handleReplay,
+        handleRetry,
         handleOptionSelect,
         nextQuestion,
         prevQuestion,

@@ -117,6 +117,13 @@ const initializeDatabase = async () => {
             ) NOT NULL;
         `);
 
+        // Asegurar que 'data_tetris' y 'video' existan en el ENUM de question_type en quiz_questions
+        await db.query(`
+            ALTER TABLE quiz_questions MODIFY COLUMN question_type ENUM(
+                'multiple_choice', 'true_false', 'multiple_select', 'mfa_defender', 'hack_neighbor', 'data_tetris', 'video'
+            ) DEFAULT 'multiple_choice';
+        `);
+
         // Columnas para racha de login
         await db.query(`
             ALTER TABLE users ADD COLUMN IF NOT EXISTS login_streak INT DEFAULT 0;

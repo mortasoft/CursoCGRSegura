@@ -9,14 +9,19 @@ const DATA_TYPES = [
     // --- ACCESO IRRESTRICTO (Público) ---
     { text: "Nombre\nCompleto", classification: "publico" },
     { text: "Estado\nCivil", classification: "publico" },
+    { text: "Profesión\nu Oficio", classification: "publico" },
     { text: "Fecha\nNacimiento", classification: "publico" },
-    { text: "Filiación\n(Padres)", classification: "publico" },
+    { text: "Nacionalidad", classification: "publico" },
     { text: "Bienes\nInmuebles", classification: "publico" },
     { text: "Gravámenes\nVehiculares", classification: "publico" },
     { text: "Representación\nLegal", classification: "publico" },
     { text: "Títulos\nAcadémicos", classification: "publico" },
     { text: "Defunciones\nRegistradas", classification: "publico" },
     { text: "Concesiones\nPúblicas", classification: "publico" },
+    { text: "Número de\nCédula", classification: "publico" },
+    { text: "Información de\nProveedores Estado", classification: "publico" },
+    { text: "Fecha de\nNacimiento", classification: "publico" },
+    { text: "Foto de Perfil\nde Google", classification: "publico" },
 
     // --- ACCESO RESTRINGIDO / PERSONALES (Confidencial) ---
     { text: "Dirección\nHabitación", classification: "confidencial", color: 0x00E676 },
@@ -24,28 +29,44 @@ const DATA_TYPES = [
     { text: "Correo\nElectrónico", classification: "confidencial", color: 0x00E676 },
     { text: "Salario\nBruto", classification: "confidencial", color: 0x00E676 },
     { text: "Historial\nCrediticio", classification: "confidencial", color: 0x00E676 },
-    { text: "Récord de\nCotizaciones", classification: "confidencial", color: 0x00E676 },
+    { text: "Cuenta\nBancaria", classification: "confidencial", color: 0x00E676 },
     { text: "Número de\nPasaporte", classification: "confidencial", color: 0x00E676 },
     { text: "Firma\nHológrafa", classification: "confidencial", color: 0x00E676 },
     { text: "Placa de\nVehículo", classification: "confidencial", color: 0x00E676 },
     { text: "Hábitos de\nConsumo", classification: "confidencial", color: 0x00E676 },
+    { text: "Ubicación\nGPS", classification: "confidencial", color: 0x00E676 },
+    { text: "Usuario de\nSistema", classification: "confidencial", color: 0x00E676 },
+    { text: "Declaraciones\nJuradas\nPatrimoniales", classification: "confidencial", color: 0x00E676 },
+    { text: "Selfie en la\nOficina", classification: "confidencial", color: 0x00E676 },
+    { text: "Dirección\nIP", classification: "confidencial", color: 0x00E676 },
+    { text: "Carta de\nAmor", classification: "confidencial", color: 0x00E676 },
+    { text: "Excel llamado\nFINAL_v8_REAL", classification: "confidencial", color: 0x00E676 },
+    { text: "Fotos de\nVacaciones", classification: "confidencial", color: 0x00E676 },
+    { text: "Grabación de\nAudio", classification: "confidencial", color: 0x00E676 },
+    { text: "Video de\nReunión", classification: "confidencial", color: 0x00E676 },
 
     // --- DATOS SENSIBLES (Restringido) ---
     { text: "Expediente\nMédico", classification: "restringido", color: 0xFF1744 },
+    { text: "Tipo de\nSangre", classification: "restringido", color: 0xFF1744 },
     { text: "Preferencia\nSexual", classification: "restringido", color: 0xFF1744 },
     { text: "Opinión\nPolítica", classification: "restringido", color: 0xFF1744 },
+    { text: "Partido\nPolítico", classification: "restringido", color: 0xFF1744 },
     { text: "Creencia\nReligiosa", classification: "restringido", color: 0xFF1744 },
     { text: "Origen\nRacial", classification: "restringido", color: 0xFF1744 },
     { text: "Huella\nDactilar", classification: "restringido", color: 0xFF1744 },
     { text: "Información\nGenética", classification: "restringido", color: 0xFF1744 },
     { text: "Afiliación\nSindical", classification: "restringido", color: 0xFF1744 },
     { text: "Vida\nSexual", classification: "restringido", color: 0xFF1744 },
+    { text: "Reconocimiento\nFacial", classification: "restringido", color: 0xFF1744 },
+    { text: "Diagnóstico\nPsiquiátrico", classification: "restringido", color: 0xFF1744 },
+    { text: "Enfermedades\nInfecciosas", classification: "restringido", color: 0xFF1744 },
+    { text: "Equipo de\nFútbol Favorito", classification: "restringido", color: 0xFF1744 },
     { text: "Convicciones\nFilosóficas", classification: "restringido", color: 0xFF1744 }
 ];
 
 const COLUMNS = [0, 1, 2];
-const COLUMN_WIDTH = 300; 
-const GRID_OFFSET = (800 - COLUMN_WIDTH) / 2; 
+const COLUMN_WIDTH = 300;
+const GRID_OFFSET = (800 - COLUMN_WIDTH) / 2;
 
 const TETROMINOS = [
     { name: 'I', color: 0x00FFFF, blocks: [[-1.5, -0.5], [-0.5, -0.5], [0.5, -0.5], [1.5, -0.5]] },
@@ -57,7 +78,7 @@ const TETROMINOS = [
     { name: 'Z', color: 0xFF0000, blocks: [[-1.5, -0.5], [-0.5, -0.5], [-0.5, 0.5], [0.5, 0.5]] }
 ];
 
-const T_SIZE = 30; 
+const T_SIZE = 30;
 
 export default class MainScene extends Phaser.Scene {
     constructor() {
@@ -107,9 +128,9 @@ export default class MainScene extends Phaser.Scene {
         this.DAS_REPEAT = 40;
 
         this.colors = {
-            publico: 0x00FF00,       
-            confidencial: 0xFFA500,  
-            restringido: 0x00E5FF    
+            publico: 0x00FF00,
+            confidencial: 0xFFA500,
+            restringido: 0x00E5FF
         };
 
         this.labels = {
@@ -220,18 +241,18 @@ export default class MainScene extends Phaser.Scene {
         if (this.isGameOver) return;
 
         this.currentColumn = 1;
-        this.isLocked = true; 
+        this.isLocked = true;
         const speedMultiplier = this.baseFallSpeed < 0.2 ? 0.02 : 0.1;
         this.fallSpeed = this.baseFallSpeed + (this.combo * speedMultiplier);
         this.events.emit('speed-changed', this.fallSpeed);
 
         const data = Phaser.Utils.Array.GetRandom(DATA_TYPES);
-        const x = 400; 
-        const y = 45; 
+        const x = 400;
+        const y = 45;
 
         this.currentBlock = this.add.container(x, y);
         this.currentBlock.classification = data.classification;
-        this.currentBlock.selectedClassification = null; 
+        this.currentBlock.selectedClassification = null;
 
         const squaresContainer = this.add.container(0, 0);
         const shapeDef = Phaser.Utils.Array.GetRandom(TETROMINOS);
@@ -241,7 +262,7 @@ export default class MainScene extends Phaser.Scene {
             const sqY = coord[1] * T_SIZE;
 
             const sq = this.add.rectangle(sqX, sqY, T_SIZE - 2, T_SIZE - 2, 0xFFFFFF, 0.7);
-            sq.isMain = true; 
+            sq.isMain = true;
 
             sq.setStrokeStyle(1, 0xFFFFFF, 1);
 
@@ -598,7 +619,7 @@ export default class MainScene extends Phaser.Scene {
         if (this.bgMusic) {
             this.bgMusic.stop();
         }
-        
+
         this.events.emit('game-over', this.score);
         this.showFloatingText(400, 300, "¡SISTEMA COMPROMETIDO!", "#FF0000");
     }
@@ -649,13 +670,13 @@ export default class MainScene extends Phaser.Scene {
         });
 
         block.destroy();
-        this.snapAllToGrid(); 
+        this.snapAllToGrid();
         this.checkAndClearLines();
     }
 
     checkAndClearLines() {
         const gridW = 10;
-        const startY = 555; 
+        const startY = 555;
         const rows = 20;
         let rowsToClear = [];
         let totalPoints = 0;
@@ -676,13 +697,13 @@ export default class MainScene extends Phaser.Scene {
             rowsToClear.forEach(row => {
                 row.squares.forEach(sq => {
                     squaresToRemove.add(sq);
-                    
+
                     this.tweens.add({
                         targets: sq, fillColor: 0xFFFFFF, duration: 100, repeat: 2, yoyo: true,
                         onComplete: () => sq.destroy()
                     });
                 });
-                
+
                 const rowPoints = row.squares.reduce((sum, sq) => sum + (sq.isBrecha ? -100 : 50), 0);
                 totalPoints += rowPoints;
             });

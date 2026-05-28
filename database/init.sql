@@ -116,7 +116,7 @@ CREATE TABLE IF NOT EXISTS quiz_questions (
     id INT AUTO_INCREMENT PRIMARY KEY,
     quiz_id INT NOT NULL,
     question_text TEXT NOT NULL,
-    question_type ENUM('multiple_choice', 'true_false', 'multiple_select', 'mfa_defender', 'hack_neighbor', 'data_tetris') DEFAULT 'multiple_choice',
+    question_type ENUM('multiple_choice', 'true_false', 'multiple_select', 'mfa_defender', 'hack_neighbor', 'data_tetris', 'video') DEFAULT 'multiple_choice',
     image_url TEXT,
     points INT DEFAULT 1,
     order_index INT NOT NULL,

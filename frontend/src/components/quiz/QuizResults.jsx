@@ -2,7 +2,45 @@ import { Star, AlertTriangle, RotateCcw, Gamepad2, Award } from 'lucide-react';
 import CyberCat from '../CyberCat';
 import PointsCounter from './PointsCounter';
 
-export default function QuizResults({ results, quiz, onBack, onRetry, onReplay }) {
+export default function QuizResults({ results, quiz, questions, userAnswers, onBack, onRetry, onReplay }) {
+    const tetrisQuestion = questions?.find(q => q.question_type === 'data_tetris');
+    const basePoints = tetrisQuestion?.points || 0;
+    const tetrisAnswer = tetrisQuestion ? userAnswers?.[tetrisQuestion.id] : null;
+
+    // Determine if they completed Data Tetris and with what parameters
+    const tetrisScore = tetrisAnswer?.score || 0;
+    const tetrisDiff = tetrisAnswer?.difficulty || 'easy';
+
+    // Parse question data to get min_score
+    let tetrisMinScore = 500;
+    if (tetrisQuestion?.data) {
+        try {
+            const qData = typeof tetrisQuestion.data === 'string' ? JSON.parse(tetrisQuestion.data) : tetrisQuestion.data;
+            tetrisMinScore = qData.min_score || 500;
+        } catch (e) {
+            // fallback
+        }
+    }
+
+    // Calculate performance tier
+    let tetrisPerformance = 'normal';
+    if (tetrisScore >= tetrisMinScore * 3) tetrisPerformance = 'legend';
+    else if (tetrisScore >= tetrisMinScore * 2) tetrisPerformance = 'master';
+    else if (tetrisScore >= tetrisMinScore * 1.5) tetrisPerformance = 'expert';
+
+    const renderCell = (rowDiff, colPerf, value) => {
+        const isMatched = tetrisQuestion && tetrisDiff === rowDiff && tetrisPerformance === colPerf;
+        return (
+            <td className={`py-2 px-1 text-center text-[10px] transition-all rounded-lg ${
+                isMatched 
+                ? 'bg-secondary-500/20 text-secondary-400 font-black border-2 border-secondary-500/40 shadow-[0_0_15px_rgba(249,115,22,0.15)] animate-pulse' 
+                : 'text-slate-400 font-semibold'
+            }`}>
+                {value}
+            </td>
+        );
+    };
+
     return (
         <div className={`card overflow-hidden border-t-8 ${results.passed ? 'border-green-500 bg-green-500/5' : 'border-red-500 bg-red-500/5'}`}>
             <div className="p-6 md:p-8 text-center space-y-4">
@@ -44,6 +82,11 @@ export default function QuizResults({ results, quiz, onBack, onRetry, onReplay }
                             <div className="inline-flex items-center gap-2 px-5 py-1.5 bg-secondary-500/20 border border-secondary-500/30 rounded-full text-secondary-500 font-black text-[11px] animate-bounce">
                                 <Star className="w-3.5 h-3.5 fill-secondary-500" /> +<PointsCounter target={results.pointsAwarded} /> PTS
                             </div>
+                            {results.score > 100 && (
+                                <p className="text-[9px] font-black text-secondary-400 uppercase tracking-widest flex items-center gap-1.5 bg-secondary-500/5 px-2.5 py-1 rounded-lg border border-secondary-500/10">
+                                    ¡Incluye bonificación por dificultad y desempeño en Data Tetris!
+                                </p>
+                            )}
                             {results.penaltyApplied > 0 && (
                                 <p className="text-[9px] font-black text-red-500 uppercase tracking-widest flex items-center gap-1.5 bg-red-500/5 px-2.5 py-1 rounded-lg border border-red-500/10">
                                     <AlertTriangle className="w-2.5 h-2.5" /> Penalización de {(results.attemptNumber - 1) * 10}% por intentos
@@ -86,6 +129,58 @@ export default function QuizResults({ results, quiz, onBack, onRetry, onReplay }
                     </div>
                 </div>
 
+                {/* Tabla de Puntos Posibles para Data Tetris */}
+                {tetrisQuestion && (
+                    <div className="mt-6 p-5 bg-slate-950/60 rounded-2xl border border-white/5 space-y-3 max-w-lg mx-auto text-left shadow-2xl backdrop-blur-sm relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-secondary-500/5 rounded-bl-full blur-2xl"></div>
+                        <div className="flex items-center gap-2 border-b border-white/5 pb-2">
+                            <Star className="w-4 h-4 text-secondary-500 fill-secondary-500" />
+                            <p className="text-[10px] font-black text-secondary-400 uppercase tracking-widest">
+                                Matriz de Puntos Bonus (Data Tetris)
+                            </p>
+                        </div>
+                        <p className="text-[10px] text-slate-400 font-medium leading-relaxed">
+                            Tus puntos obtenidos en el juego se calculan según la dificultad elegida y tu puntuación alcanzada. La celda iluminada representa tu logro actual (Puntos Base: <strong className="text-white">{basePoints} PTS</strong>):
+                        </p>
+                        <div className="overflow-x-auto pt-1">
+                            <table className="w-full text-[9px] text-gray-400 border-collapse">
+                                <thead>
+                                    <tr className="border-b border-white/5 text-gray-500 font-bold uppercase text-[8px] tracking-wider">
+                                        <th className="py-2 px-1 text-left">Dificultad</th>
+                                        <th className="py-2 px-1 text-center">Normal</th>
+                                        <th className="py-2 px-1 text-center">Experto</th>
+                                        <th className="py-2 px-1 text-center">Maestro</th>
+                                        <th className="py-2 px-1 text-center">Leyenda</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr className="border-b border-white/5">
+                                        <td className="py-2 px-1 font-bold text-slate-300 text-left">Fácil (1.0x)</td>
+                                        {renderCell('easy', 'normal', basePoints)}
+                                        {renderCell('easy', 'expert', Math.round(basePoints * 1.25))}
+                                        {renderCell('easy', 'master', Math.round(basePoints * 1.5))}
+                                        {renderCell('easy', 'legend', basePoints * 2)}
+                                    </tr>
+                                    <tr className="border-b border-white/5">
+                                        <td className="py-2 px-1 font-bold text-slate-300 text-left">Medio (1.2x)</td>
+                                        {renderCell('medium', 'normal', Math.round(basePoints * 1.2))}
+                                        {renderCell('medium', 'expert', Math.round(basePoints * 1.5))}
+                                        {renderCell('medium', 'master', Math.round(basePoints * 1.8))}
+                                        {renderCell('medium', 'legend', Math.round(basePoints * 2.4))}
+                                    </tr>
+                                    <tr>
+                                        <td className="py-2 px-1 font-bold text-slate-300 text-left">Difícil (1.5x)</td>
+                                        {renderCell('hard', 'normal', Math.round(basePoints * 1.5))}
+                                        {renderCell('hard', 'expert', Math.round(basePoints * 1.875))}
+                                        {renderCell('hard', 'master', Math.round(basePoints * 2.25))}
+                                        {renderCell('hard', 'legend', basePoints * 3)}
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+
                 <div className="pt-4 flex flex-col md:flex-row gap-3 justify-center">
                     <button
                         onClick={onBack}
@@ -93,26 +188,26 @@ export default function QuizResults({ results, quiz, onBack, onRetry, onReplay }
                     >
                         Volver
                     </button>
-                    {results.passed && onReplay && (
-                        <button
-                            onClick={onReplay}
-                            className="px-10 py-4 bg-secondary-600/20 text-secondary-400 rounded-2xl font-black uppercase tracking-widest text-[10px] border border-secondary-500/30 hover:bg-secondary-600 hover:text-white transition-all flex flex-col items-center justify-center gap-1"
-                        >
-                            {/* Fila superior: Icono + Texto principal */}
-                            <div className="flex items-center gap-2">
-                                <Gamepad2 className="w-4 h-4" />
-                                <span>Rejugar por diversión</span>
-                            </div>
-
-                        </button>
-                    )}
-                    {!results.passed && results.attemptNumber < quiz.max_attempts && (
+                    {results.attemptNumber < quiz.max_attempts ? (
                         <button
                             onClick={onRetry}
-                            className="px-10 py-3.5 bg-slate-800 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] border border-white/10 hover:bg-slate-700 transition-all flex items-center justify-center gap-2"
+                            className="px-10 py-3.5 bg-slate-800 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] border border-white/10 hover:bg-slate-700 hover:border-orange-500/50 transition-all flex items-center justify-center gap-2 hover:scale-105 active:scale-95 shadow-lg"
                         >
-                            <RotateCcw className="w-4 h-4" /> Reintentar
+                            <RotateCcw className="w-4 h-4" />
+                            <span>Intentar de nuevo</span>
                         </button>
+                    ) : (
+                        results.passed && onReplay && (
+                            <button
+                                onClick={onReplay}
+                                className="px-10 py-4 bg-secondary-600/20 text-secondary-400 rounded-2xl font-black uppercase tracking-widest text-[10px] border border-secondary-500/30 hover:bg-secondary-600 hover:text-white transition-all flex flex-col items-center justify-center gap-1 hover:scale-105 active:scale-95"
+                            >
+                                <div className="flex items-center gap-2">
+                                    <Gamepad2 className="w-4 h-4" />
+                                    <span>Rejugar por diversión</span>
+                                </div>
+                            </button>
+                        )
                     )}
                 </div>
             </div>

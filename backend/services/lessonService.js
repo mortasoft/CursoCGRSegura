@@ -170,7 +170,7 @@ class LessonService {
 
         const quizzes = await db.query(
             `SELECT lc.title, lc.is_required,
-             (SELECT passed FROM quiz_attempts qa WHERE qa.user_id = ? AND qa.quiz_id = JSON_VALUE(lc.data, '$.quiz_id') ORDER BY qa.attempt_number DESC LIMIT 1) as has_passed,
+             COALESCE((SELECT MAX(passed) FROM quiz_attempts qa WHERE qa.user_id = ? AND qa.quiz_id = JSON_VALUE(lc.data, '$.quiz_id')), 0) as has_passed,
              (SELECT COUNT(*) FROM quiz_attempts qa WHERE qa.user_id = ? AND qa.quiz_id = JSON_VALUE(lc.data, '$.quiz_id')) as attempts_made,
              (SELECT max_attempts FROM quizzes q WHERE q.id = JSON_VALUE(lc.data, '$.quiz_id')) as max_attempts
              FROM lesson_contents lc WHERE lc.lesson_id = ? AND lc.content_type = 'quiz'`,
@@ -224,7 +224,7 @@ class LessonService {
                 asub.status as asub_status,
                 ucp.completed_at as ucp_completed_at,
                 ucp.response_data as interaction_data,
-                (SELECT passed FROM quiz_attempts qa WHERE qa.user_id = ? AND qa.quiz_id = JSON_VALUE(lc.data, '$.quiz_id') ORDER BY qa.attempt_number DESC LIMIT 1) as quiz_passed,
+                COALESCE((SELECT MAX(passed) FROM quiz_attempts qa WHERE qa.user_id = ? AND qa.quiz_id = JSON_VALUE(lc.data, '$.quiz_id')), 0) as quiz_passed,
                 (SELECT COUNT(*) FROM survey_responses sr WHERE sr.user_id = ? AND sr.survey_id = JSON_VALUE(lc.data, '$.survey_id')) as survey_done
              FROM lesson_contents lc
              LEFT JOIN assignment_submissions asub ON asub.content_id = lc.id AND asub.user_id = ?
