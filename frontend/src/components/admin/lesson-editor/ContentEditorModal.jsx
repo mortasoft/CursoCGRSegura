@@ -70,6 +70,7 @@ export default function ContentEditorModal({
             case 'assignment':
             case 'note':
             case 'terms_trap':
+            case 'drive_auditor':
                 return (
                     <TaskEditor
                         contentType={formData.content_type}
