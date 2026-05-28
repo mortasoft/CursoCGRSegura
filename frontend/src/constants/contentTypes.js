@@ -10,5 +10,6 @@ export const TRACEABLE_CONTENT_TYPES = [
     'hack_neighbor',
     'dork_search',
     'data_tetris',
-    'terms_trap'
+    'terms_trap',
+    'drive_auditor'
 ];

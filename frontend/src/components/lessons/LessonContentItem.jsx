@@ -22,7 +22,7 @@ import CategorizationActivity from './activities/CategorizationActivity';
 import DataTetrisActivity from './activities/DataTetrisActivity';
 import ForumActivity from './activities/ForumActivity/ForumActivity';
 import TermsTrapActivity from './activities/TermsTrapActivity';
-
+import DriveAuditorActivity from './activities/DriveAuditorActivity';
 const API_URL = import.meta.env.VITE_API_URL;
 
 export default function LessonContentItem({
@@ -146,6 +146,9 @@ export default function LessonContentItem({
 
         case 'terms_trap':
             return <TermsTrapActivity {...commonProps} />;
+
+        case 'drive_auditor':
+            return <DriveAuditorActivity {...commonProps} />;
 
         case 'forum':
             return (

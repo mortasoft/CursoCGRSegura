@@ -17,6 +17,8 @@ import Leaderboard from './pages/Leaderboard';
 import AdminPanel from './pages/AdminPanel';
 import AdminModules from './pages/AdminModules';
 import Reports from './pages/Reports';
+import DriveAuditReport from './pages/DriveAuditReport';
+import DriveAuditHistory from './pages/DriveAuditHistory';
 import AdminUsers from './pages/AdminUsers';
 import AdminDirectory from './pages/AdminDirectory';
 import AdminDepartments from './pages/AdminDepartments';
@@ -30,11 +32,14 @@ import AdminSurveys from './pages/AdminSurveys';
 import AdminSurveyDetail from './pages/AdminSurveyDetail';
 import AdminAnnouncements from './pages/AdminAnnouncements';
 import AdminNotifications from './pages/AdminNotifications';
+import AdminDriveAuditor from './pages/AdminDriveAuditor';
 import Notifications from './pages/Notifications';
 import NotFound from './pages/NotFound';
 import ServerError from './pages/ServerError';
 import Maintenance from './pages/Maintenance';
 import DisabledAccount from './pages/DisabledAccount';
+
+import DriveAuditorStandalone from './pages/DriveAuditorStandalone';
 
 // Components
 import ProtectedRoute from './components/ProtectedRoute';
@@ -74,6 +79,10 @@ function App() {
 
           {/* Rutas protegidas */}
           <Route element={<ProtectedRoute />}>
+            
+            {/* Standalone pages without layout */}
+            <Route path="/drive-auditor" element={<DriveAuditorStandalone />} />
+
             <Route element={<Layout />}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/modules" element={<Modules />} />
@@ -84,6 +93,8 @@ function App() {
               <Route path="/profile" element={<Profile />} />
               <Route path="/leaderboard" element={<Leaderboard />} />
               <Route path="/notifications" element={<Notifications />} />
+              <Route path="/dashboard/drive-auditor/report/:reportId" element={<DriveAuditReport />} />
+              <Route path="/dashboard/drive-auditor/history" element={<DriveAuditHistory />} />
 
               {/* Rutas de administrador compartidas con Analista */}
               <Route element={<AdminRoute roles={['admin', 'analyst']} />}>
@@ -108,6 +119,7 @@ function App() {
                 <Route path="/admin/phishing" element={<AdminPhishing />} />
                 <Route path="/admin/announcements" element={<AdminAnnouncements />} />
                 <Route path="/admin/notifications" element={<AdminNotifications />} />
+                <Route path="/admin/drive-auditor" element={<AdminDriveAuditor />} />
                 <Route path="/admin/lessons/:id/editor" element={<AdminLessonEditor />} />
               </Route>
 

@@ -113,6 +113,14 @@ export default function AdminPanel() {
             stats: 'DIRECTO'
         },
         {
+            title: 'Auditorías de Drive',
+            description: 'Ver procesos de escaneo en segundo plano de funcionarios en ejecución.',
+            icon: ShieldAlert,
+            path: '/admin/drive-auditor',
+            iconBg: 'bg-indigo-600',
+            stats: 'EN TIEMPO REAL'
+        },
+        {
             title: 'Directorio Maestro',
 
             description: 'Subir lista oficial de funcionarios (CSV) y ver quién falta de entrar.',
