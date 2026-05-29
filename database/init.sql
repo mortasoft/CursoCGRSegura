@@ -408,6 +408,34 @@ CREATE TABLE IF NOT EXISTS activity_logs (
     INDEX idx_created_at (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Tabla de posts para foros
+CREATE TABLE IF NOT EXISTS forum_posts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    content_id INT NOT NULL,
+    user_id INT NOT NULL,
+    parent_id INT DEFAULT NULL,
+    message TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (content_id) REFERENCES lesson_contents(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (parent_id) REFERENCES forum_posts(id) ON DELETE CASCADE,
+    INDEX idx_content_id (content_id),
+    INDEX idx_user_id (user_id),
+    INDEX idx_parent_id (parent_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tabla de upvotes para foros
+CREATE TABLE IF NOT EXISTS forum_post_upvotes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    post_id INT NOT NULL,
+    user_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (post_id) REFERENCES forum_posts(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_user_post_upvote (user_id, post_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Insertar módulos iniciales del curso CGR Segur@
 INSERT INTO modules (module_number, title, description, month, duration_minutes, is_published, order_index) VALUES
 (1, 'Fundamentos de Seguridad de la Información', 'Conceptos básicos de seguridad, marco normativo ISO 27001:2022, roles y responsabilidades, gestión de contraseñas y autenticación 2FA', 'Febrero', 120, TRUE, 1),

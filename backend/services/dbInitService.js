@@ -143,6 +143,25 @@ const initializeDatabase = async () => {
         `);
 
 
+        // Tabla de posts para foros
+        await db.query(`
+            CREATE TABLE IF NOT EXISTS forum_posts (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                content_id INT NOT NULL,
+                user_id INT NOT NULL,
+                parent_id INT DEFAULT NULL,
+                message TEXT NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                FOREIGN KEY (content_id) REFERENCES lesson_contents(id) ON DELETE CASCADE,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY (parent_id) REFERENCES forum_posts(id) ON DELETE CASCADE,
+                INDEX idx_content_id (content_id),
+                INDEX idx_user_id (user_id),
+                INDEX idx_parent_id (parent_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `);
+
         // Tabla de upvotes para foros
         await db.query(`
             CREATE TABLE IF NOT EXISTS forum_post_upvotes (
