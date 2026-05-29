@@ -143,6 +143,29 @@ class BadgeController {
             res.status(500).json({ error: 'Error al asignar la insignia' });
         }
     }
+
+    async awardRoswellBadge(req, res) {
+        try {
+            const userId = req.user.id;
+            const db = require('../config/database');
+            const [badge] = await db.query("SELECT id FROM badges WHERE name = 'Hacker de Roswell'");
+            if (!badge) {
+                return res.status(404).json({ error: 'Insignia Hacker de Roswell no encontrada en la base de datos' });
+            }
+
+            const badgesUtil = require('../utils/badges');
+            const result = await badgesUtil.awardBadge(userId, badge.id, true);
+
+            res.json({ 
+                success: true, 
+                awarded: result ? result.awarded : false,
+                badge: result ? result.badge : null
+            });
+        } catch (error) {
+            logger.error('Error al auto-asignar insignia Hacker de Roswell:', error);
+            res.status(500).json({ error: 'Error interno al procesar la insignia' });
+        }
+    }
 }
 
 module.exports = new BadgeController();

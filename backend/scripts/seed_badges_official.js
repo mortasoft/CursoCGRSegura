@@ -200,6 +200,15 @@ async function seedBadges() {
                 criteria_type: 'manual',
                 criteria_value: null,
                 points: 15
+            },
+            {
+                name: 'Hacker de Roswell',
+                description: '¡La verdad ha sido desclasificada! Has roto el cifrado del archivo que el gobierno ha intentado ocultar desde 1947. Al ingresar a la base de datos del Expediente MAJESTIC, demostraste un instinto y unas habilidades de investigación dignas de los agentes Mulder y Scully, capaces de conectar los puntos que la APO quería ocultar. No solo encontraste información ultraconfidencial sobre los EBNT y la ingeniería inversa, sino que lograste identificar con éxito al infiltrado que operaba desde las sombras en la institución.',
+                icon_name: 'Terminal',
+                image_url: 'roswell.svg',
+                criteria_type: 'manual',
+                criteria_value: null,
+                points: 25
             }
         ];
 

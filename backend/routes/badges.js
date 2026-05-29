@@ -52,4 +52,11 @@ router.post('/award', authMiddleware, adminMiddleware, badgeController.awardBadg
  */
 router.post('/award-by-email', authMiddleware, adminMiddleware, badgeController.awardBadgeByEmail);
 
+/**
+ * @route   POST /api/badges/roswell-claim
+ * @desc    Auto-asignar la insignia Hacker de Roswell al entrar al expediente
+ * @access  Private
+ */
+router.post('/roswell-claim', authMiddleware, badgeController.awardRoswellBadge);
+
 module.exports = router;

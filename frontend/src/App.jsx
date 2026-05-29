@@ -40,6 +40,7 @@ import Maintenance from './pages/Maintenance';
 import DisabledAccount from './pages/DisabledAccount';
 
 import DriveAuditorStandalone from './pages/DriveAuditorStandalone';
+import MajesticEvidence from './pages/MajesticEvidence';
 
 // Components
 import ProtectedRoute from './components/ProtectedRoute';
@@ -95,6 +96,7 @@ function App() {
               <Route path="/notifications" element={<Notifications />} />
               <Route path="/dashboard/drive-auditor/report/:reportId" element={<DriveAuditReport />} />
               <Route path="/dashboard/drive-auditor/history" element={<DriveAuditHistory />} />
+              <Route path="/dashboard/confidential-files" element={<MajesticEvidence />} />
 
               {/* Rutas de administrador compartidas con Analista */}
               <Route element={<AdminRoute roles={['admin', 'analyst']} />}>
