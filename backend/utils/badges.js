@@ -425,6 +425,110 @@ async function checkEliteTeamBadge(userId, moduleId) {
 }
 
 /**
+ * Lógica para la insignia "Maestro del Co-Op"
+ * (Realizar 5 aportes en foros de discusión)
+ */
+async function checkForumBadge(userId) {
+    try {
+        const [result] = await db.query(
+            'SELECT COUNT(*) as count FROM forum_posts WHERE user_id = ?',
+            [userId]
+        );
+
+        if (result && result.count >= 5) {
+            const [badge] = await db.query("SELECT id FROM badges WHERE name = 'Maestro del Co-Op' LIMIT 1");
+            if (badge) {
+                return await awardBadge(userId, badge.id);
+            }
+        }
+        return null;
+    } catch (error) {
+        logger.error(`Error en checkForumBadge para usuario ${userId}:`, error);
+        return null;
+    }
+}
+
+/**
+ * Lógica para la insignia "Data Tetris Grandmaster"
+ * (Rango de Leyenda en Modo Difícil de Data Tetris)
+ */
+async function checkTetrisBadge(userId) {
+    try {
+        const attempts = await db.query(
+            `SELECT qa.answers, qq.id as question_id, qq.data as question_data 
+             FROM quiz_attempts qa
+             JOIN quiz_questions qq ON qq.quiz_id = qa.quiz_id
+             WHERE qa.user_id = ? AND qq.question_type = 'data_tetris'`,
+            [userId]
+        );
+
+        let qualified = false;
+        for (const attempt of attempts) {
+            const answers = typeof attempt.answers === 'string' ? JSON.parse(attempt.answers) : (attempt.answers || {});
+            const userAnswer = answers[attempt.question_id];
+            if (!userAnswer) continue;
+
+            const qData = typeof attempt.question_data === 'string' ? JSON.parse(attempt.question_data) : (attempt.question_data || {});
+            
+            const finalScore = parseInt(userAnswer.score) || 0;
+            const minScore = parseInt(qData.min_score) || 500;
+            const difficulty = userAnswer.difficulty || qData.difficulty || 'easy';
+
+            if (difficulty === 'hard' && finalScore >= minScore * 3) {
+                qualified = true;
+                break;
+            }
+        }
+
+        if (qualified) {
+            const [badge] = await db.query("SELECT id FROM badges WHERE name = 'Data Tetris Grandmaster' LIMIT 1");
+            if (badge) {
+                return await awardBadge(userId, badge.id);
+            }
+        }
+        return null;
+    } catch (error) {
+        logger.error(`Error en checkTetrisBadge para usuario ${userId}:`, error);
+        return null;
+    }
+}
+
+/**
+ * Lógica para la insignia "El Último Continue"
+ * (Superar un cuestionario en el último intento permitido)
+ */
+async function checkContinueBadge(userId) {
+    try {
+        const attempts = await db.query(
+            `SELECT qa.attempt_number, q.max_attempts 
+             FROM quiz_attempts qa
+             JOIN quizzes q ON qa.quiz_id = q.id
+             WHERE qa.user_id = ? AND qa.passed = 1`,
+            [userId]
+        );
+
+        let qualified = false;
+        for (const attempt of attempts) {
+            if (attempt.attempt_number >= attempt.max_attempts) {
+                qualified = true;
+                break;
+            }
+        }
+
+        if (qualified) {
+            const [badge] = await db.query("SELECT id FROM badges WHERE name = 'El Último \"Continue\"' LIMIT 1");
+            if (badge) {
+                return await awardBadge(userId, badge.id);
+            }
+        }
+        return null;
+    } catch (error) {
+        logger.error(`Error en checkContinueBadge para usuario ${userId}:`, error);
+        return null;
+    }
+}
+
+/**
  * Revisa todas las insignias automáticas para un usuario.
  * @returns Un objeto con 'awarded' (boolean) y 'badges' (array de insignias otorgadas)
  */
@@ -438,6 +542,18 @@ async function checkAllBadges(userId, extraData = {}) {
         // 2. Descarga de recursos
         const resource = await checkResourceBadge(userId);
         if (resource && resource.awarded) awardedBadges.push(resource.badge);
+
+        // 2b. Aportes en foros (Maestro del Co-Op)
+        const forum = await checkForumBadge(userId);
+        if (forum && forum.awarded) awardedBadges.push(forum.badge);
+
+        // 2c. Data Tetris Grandmaster
+        const tetris = await checkTetrisBadge(userId);
+        if (tetris && tetris.awarded) awardedBadges.push(tetris.badge);
+
+        // 2d. El Último Continue
+        const retryBadge = await checkContinueBadge(userId);
+        if (retryBadge && retryBadge.awarded) awardedBadges.push(retryBadge.badge);
 
         // 3. Velocidad e Insignias de Módulo Específico (solo si es el momento de completitud)
         if (extraData.moduleId && extraData.isModuleCompletion) {
@@ -499,5 +615,8 @@ module.exports = {
     checkReplayBadge,
     checkComboX5Badge,
     checkEliteTeamBadge,
+    checkForumBadge,
+    checkTetrisBadge,
+    checkContinueBadge,
     checkAllBadges
 };

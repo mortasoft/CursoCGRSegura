@@ -4,7 +4,7 @@ const logger = require('../config/logger');
 exports.startAudit = async (req, res) => {
     try {
         const { access_token } = req.body;
-        
+
         if (!access_token) {
             return res.status(400).json({ error: 'Se requiere access_token de Google Drive' });
         }
@@ -14,14 +14,14 @@ exports.startAudit = async (req, res) => {
         const userName = `${req.user.first_name} ${req.user.last_name}`;
 
         const result = await driveAuditorService.startAudit(userId, userEmail, userName, access_token);
-        
+
         res.status(202).json({
             message: 'Auditoría iniciada en segundo plano',
             data: result
         });
     } catch (error) {
         logger.error('Error en startAudit:', error);
-        res.status(error.statusCode || 500).json({ 
+        res.status(error.statusCode || 500).json({
             error: error.message || 'Error al iniciar la auditoría',
             nextAvailableDate: error.nextAvailableDate
         });
@@ -32,9 +32,9 @@ exports.getAuditStatus = async (req, res) => {
     try {
         const reportId = req.params.reportId;
         const userId = req.user.id;
-        
+
         const status = await driveAuditorService.getReportStatus(reportId, userId);
-        
+
         if (!status) {
             return res.status(404).json({ error: 'Reporte no encontrado' });
         }
@@ -62,9 +62,9 @@ exports.getAuditReport = async (req, res) => {
         const reportId = req.params.reportId;
         const isAdmin = req.user.role === 'admin' || req.user.role === 'instructor';
         const userId = isAdmin ? null : req.user.id;
-        
+
         const reportData = await driveAuditorService.getReportDetails(reportId, userId);
-        
+
         if (!reportData) {
             return res.status(404).json({ error: 'Reporte no encontrado' });
         }
@@ -90,7 +90,7 @@ exports.getAdminAuditReport = async (req, res) => {
     try {
         const reportId = req.params.reportId;
         const reportData = await driveAuditorService.getAdminReportDetails(reportId);
-        
+
         if (!reportData) {
             return res.status(404).json({ error: 'Reporte no encontrado' });
         }
@@ -106,13 +106,13 @@ exports.cancelAudit = async (req, res) => {
     try {
         const { reportId } = req.body;
         const userId = req.user.id;
-        
+
         if (!reportId) {
             return res.status(400).json({ error: 'Report ID es requerido' });
         }
 
         const cancelled = await driveAuditorService.cancelAudit(reportId, userId);
-        
+
         if (!cancelled) {
             return res.status(400).json({ error: 'No se pudo cancelar el proceso (puede que ya haya terminado o no te pertenezca)' });
         }
@@ -127,13 +127,13 @@ exports.cancelAudit = async (req, res) => {
 exports.cancelAdminAudit = async (req, res) => {
     try {
         const { reportId } = req.body;
-        
+
         if (!reportId) {
             return res.status(400).json({ error: 'Report ID es requerido' });
         }
 
         const cancelled = await driveAuditorService.cancelAdminAudit(reportId);
-        
+
         if (!cancelled) {
             return res.status(400).json({ error: 'No se pudo cancelar el proceso (puede que ya haya terminado)' });
         }
@@ -148,7 +148,7 @@ exports.cancelAdminAudit = async (req, res) => {
 exports.sendWarningEmail = async (req, res) => {
     try {
         const { ownerEmail, ownerName, fileName, sharingLevel, fileLink } = req.body;
-        
+
         if (!ownerEmail || !fileName || !sharingLevel || !fileLink) {
             return res.status(400).json({ error: 'Faltan parámetros requeridos (ownerEmail, fileName, sharingLevel, fileLink)' });
         }
@@ -166,6 +166,20 @@ exports.sendWarningEmail = async (req, res) => {
             auditorName,
             auditorEmail
         );
+
+        // Otorgar insignia "¡Reunión de Emergencia!"
+        try {
+            const { awardBadge } = require('../utils/badges');
+            const db = require('../config/database');
+            const [badge] = await db.query(
+                "SELECT id FROM badges WHERE name = '¡Reunión de Emergencia!' LIMIT 1"
+            );
+            if (badge) {
+                await awardBadge(req.user.id, badge.id, true);
+            }
+        } catch (badgeErr) {
+            logger.error('Error al otorgar la insignia Reunion de Emergencia:', badgeErr);
+        }
 
         res.json({ message: 'Correo de advertencia enviado exitosamente al propietario' });
     } catch (error) {

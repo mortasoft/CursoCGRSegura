@@ -154,6 +154,14 @@ class ForumService {
                 logger.error('Error procesando gamificación de post de foro:', gamificationErr);
             }
 
+            // Sincronizar insignias
+            try {
+                const { checkAllBadges } = require('../utils/badges');
+                await checkAllBadges(userId);
+            } catch (badgeErr) {
+                logger.error('Error al verificar insignias tras post de foro:', badgeErr);
+            }
+
             return { success: true, postId: result.insertId };
         } catch (error) {
             console.error('Error creating forum post:', error);
@@ -214,6 +222,14 @@ class ForumService {
                 }
             } catch (gamificationErr) {
                 logger.error('Error procesando gamificación de reply de foro:', gamificationErr);
+            }
+
+            // Sincronizar insignias
+            try {
+                const { checkAllBadges } = require('../utils/badges');
+                await checkAllBadges(userId);
+            } catch (badgeErr) {
+                logger.error('Error al verificar insignias tras respuesta de foro:', badgeErr);
             }
 
             return { success: true, postId: result.insertId };

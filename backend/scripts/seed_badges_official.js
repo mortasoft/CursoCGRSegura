@@ -164,6 +164,42 @@ async function seedBadges() {
                 criteria_type: 'manual',
                 criteria_value: null,
                 points: 15
+            },
+            {
+                name: 'Maestro del Co-Op',
+                description: 'Esta insignia se otorga al realizar 5 aportes en los foros de discusión. Al igual que en las mejores partidas multijugador, compartes tus tácticas con el clan para que todo el equipo suba de nivel en seguridad y evite un "Game Over" institucional',
+                icon_name: 'MessageSquare',
+                image_url: 'maestro-co-op.svg',
+                criteria_type: 'manual',
+                criteria_value: null,
+                points: 15
+            },
+            {
+                name: 'Data Tetris Grandmaster',
+                description: '¡Has alcanzado el Olimpo! Desbloqueado al conquistar el rango de Leyenda en el Modo Difícil de Data Tetris. Soportaste la velocidad máxima de caída de archivos, ordenaste bloques rojos y amarillos bajo una presión extrema y demostraste reflejos inhumanos para aplicar la Ley Nº 8968 en milisegundos. Para ti, el término "Fuga de Datos" simplemente no existe. ¡Eres una leyenda viviente de la seguridad!',
+                icon_name: 'Trophy',
+                image_url: 'tetris.svg',
+                criteria_type: 'manual',
+                criteria_value: null,
+                points: 50
+            },
+            {
+                name: 'El Último "Continue"',
+                description: '9... 8... 7... ¡Insert Coin! Esta insignia reconoce tu espíritu de la vieja escuela. Gastaste absolutamente todos los "tokens" y vidas de la máquina para superar el cuestionario. No importa cuántas veces viste la pantalla de advertencia; luchaste hasta el último segundo para asegurar que el aprendizaje sobre la Ley Nº 8968 quedara grabado en tu inventario.',
+                icon_name: 'Gamepad2',
+                image_url: 'reintento.svg',
+                criteria_type: 'manual',
+                criteria_value: null,
+                points: 15
+            },
+            {
+                name: '¡Reunión de Emergencia!',
+                description: '¡Hay un archivo sospechoso en el sector de la nube! Tocaste el gran botón rojo al advertir de forma proactiva a un compañero sobre una anomalía crítica en sus carpetas compartidas. Gracias a tu reporte rápido y preciso a través de Drive Auditor, el "impostor" de la vulnerabilidad fue eyectado a tiempo, manteniendo a toda la tripulación de la CGR a salvo.',
+                icon_name: 'AlertTriangle',
+                image_url: 'emergencia.svg',
+                criteria_type: 'manual',
+                criteria_value: null,
+                points: 15
             }
         ];
 
