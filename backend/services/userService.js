@@ -303,6 +303,12 @@ class UserService {
 
                 // 7. Eliminar certificados y insignias del módulo
                 await connection.query('DELETE FROM certificates WHERE user_id = ? AND module_id = ?', [userId, moduleId]);
+                await connection.query(`
+                    DELETE FROM user_badges 
+                    WHERE user_id = ? AND badge_id IN (
+                        SELECT id FROM badges 
+                        WHERE criteria_type = 'module_completion' AND criteria_value = ?
+                    )`, [userId, moduleId.toString()]);
                 
                 // 8. Eliminar actividades de gamificación relacionadas al módulo o sus lecciones
                 await connection.query(`
@@ -311,8 +317,27 @@ class UserService {
                         (activity_type = 'module_completed' AND reference_id = ?) OR
                         (activity_type = 'lesson_completed' AND reference_id IN (?)) OR
                         (activity_type = 'quiz_passed' AND reference_id IN (SELECT id FROM quizzes WHERE lesson_id IN (?))) OR
-                        (activity_type = 'task_approved' AND reference_id IN (SELECT id FROM lesson_contents WHERE lesson_id IN (?)))
-                    )`, [userId, moduleId, lessonIds.length > 0 ? lessonIds : [0], lessonIds.length > 0 ? lessonIds : [0], lessonIds.length > 0 ? lessonIds : [0]]);
+                        (activity_type = 'task_approved' AND reference_id IN (SELECT id FROM lesson_contents WHERE lesson_id IN (?))) OR
+                        (activity_type = 'survey_completed' AND reference_id IN (SELECT id FROM surveys WHERE module_id = ? OR lesson_id IN (?))) OR
+                        (activity_type IN ('forum_post', 'forum_reply') AND reference_id IN (SELECT id FROM lesson_contents WHERE lesson_id IN (?))) OR
+                        (activity_type = 'badge_earned' AND reference_id IN (SELECT id FROM badges WHERE criteria_type = 'module_completion' AND criteria_value = ?)) OR
+                        (activity_type = 'resource_downloaded' AND (
+                            reference_id IN (SELECT id FROM resources WHERE module_id = ?) OR
+                            reference_id IN (SELECT id FROM lesson_contents WHERE lesson_id IN (?))
+                        ))
+                    )`, [
+                        userId, 
+                        moduleId, 
+                        lessonIds.length > 0 ? lessonIds : [0], 
+                        lessonIds.length > 0 ? lessonIds : [0], 
+                        lessonIds.length > 0 ? lessonIds : [0],
+                        moduleId,
+                        lessonIds.length > 0 ? lessonIds : [0],
+                        lessonIds.length > 0 ? lessonIds : [0],
+                        moduleId.toString(),
+                        moduleId,
+                        lessonIds.length > 0 ? lessonIds : [0]
+                    ]);
 
             } else {
                 // REINICIO TOTAL (Existente)

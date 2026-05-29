@@ -269,7 +269,14 @@ const calculateDynamicModuleBonus = async (userId, moduleId) => {
 const syncUserLevel = async (userId, connection = null) => {
     try {
         const executor = connection || db;
-        const [userData] = await executor.query('SELECT points, level FROM user_points WHERE user_id = ?', [userId]);
+        let userData;
+        if (connection) {
+            const [rows] = await connection.query('SELECT points, level FROM user_points WHERE user_id = ?', [userId]);
+            userData = rows && rows[0];
+        } else {
+            const rows = await db.query('SELECT points, level FROM user_points WHERE user_id = ?', [userId]);
+            userData = rows && rows[0];
+        }
         if (!userData) return null;
 
         const currentPoints = userData.points;
