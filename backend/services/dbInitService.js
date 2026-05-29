@@ -143,9 +143,14 @@ const initializeDatabase = async () => {
         `);
 
 
-        // Tabla de posts para foros
+        // Limpiar posibles tablas corruptas o a medias de foros de intentos previos
+        // (Al ser una característica nueva en desarrollo/despliegue, es seguro recrearlas para corregir estructuras incompatibles)
+        await db.query(`DROP TABLE IF EXISTS forum_post_upvotes`);
+        await db.query(`DROP TABLE IF EXISTS forum_posts`);
+
+        // Tabla de posts para foros (con nombres de restricciones explícitas)
         await db.query(`
-            CREATE TABLE IF NOT EXISTS forum_posts (
+            CREATE TABLE forum_posts (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 content_id INT NOT NULL,
                 user_id INT NOT NULL,
@@ -153,29 +158,31 @@ const initializeDatabase = async () => {
                 message TEXT NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                FOREIGN KEY (content_id) REFERENCES lesson_contents(id) ON DELETE CASCADE,
-                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-                FOREIGN KEY (parent_id) REFERENCES forum_posts(id) ON DELETE CASCADE,
+                CONSTRAINT fk_forum_posts_content FOREIGN KEY (content_id) REFERENCES lesson_contents(id) ON DELETE CASCADE,
+                CONSTRAINT fk_forum_posts_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                CONSTRAINT fk_forum_posts_parent FOREIGN KEY (parent_id) REFERENCES forum_posts(id) ON DELETE CASCADE,
                 INDEX idx_content_id (content_id),
                 INDEX idx_user_id (user_id),
                 INDEX idx_parent_id (parent_id)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         `);
 
-        // Tabla de upvotes para foros
+        // Tabla de upvotes para foros (con nombres de restricciones explícitas)
         await db.query(`
-            CREATE TABLE IF NOT EXISTS forum_post_upvotes (
+            CREATE TABLE forum_post_upvotes (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 post_id INT NOT NULL,
                 user_id INT NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (post_id) REFERENCES forum_posts(id) ON DELETE CASCADE,
-                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                INDEX idx_post_id (post_id),
+                INDEX idx_user_id (user_id),
+                CONSTRAINT fk_forum_upvotes_post FOREIGN KEY (post_id) REFERENCES forum_posts(id) ON DELETE CASCADE,
+                CONSTRAINT fk_forum_upvotes_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
                 UNIQUE KEY unique_user_post_upvote (user_id, post_id)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         `);
 
-        // Tablas de Auditoría de Drive
+        // Tablas de Auditoría de Drive (con nombres de restricciones explícitas)
         await db.query(`
             CREATE TABLE IF NOT EXISTS drive_audit_reports (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -191,7 +198,7 @@ const initializeDatabase = async () => {
                 error_message TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                CONSTRAINT fk_drive_audit_reports_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
                 INDEX idx_user_id (user_id)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         `);
@@ -210,7 +217,7 @@ const initializeDatabase = async () => {
                 shared_with_emails TEXT,
                 file_link TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (report_id) REFERENCES drive_audit_reports(id) ON DELETE CASCADE,
+                CONSTRAINT fk_drive_audit_files_report FOREIGN KEY (report_id) REFERENCES drive_audit_reports(id) ON DELETE CASCADE,
                 INDEX idx_report_id (report_id)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         `);
@@ -261,8 +268,26 @@ const initializeDatabase = async () => {
         logger.info('✅ Estructura de base de datos verificada y actualizada.');
     } catch (error) {
         logger.error('❌ Error inicializando base de datos:', error);
-        // No salimos del proceso para permitir que la app intente funcionar, 
-        // pero el error queda registrado.
+        
+        // Log detailed InnoDB foreign key errors if available
+        if (error.message && (error.message.includes('errno: 150') || error.message.toLowerCase().includes('foreign key'))) {
+            try {
+                const statusRows = await db.query("SHOW ENGINE INNODB STATUS");
+                if (statusRows && statusRows.length > 0) {
+                    const statusText = statusRows[0].Status || statusRows[0].status || '';
+                    const errorIndex = statusText.indexOf('LATEST FOREIGN KEY ERROR');
+                    if (errorIndex !== -1) {
+                        const errorDetails = statusText.substring(errorIndex, errorIndex + 1200);
+                        logger.error('🔍 DETALLES DE ERROR DE LLAVE FORÁNEA (InnoDB):');
+                        logger.error(errorDetails);
+                    } else {
+                        logger.warn('No se encontró la sección LATEST FOREIGN KEY ERROR en el estado de InnoDB.');
+                    }
+                }
+            } catch (errStatus) {
+                logger.error('No se pudo obtener el estado de InnoDB para diagnosticar el error de llave foránea:', errStatus);
+            }
+        }
     }
 };
 
