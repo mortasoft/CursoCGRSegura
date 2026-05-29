@@ -46,7 +46,7 @@ export default function ForumActivity({ item, user, onComplete }) {
                     </div>
 
                     {description && (
-                        <div className="text-gray-300 text-sm md:text-base leading-relaxed bg-slate-800/50 p-4 rounded-xl border border-white/5">
+                        <div className="text-gray-300 text-sm md:text-base leading-relaxed bg-slate-800/50 p-4 rounded-xl border border-white/5 whitespace-pre-wrap">
                             {description}
                         </div>
                     )}
