@@ -155,6 +155,12 @@ class LessonService {
         const [lesson] = await db.query('SELECT module_id FROM lessons WHERE id = ?', [lessonId]);
         if (!lesson) throw new Error('Lección no encontrada');
 
+        // Verificar si la lección ya estaba completada para evitar duplicar puntos
+        const [existingProgress] = await db.query(
+            `SELECT status FROM user_progress WHERE user_id = ? AND lesson_id = ?`,
+            [userId, lessonId]
+        );
+        const isAlreadyCompleted = existingProgress && existingProgress.status === 'completed';
 
         // Verify requirements
         const assignments = await db.query(
@@ -286,9 +292,23 @@ class LessonService {
             pointsAwarded += itemPoints;
         }
 
-        await db.query(`UPDATE user_progress SET status = 'completed', progress_percentage = 100, completed_at = NOW(), time_spent_minutes = COALESCE(time_spent_minutes, 0) + ? WHERE user_id = ? AND lesson_id = ?`, [timeSpent, userId, lessonId]);
-        await db.query(`INSERT INTO user_points (user_id, points) VALUES (?, ?) ON DUPLICATE KEY UPDATE points = points + ?`, [userId, pointsAwarded, pointsAwarded]);
-        await db.query(`INSERT INTO gamification_activities (user_id, activity_type, points_earned, reference_id) VALUES (?, 'lesson_completed', ?, ?)`, [userId, pointsAwarded, lessonId]);
+        await db.query(
+            `UPDATE user_progress 
+             SET status = 'completed', 
+                 progress_percentage = 100, 
+                 completed_at = COALESCE(completed_at, NOW()), 
+                 time_spent_minutes = COALESCE(time_spent_minutes, 0) + ? 
+             WHERE user_id = ? AND lesson_id = ?`,
+            [timeSpent, userId, lessonId]
+        );
+
+        // Solo otorgar puntos si es la PRIMERA vez que se completa la lección
+        if (!isAlreadyCompleted) {
+            if (pointsAwarded > 0) {
+                await db.query(`INSERT INTO user_points (user_id, points) VALUES (?, ?) ON DUPLICATE KEY UPDATE points = points + ?`, [userId, pointsAwarded, pointsAwarded]);
+            }
+            await db.query(`INSERT INTO gamification_activities (user_id, activity_type, points_earned, reference_id) VALUES (?, 'lesson_completed', ?, ?)`, [userId, pointsAwarded, lessonId]);
+        }
 
         const moduleSync = await checkAndRecordModuleCompletion(userId, lesson.module_id, isAdminView);
         const levelSync = await syncUserLevel(userId);
@@ -359,6 +379,17 @@ class LessonService {
     }
 
     async deleteLesson(lessonId) {
+        // Limpiar quizzes y surveys asociados a esta lección
+        const quizzes = await db.query('SELECT id FROM quizzes WHERE lesson_id = ?', [lessonId]);
+        for (const q of quizzes) {
+            await db.query('DELETE FROM quizzes WHERE id = ?', [q.id]);
+        }
+
+        const surveys = await db.query('SELECT id FROM surveys WHERE lesson_id = ?', [lessonId]);
+        for (const s of surveys) {
+            await db.query('DELETE FROM surveys WHERE id = ?', [s.id]);
+        }
+
         return await db.query('DELETE FROM lessons WHERE id = ?', [lessonId]);
     }
 

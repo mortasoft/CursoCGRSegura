@@ -335,7 +335,7 @@ class QuizService {
                 "SELECT COALESCE(SUM(points_earned), 0) as total FROM gamification_activities WHERE user_id = ? AND activity_type = 'quiz_passed' AND reference_id = ?",
                 [userId, quizId]
             );
-            const pointsAlreadyAwarded = parseInt(pointsEarnedRows?.[0]?.total) || 0;
+            const pointsAlreadyAwarded = parseInt(pointsEarnedRows?.total) || 0;
 
             // Only award the difference if this attempt yields more points
             pointsAwarded = Math.max(0, potentialPoints - pointsAlreadyAwarded);

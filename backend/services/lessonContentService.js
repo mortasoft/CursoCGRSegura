@@ -388,6 +388,34 @@ class LessonContentService {
     }
 
     async deleteContent(id) {
+        const [content] = await db.query('SELECT content_type, data FROM lesson_contents WHERE id = ?', [id]);
+        if (content) {
+            let data = {};
+            try {
+                data = typeof content.data === 'string' ? JSON.parse(content.data) : (content.data || {});
+            } catch (e) {
+                logger.error('Error parsing content data on deletion:', e);
+            }
+            if (content.content_type === 'quiz' && data.quiz_id) {
+                const quizId = data.quiz_id;
+                const [otherReferences] = await db.query(
+                    `SELECT COUNT(*) as count FROM lesson_contents WHERE id != ? AND JSON_VALUE(data, '$.quiz_id') = ?`,
+                    [id, quizId]
+                );
+                if (otherReferences && otherReferences.count === 0) {
+                    await db.query('DELETE FROM quizzes WHERE id = ?', [quizId]);
+                }
+            } else if (content.content_type === 'survey' && data.survey_id) {
+                const surveyId = data.survey_id;
+                const [otherReferences] = await db.query(
+                    `SELECT COUNT(*) as count FROM lesson_contents WHERE id != ? AND JSON_VALUE(data, '$.survey_id') = ?`,
+                    [id, surveyId]
+                );
+                if (otherReferences && otherReferences.count === 0) {
+                    await db.query('DELETE FROM surveys WHERE id = ?', [surveyId]);
+                }
+            }
+        }
         return await db.query('DELETE FROM lesson_contents WHERE id = ?', [id]);
     }
 
