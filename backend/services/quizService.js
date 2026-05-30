@@ -1,7 +1,7 @@
 const db = require('../config/database');
 const logger = require('../config/logger');
-const { syncUserLevel, getSystemSettings, checkAndRecordModuleCompletion } = require('../utils/gamification');
-const { checkAllBadges } = require('../utils/badges');
+const { syncUserLevel, getSystemSettings, checkAndRecordModuleCompletion } = require('./gamificationService');
+const { checkAllBadges } = require('./badgeService');
 
 const GAME_QUESTION_TYPES = ['mfa_defender', 'hack_neighbor', 'data_tetris'];
 

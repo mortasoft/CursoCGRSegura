@@ -1,7 +1,7 @@
 const db = require('../config/database');
 const logger = require('../config/logger');
-const { syncUserLevel, checkAndRecordModuleCompletion } = require('../utils/gamification');
-const { checkAllBadges } = require('../utils/badges');
+const { syncUserLevel, checkAndRecordModuleCompletion } = require('./gamificationService');
+const { checkAllBadges } = require('./badgeService');
 const { TRACEABLE_CONTENT_TYPES } = require('../constants/contentTypes');
 
 class LessonService {
@@ -322,7 +322,7 @@ class LessonService {
         // --- SINCRONIZACIÓN FINAL ---
         // Refrescar el ranking global después de otorgar todos los puntos (incluyendo posibles insignias)
         try {
-            const { refreshLeaderboardCache } = require('../utils/gamification');
+            const { refreshLeaderboardCache } = require('./gamificationService');
             await refreshLeaderboardCache();
         } catch (rankErr) {
             console.error('Error sincronizando ranking al final de la lección:', rankErr);

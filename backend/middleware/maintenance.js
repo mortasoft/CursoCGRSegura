@@ -1,4 +1,4 @@
-const db = require('../config/database');
+const { getSystemSettings } = require('../services/gamificationService');
 const logger = require('../config/logger');
 
 /**
@@ -11,11 +11,8 @@ const maintenanceMiddleware = async (req, res, next) => {
             return next();
         }
 
-        const [setting] = await db.query(
-            "SELECT setting_value FROM system_settings WHERE setting_key = 'maintenance_mode'"
-        );
-
-        const isMaintenance = setting && setting.setting_value === 'true';
+        const settings = await getSystemSettings();
+        const isMaintenance = settings && settings.maintenance_mode === true;
 
         if (isMaintenance) {
             return res.status(503).json({
@@ -27,7 +24,7 @@ const maintenanceMiddleware = async (req, res, next) => {
         next();
     } catch (error) {
         logger.error('Error en maintenanceMiddleware:', error);
-        next(); // Si falla la DB, dejamos pasar para no romper el app por completo
+        next(); // Si falla la obtención, dejamos pasar para no romper la app por completo
     }
 };
 

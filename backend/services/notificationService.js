@@ -46,6 +46,119 @@ class NotificationService {
             return false;
         }
     }
+
+    /**
+     * Obtener todas las notificaciones de un usuario
+     * @param {number} userId - ID del usuario
+     */
+    async getUserNotifications(userId) {
+        return await db.query(
+            `SELECT * FROM notifications 
+             WHERE user_id = ? 
+             ORDER BY created_at DESC 
+             LIMIT 10`,
+            [userId]
+        );
+    }
+
+    /**
+     * Obtener conteo de notificaciones no leídas de un usuario
+     * @param {number} userId - ID del usuario
+     */
+    async getUnreadCount(userId) {
+        const [result] = await db.query(
+            'SELECT COUNT(*) as count FROM notifications WHERE user_id = ? AND is_read = FALSE',
+            [userId]
+        );
+        return result ? result.count : 0;
+    }
+
+    /**
+     * Marcar una notificación como leída
+     * @param {number} notificationId - ID de la notificación
+     * @param {number} userId - ID del usuario
+     */
+    async markAsRead(notificationId, userId) {
+        return await db.query(
+            'UPDATE notifications SET is_read = TRUE, read_at = NOW() WHERE id = ? AND user_id = ?',
+            [notificationId, userId]
+        );
+    }
+
+    /**
+     * Marcar todas las notificaciones como leídas
+     * @param {number} userId - ID del usuario
+     */
+    async markAllAsRead(userId) {
+        return await db.query(
+            'UPDATE notifications SET is_read = TRUE, read_at = NOW() WHERE user_id = ? AND is_read = FALSE',
+            [userId]
+        );
+    }
+
+    /**
+     * Enviar notificaciones masivas filtradas
+     * @param {object} params - Parámetros de envío
+     */
+    async sendFilteredNotifications({ title, message, type, link_url, filters }) {
+        const connection = await db.pool.getConnection();
+        try {
+            await connection.beginTransaction();
+
+            // Construir la consulta de usuarios basada en filtros
+            let userQuery = 'SELECT id FROM users WHERE is_active = TRUE';
+            let queryParams = [];
+
+            if (filters) {
+                if (filters.userIds && filters.userIds.length > 0) {
+                    userQuery += ' AND id IN (?)';
+                    queryParams.push(filters.userIds);
+                } else {
+                    if (filters.department) {
+                        userQuery += ' AND department = ?';
+                        queryParams.push(filters.department);
+                    }
+                    if (filters.role) {
+                        userQuery += ' AND role = ?';
+                        queryParams.push(filters.role);
+                    }
+                }
+            }
+
+            const [users] = await connection.query(userQuery, queryParams);
+
+            if (users.length === 0) {
+                await connection.rollback();
+                return { success: false, reason: 'no_users' };
+            }
+
+            // Insertar notificaciones para cada usuario
+            const insertQuery = `
+                INSERT INTO notifications (user_id, title, message, notification_type, link_url, created_at)
+                VALUES ?
+            `;
+
+            const now = new Date();
+            const values = users.map(user => [
+                user.id,
+                title,
+                message,
+                type || 'info',
+                link_url || null,
+                now
+            ]);
+
+            await connection.query(insertQuery, [values]);
+
+            await connection.commit();
+            return { success: true, count: users.length };
+        } catch (error) {
+            await connection.rollback();
+            throw error;
+        } finally {
+            connection.release();
+        }
+    }
 }
 
 module.exports = new NotificationService();

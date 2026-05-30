@@ -1,6 +1,6 @@
 const db = require('../config/database');
 const redisClient = require('../config/redis');
-const { getLevels } = require('../utils/gamification');
+const { getLevels } = require('./gamificationService');
 const logger = require('../config/logger');
 
 class UserService {
@@ -98,7 +98,7 @@ class UserService {
         );
 
         // Logic for Rankings (Consistent Logic)
-        const { getUserRank } = require('../utils/gamification');
+        const { getUserRank } = require('./gamificationService');
         const badgeService = require('./badgeService');
         
         const rankData = await getUserRank(userId, user.email, user.department);
@@ -188,7 +188,7 @@ class UserService {
 
         let activeModulesCount = 0;
 
-        const gamification = require('../utils/gamification');
+        const gamification = require('./gamificationService');
 
         for (const mod of detailedProgress) {
             // Ignorar módulos cuya fecha de lanzamiento es en el futuro
@@ -369,7 +369,7 @@ class UserService {
                 [userId, newTotalPoints, newTotalPoints]
             );
 
-            const { syncUserLevel } = require('../utils/gamification');
+            const { syncUserLevel } = require('./gamificationService');
             // Ahora sí, sincronizamos el nivel basándonos en los puntos ya actualizados
             const levelData = await syncUserLevel(userId, connection);
 

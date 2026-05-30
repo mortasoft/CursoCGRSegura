@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const quizController = require('../controllers/quizController');
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
+const { submitQuiz, createQuiz, updateQuiz, addQuizQuestion, updateQuizQuestion } = require('../validators/schemas');
+const { validateRequest } = require('../middleware/validator');
 
 /**
  * @route   GET /api/quizzes/:id
@@ -22,7 +24,7 @@ router.get('/:id/last-attempt', authMiddleware, quizController.getLastAttempt);
  * @desc    Enviar respuestas de un quiz y calificar
  * @access  Private
  */
-router.post('/:id/submit', authMiddleware, quizController.submitQuiz);
+router.post('/:id/submit', authMiddleware, submitQuiz, validateRequest, quizController.submitQuiz);
 
 // --- Admin Routes ---
 
@@ -31,7 +33,7 @@ router.post('/:id/submit', authMiddleware, quizController.submitQuiz);
  * @desc    Crear un nuevo quiz vinculado a una lección
  * @access  Private/Admin
  */
-router.post('/', authMiddleware, adminMiddleware, quizController.createQuiz);
+router.post('/', authMiddleware, adminMiddleware, createQuiz, validateRequest, quizController.createQuiz);
 
 /**
  * @route   GET /api/quizzes/:id/admin
@@ -45,21 +47,21 @@ router.get('/:id/admin', authMiddleware, adminMiddleware, quizController.getQuiz
  * @desc    Actualizar datos básicos del quiz
  * @access  Private/Admin
  */
-router.put('/:id', authMiddleware, adminMiddleware, quizController.updateQuiz);
+router.put('/:id', authMiddleware, adminMiddleware, updateQuiz, validateRequest, quizController.updateQuiz);
 
 /**
  * @route   POST /api/quizzes/:id/questions
  * @desc    Agregar una pregunta a un quiz
  * @access  Private/Admin
  */
-router.post('/:id/questions', authMiddleware, adminMiddleware, quizController.addQuestion);
+router.post('/:id/questions', authMiddleware, adminMiddleware, addQuizQuestion, validateRequest, quizController.addQuestion);
 
 /**
  * @route   PUT /api/quizzes/questions/:questionId
  * @desc    Actualizar pregunta y sus opciones
  * @access  Private/Admin
  */
-router.put('/questions/:questionId', authMiddleware, adminMiddleware, quizController.updateQuestion);
+router.put('/questions/:questionId', authMiddleware, adminMiddleware, updateQuizQuestion, validateRequest, quizController.updateQuestion);
 
 /**
  * @route   DELETE /api/quizzes/questions/:questionId

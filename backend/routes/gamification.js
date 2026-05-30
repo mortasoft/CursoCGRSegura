@@ -5,7 +5,7 @@ const logger = require('../config/logger');
 const db = require('../config/database');
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 const { cacheMiddleware } = require('../middleware/cache');
-const { getLevels, refreshLeaderboardCache } = require('../utils/gamification');
+const { getLevels, refreshLeaderboardCache } = require('../services/gamificationService');
 
 const redisClient = require('../config/redis');
 
@@ -52,7 +52,7 @@ router.get('/leaderboard', authMiddleware, cacheMiddleware(60, true), async (req
         }
 
         // --- RANKING CONSISTENTE ---
-        const { getUserRank } = require('../utils/gamification');
+        const { getUserRank } = require('../services/gamificationService');
         const rankData = await getUserRank(userId, email, department);
 
         const myGlobalRankPos = rankData.institutionalRank;
@@ -76,7 +76,7 @@ router.get('/leaderboard', authMiddleware, cacheMiddleware(60, true), async (req
         const formattedLevel = `Nivel ${levelIdx !== -1 ? levelIdx + 1 : 1}: ${userPointsData?.level || 'Novato'}`;
 
         // Obtener límites de configuración para la respuesta
-        const { getSystemSettings } = require('../utils/gamification');
+        const { getSystemSettings } = require('../services/gamificationService');
         const sysSettings = await getSystemSettings();
         const globalLimit = sysSettings.ranking_limit_global;
         const deptLimit = sysSettings.ranking_limit_department;
@@ -148,7 +148,7 @@ router.put('/settings', authMiddleware, adminMiddleware, async (req, res) => {
             }
             await getLevels(true); // Refrescar caché
             // Sincronizar niveles de todos los usuarios en segundo plano para reflejar los nuevos umbrales
-            const { syncAllUsersLevels } = require('../utils/gamification');
+            const { syncAllUsersLevels } = require('../services/gamificationService');
             syncAllUsersLevels().catch(err => logger.error('Error in background mass sync after settings update:', err));
         }
 
@@ -169,7 +169,7 @@ router.put('/settings', authMiddleware, adminMiddleware, async (req, res) => {
 router.post('/leaderboard/refresh', authMiddleware, adminMiddleware, async (req, res) => {
     try {
         // 1. Recalcular la data central e invalidar niveles
-        const { syncAllUsersLevels } = require('../utils/gamification');
+        const { syncAllUsersLevels } = require('../services/gamificationService');
         await syncAllUsersLevels();
 
         // 2. Invalidar todos los resultados cacheados por usuario del endpoint de leaderboard

@@ -265,7 +265,7 @@ class LessonContentService {
                             [submission.user_id, points, points]
                         );
                         // Sincronizar nivel después de sumar puntos
-                        const { syncUserLevel } = require('../utils/gamification');
+                        const { syncUserLevel } = require('./gamificationService');
                         await syncUserLevel(submission.user_id);
                     }
 

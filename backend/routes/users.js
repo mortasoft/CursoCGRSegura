@@ -3,6 +3,8 @@ const router = express.Router();
 const userController = require('../controllers/userController');
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
 const { cacheMiddleware } = require('../middleware/cache');
+const { updateUserProfile, updateUserAdmin } = require('../validators/schemas');
+const { validateRequest } = require('../middleware/validator');
 
 /**
  * @route   GET /api/users/profile
@@ -10,7 +12,7 @@ const { cacheMiddleware } = require('../middleware/cache');
  * @access  Private
  */
 router.get('/profile', authMiddleware, cacheMiddleware(300, true), (req, res) => userController.getProfile(req, res));
-router.put('/profile', authMiddleware, (req, res) => userController.updateProfile(req, res));
+router.put('/profile', authMiddleware, updateUserProfile, validateRequest, (req, res) => userController.updateProfile(req, res));
 
 /**
  * @route   GET /api/users
@@ -38,7 +40,7 @@ router.get('/:id', authMiddleware, adminMiddleware, (req, res) => userController
  * @desc    Actualizar un usuario (Admin)
  * @access  Private/Admin
  */
-router.put('/:id', authMiddleware, adminMiddleware, (req, res) => userController.updateUser(req, res));
+router.put('/:id', authMiddleware, adminMiddleware, updateUserAdmin, validateRequest, (req, res) => userController.updateUser(req, res));
 
 /**
  * @route   DELETE /api/users/:id

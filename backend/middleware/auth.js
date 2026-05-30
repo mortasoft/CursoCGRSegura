@@ -2,6 +2,7 @@ const db = require('../config/database');
 const logger = require('../config/logger');
 const redisClient = require('../config/redis');
 const { isAdmin, isAnalystOrAdmin } = require('../utils/authUtils');
+const AppError = require('../utils/appError');
 
 /**
  * Middleware de autenticación basado en Sesiones
@@ -13,10 +14,7 @@ const authMiddleware = async (req, res, next) => {
         const userId = req.session.userId;
 
         if (!userId) {
-            return res.status(401).json({ 
-                error: 'Sesión no iniciada',
-                message: 'No se detectó una sesión activa. Por favor inicie sesión.'
-            });
+            return next(new AppError('No se detectó una sesión activa. Por favor inicie sesión.', 401));
         }
 
         // Marcar usuario como activo en Redis (expira en 5 minutos)
@@ -34,11 +32,11 @@ const authMiddleware = async (req, res, next) => {
         if (!user) {
             // Si el usuario ya no existe, destruimos la sesión inválida
             req.session.destroy();
-            return res.status(401).json({ error: 'Usuario no encontrado' });
+            return next(new AppError('Usuario no encontrado', 401));
         }
 
         if (!user.is_active) {
-            return res.status(403).json({ error: 'Usuario desactivado' });
+            return next(new AppError('Usuario desactivado', 403));
         }
 
         // Agregar usuario al objeto request para uso posterior
@@ -46,7 +44,7 @@ const authMiddleware = async (req, res, next) => {
         next();
     } catch (error) {
         logger.error('Error en middleware de autenticación:', error);
-        return res.status(500).json({ error: 'Error interno del servidor en autenticación' });
+        next(error);
     }
 };
 
@@ -55,10 +53,7 @@ const authMiddleware = async (req, res, next) => {
  */
 const adminMiddleware = (req, res, next) => {
     if (!isAdmin(req.user)) {
-        return res.status(403).json({ 
-            error: 'Acceso denegado',
-            message: 'Se requieren permisos de administrador para realizar esta acción.'
-        });
+        return next(new AppError('Se requieren permisos de administrador para realizar esta acción.', 403));
     }
     next();
 };
@@ -69,10 +64,7 @@ const adminMiddleware = (req, res, next) => {
 const instructorMiddleware = (req, res, next) => {
     // Nota: Podríamos agregar isInstructorOrAdmin en authUtils si se vuelve común
     if (!req.user || (req.user.role !== 'instructor' && req.user.role !== 'admin')) {
-        return res.status(403).json({ 
-            error: 'Acceso denegado',
-            message: 'Se requieren permisos de instructor o administrador.'
-        });
+        return next(new AppError('Se requieren permisos de instructor o administrador.', 403));
     }
     next();
 };
@@ -82,10 +74,7 @@ const instructorMiddleware = (req, res, next) => {
  */
 const analystMiddleware = (req, res, next) => {
     if (!isAnalystOrAdmin(req.user)) {
-        return res.status(403).json({ 
-            error: 'Acceso denegado',
-            message: 'Se requieren permisos de analista o administrador.'
-        });
+        return next(new AppError('Se requieren permisos de analista o administrador.', 403));
     }
     next();
 };

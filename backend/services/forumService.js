@@ -145,7 +145,7 @@ class ForumService {
                                 [userId, points, points]
                             );
                             
-                            const { syncUserLevel } = require('../utils/gamification');
+                            const { syncUserLevel } = require('./gamificationService');
                             await syncUserLevel(userId);
                         }
                     }
@@ -156,7 +156,7 @@ class ForumService {
 
             // Sincronizar insignias
             try {
-                const { checkAllBadges } = require('../utils/badges');
+                const { checkAllBadges } = require('./badgeService');
                 await checkAllBadges(userId);
             } catch (badgeErr) {
                 logger.error('Error al verificar insignias tras post de foro:', badgeErr);
@@ -215,7 +215,7 @@ class ForumService {
                                 [userId, points, points]
                             );
                             
-                            const { syncUserLevel } = require('../utils/gamification');
+                            const { syncUserLevel } = require('./gamificationService');
                             await syncUserLevel(userId);
                         }
                     }
@@ -226,7 +226,7 @@ class ForumService {
 
             // Sincronizar insignias
             try {
-                const { checkAllBadges } = require('../utils/badges');
+                const { checkAllBadges } = require('./badgeService');
                 await checkAllBadges(userId);
             } catch (badgeErr) {
                 logger.error('Error al verificar insignias tras respuesta de foro:', badgeErr);

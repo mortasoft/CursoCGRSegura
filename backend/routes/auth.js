@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
-const { body } = require('express-validator');
+const { googleAuth } = require('../validators/schemas');
 const { validateRequest } = require('../middleware/validator');
 
 /**
@@ -10,9 +10,7 @@ const { validateRequest } = require('../middleware/validator');
  * @access  Public
  */
 router.post('/google', 
-    [
-        body('credential').notEmpty().withMessage('El token de credencial es requerido').isString()
-    ], 
+    googleAuth, 
     validateRequest,
     authController.googleAuth
 );
