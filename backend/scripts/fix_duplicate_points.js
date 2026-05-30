@@ -90,7 +90,7 @@ async function fixQuizPassedDuplicates(quizIds) {
     console.log('FIX 1: Corrección de duplicados en "quiz_passed"');
     separator();
 
-    let whereClause = `WHERE activity_type = 'quiz_passed'`;
+    let whereClause = `WHERE ga.activity_type = 'quiz_passed'`;
     let params = [];
 
     if (quizIds !== null) {
@@ -98,22 +98,24 @@ async function fixQuizPassedDuplicates(quizIds) {
             console.log('  [SKIP] El modulo no tiene quizzes asociados.');
             return 0;
         }
-        whereClause += ` AND reference_id IN (${buildInClause(quizIds)})`;
+        whereClause += ` AND ga.reference_id IN (${buildInClause(quizIds)})`;
         params = quizIds;
         console.log(`  Filtrando quizzes: [${quizIds.join(', ')}]`);
     }
 
     const duplicates = await db.query(`
         SELECT
-            user_id,
-            reference_id AS quiz_id,
+            ga.user_id,
+            u.email,
+            ga.reference_id AS quiz_id,
             COUNT(*)              AS qty,
-            SUM(points_earned)    AS total_awarded,
-            MAX(points_earned)    AS correct_points,
-            SUM(points_earned) - MAX(points_earned) AS excess_points
-        FROM gamification_activities
+            SUM(ga.points_earned)    AS total_awarded,
+            MAX(ga.points_earned)    AS correct_points,
+            SUM(ga.points_earned) - MAX(ga.points_earned) AS excess_points
+        FROM gamification_activities ga
+        JOIN users u ON ga.user_id = u.id
         ${whereClause}
-        GROUP BY user_id, reference_id
+        GROUP BY ga.user_id, ga.reference_id, u.email
         HAVING COUNT(*) > 1
         ORDER BY excess_points DESC
     `, params);
@@ -130,6 +132,7 @@ async function fixQuizPassedDuplicates(quizIds) {
 
     for (const row of duplicates) {
         const user_id       = parseInt(row.user_id);
+        const email         = row.email;
         const quiz_id       = parseInt(row.quiz_id);
         const qty           = parseInt(row.qty);
         const total_awarded = parseInt(row.total_awarded);
@@ -137,7 +140,7 @@ async function fixQuizPassedDuplicates(quizIds) {
         const excess_points  = parseInt(row.excess_points);
         totalExcess += excess_points;
 
-        console.log(`\n  Usuario ${user_id} | Quiz ${quiz_id}`);
+        console.log(`\n  Usuario ${user_id} (${email}) | Quiz ${quiz_id}`);
         console.log(`    Registros actuales : ${qty}`);
         console.log(`    Puntos otorgados   : ${total_awarded}`);
         console.log(`    Puntos correctos   : ${correct_points}`);
@@ -183,7 +186,7 @@ async function fixLessonCompletedDuplicates(lessonIds) {
     console.log('FIX 2: Corrección de duplicados en "lesson_completed"');
     separator();
 
-    let whereClause = `WHERE activity_type = 'lesson_completed'`;
+    let whereClause = `WHERE ga.activity_type = 'lesson_completed'`;
     let params = [];
 
     if (lessonIds !== null) {
@@ -191,28 +194,30 @@ async function fixLessonCompletedDuplicates(lessonIds) {
             console.log('  [SKIP] El modulo no tiene lecciones asociadas.');
             return 0;
         }
-        whereClause += ` AND reference_id IN (${buildInClause(lessonIds)})`;
+        whereClause += ` AND ga.reference_id IN (${buildInClause(lessonIds)})`;
         params = lessonIds;
         console.log(`  Filtrando lecciones: [${lessonIds.join(', ')}]`);
     }
 
     const duplicates = await db.query(`
         SELECT
-            user_id,
-            reference_id   AS lesson_id,
+            ga.user_id,
+            u.email,
+            ga.reference_id   AS lesson_id,
             COUNT(*)       AS qty,
-            SUM(points_earned)                           AS total_awarded,
-            (SELECT points_earned
+            SUM(ga.points_earned)                           AS total_awarded,
+            (SELECT ga2.points_earned
              FROM gamification_activities ga2
              WHERE ga2.user_id = ga.user_id
                AND ga2.reference_id = ga.reference_id
                AND ga2.activity_type = 'lesson_completed'
              ORDER BY ga2.id ASC LIMIT 1)                AS first_entry_points
         FROM gamification_activities ga
+        JOIN users u ON ga.user_id = u.id
         ${whereClause}
-        GROUP BY user_id, reference_id
+        GROUP BY ga.user_id, ga.reference_id, u.email
         HAVING COUNT(*) > 1
-        ORDER BY (SUM(points_earned) - first_entry_points) DESC
+        ORDER BY (SUM(ga.points_earned) - first_entry_points) DESC
     `, params);
 
     if (duplicates.length === 0) {
@@ -227,6 +232,7 @@ async function fixLessonCompletedDuplicates(lessonIds) {
 
     for (const row of duplicates) {
         const user_id          = parseInt(row.user_id);
+        const email            = row.email;
         const lesson_id        = parseInt(row.lesson_id);
         const qty              = parseInt(row.qty);
         const total_awarded    = parseInt(row.total_awarded);
@@ -235,7 +241,7 @@ async function fixLessonCompletedDuplicates(lessonIds) {
         totalExcess += excess;
         totalUsersAffected.add(user_id);
 
-        console.log(`\n  Usuario ${user_id} | Leccion ${lesson_id}`);
+        console.log(`\n  Usuario ${user_id} (${email}) | Leccion ${lesson_id}`);
         console.log(`    Registros actuales : ${qty}`);
         console.log(`    Puntos otorgados   : ${total_awarded}`);
         console.log(`    Puntos correctos   : ${first_entry_points}`);
