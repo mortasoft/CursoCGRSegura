@@ -1,7 +1,7 @@
 const db = require('../config/database');
 const logger = require('../config/logger');
-const { syncUserLevel, checkAndRecordModuleCompletion } = require('../utils/gamification');
-const { checkAllBadges } = require('../utils/badges');
+const { syncUserLevel, checkAndRecordModuleCompletion } = require('./gamificationService');
+const { checkAllBadges } = require('./badgeService');
 const { TRACEABLE_CONTENT_TYPES } = require('../constants/contentTypes');
 
 class LessonService {
@@ -155,6 +155,12 @@ class LessonService {
         const [lesson] = await db.query('SELECT module_id FROM lessons WHERE id = ?', [lessonId]);
         if (!lesson) throw new Error('Lección no encontrada');
 
+        // Verificar si la lección ya estaba completada para evitar duplicar puntos
+        const [existingProgress] = await db.query(
+            `SELECT status FROM user_progress WHERE user_id = ? AND lesson_id = ?`,
+            [userId, lessonId]
+        );
+        const isAlreadyCompleted = existingProgress && existingProgress.status === 'completed';
 
         // Verify requirements
         const assignments = await db.query(
@@ -170,7 +176,7 @@ class LessonService {
 
         const quizzes = await db.query(
             `SELECT lc.title, lc.is_required,
-             (SELECT passed FROM quiz_attempts qa WHERE qa.user_id = ? AND qa.quiz_id = JSON_VALUE(lc.data, '$.quiz_id') ORDER BY qa.attempt_number DESC LIMIT 1) as has_passed,
+             COALESCE((SELECT MAX(passed) FROM quiz_attempts qa WHERE qa.user_id = ? AND qa.quiz_id = JSON_VALUE(lc.data, '$.quiz_id')), 0) as has_passed,
              (SELECT COUNT(*) FROM quiz_attempts qa WHERE qa.user_id = ? AND qa.quiz_id = JSON_VALUE(lc.data, '$.quiz_id')) as attempts_made,
              (SELECT max_attempts FROM quizzes q WHERE q.id = JSON_VALUE(lc.data, '$.quiz_id')) as max_attempts
              FROM lesson_contents lc WHERE lc.lesson_id = ? AND lc.content_type = 'quiz'`,
@@ -224,7 +230,7 @@ class LessonService {
                 asub.status as asub_status,
                 ucp.completed_at as ucp_completed_at,
                 ucp.response_data as interaction_data,
-                (SELECT passed FROM quiz_attempts qa WHERE qa.user_id = ? AND qa.quiz_id = JSON_VALUE(lc.data, '$.quiz_id') ORDER BY qa.attempt_number DESC LIMIT 1) as quiz_passed,
+                COALESCE((SELECT MAX(passed) FROM quiz_attempts qa WHERE qa.user_id = ? AND qa.quiz_id = JSON_VALUE(lc.data, '$.quiz_id')), 0) as quiz_passed,
                 (SELECT COUNT(*) FROM survey_responses sr WHERE sr.user_id = ? AND sr.survey_id = JSON_VALUE(lc.data, '$.survey_id')) as survey_done
              FROM lesson_contents lc
              LEFT JOIN assignment_submissions asub ON asub.content_id = lc.id AND asub.user_id = ?
@@ -286,9 +292,23 @@ class LessonService {
             pointsAwarded += itemPoints;
         }
 
-        await db.query(`UPDATE user_progress SET status = 'completed', progress_percentage = 100, completed_at = NOW(), time_spent_minutes = COALESCE(time_spent_minutes, 0) + ? WHERE user_id = ? AND lesson_id = ?`, [timeSpent, userId, lessonId]);
-        await db.query(`INSERT INTO user_points (user_id, points) VALUES (?, ?) ON DUPLICATE KEY UPDATE points = points + ?`, [userId, pointsAwarded, pointsAwarded]);
-        await db.query(`INSERT INTO gamification_activities (user_id, activity_type, points_earned, reference_id) VALUES (?, 'lesson_completed', ?, ?)`, [userId, pointsAwarded, lessonId]);
+        await db.query(
+            `UPDATE user_progress 
+             SET status = 'completed', 
+                 progress_percentage = 100, 
+                 completed_at = COALESCE(completed_at, NOW()), 
+                 time_spent_minutes = COALESCE(time_spent_minutes, 0) + ? 
+             WHERE user_id = ? AND lesson_id = ?`,
+            [timeSpent, userId, lessonId]
+        );
+
+        // Solo otorgar puntos si es la PRIMERA vez que se completa la lección
+        if (!isAlreadyCompleted) {
+            if (pointsAwarded > 0) {
+                await db.query(`INSERT INTO user_points (user_id, points) VALUES (?, ?) ON DUPLICATE KEY UPDATE points = points + ?`, [userId, pointsAwarded, pointsAwarded]);
+            }
+            await db.query(`INSERT INTO gamification_activities (user_id, activity_type, points_earned, reference_id) VALUES (?, 'lesson_completed', ?, ?)`, [userId, pointsAwarded, lessonId]);
+        }
 
         const moduleSync = await checkAndRecordModuleCompletion(userId, lesson.module_id, isAdminView);
         const levelSync = await syncUserLevel(userId);
@@ -302,7 +322,7 @@ class LessonService {
         // --- SINCRONIZACIÓN FINAL ---
         // Refrescar el ranking global después de otorgar todos los puntos (incluyendo posibles insignias)
         try {
-            const { refreshLeaderboardCache } = require('../utils/gamification');
+            const { refreshLeaderboardCache } = require('./gamificationService');
             await refreshLeaderboardCache();
         } catch (rankErr) {
             console.error('Error sincronizando ranking al final de la lección:', rankErr);
@@ -359,6 +379,17 @@ class LessonService {
     }
 
     async deleteLesson(lessonId) {
+        // Limpiar quizzes y surveys asociados a esta lección
+        const quizzes = await db.query('SELECT id FROM quizzes WHERE lesson_id = ?', [lessonId]);
+        for (const q of quizzes) {
+            await db.query('DELETE FROM quizzes WHERE id = ?', [q.id]);
+        }
+
+        const surveys = await db.query('SELECT id FROM surveys WHERE lesson_id = ?', [lessonId]);
+        for (const s of surveys) {
+            await db.query('DELETE FROM surveys WHERE id = ?', [s.id]);
+        }
+
         return await db.query('DELETE FROM lessons WHERE id = ?', [lessonId]);
     }
 

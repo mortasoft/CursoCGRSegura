@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Target, ChevronLeft, ChevronRight, ShieldAlert, Terminal, Smartphone, XCircle, CheckCircle2, Heart, MessageCircle, Share2, Search, Camera, Calendar, Briefcase, Users, AtSign, Lock, Eye, EyeOff, Activity, Trophy, Zap, Maximize, Minimize, Star, Award, TrendingUp } from 'lucide-react';
+import { ArrowLeft, Target, ChevronLeft, ChevronRight, ShieldAlert, Terminal, Smartphone, XCircle, CheckCircle2, Heart, MessageCircle, Share2, Search, Camera, Calendar, Briefcase, Users, AtSign, Lock, Eye, EyeOff, Activity, Trophy, Zap, Maximize, Minimize, Star, Award, TrendingUp, PlayCircle } from 'lucide-react';
 import { calculateTetrisPoints, TETRIS_RANKS } from '../lessons/activities/DataTetris/tetrisUtils';
 import PhaserGame from '../lessons/activities/DataTetris/PhaserGame';
 import '../lessons/activities/DataTetris/DataTetris.css';
@@ -81,7 +81,7 @@ function HackNeighborQuestion({ question, isAnswered, onWin, sessionSeed }) {
             }
         } catch (error) {
             console.error('Error verificando contraseña:', error);
-            toast.error('Error al verificar la contraseña');
+            toast.error('Error al verificar la contraseña', { id: `quiz-hack-neighbor-${question.id}` });
         }
     };
 
@@ -645,14 +645,28 @@ function MfaDefenderQuestion({ question, isAnswered, storedAnswer, onWin }) {
     );
 }
 
-function DataTetrisQuestion({ question, isAnswered, onWin, onRetry }) {
-    const [score, setScore] = useState(0);
+function DataTetrisQuestion({ question, isAnswered, storedAnswer, onWin, onRetry }) {
+    const [score, setScore] = useState(() => {
+        if (storedAnswer && typeof storedAnswer === 'object') {
+            return storedAnswer.score || 0;
+        }
+        return 0;
+    });
     const [combo, setCombo] = useState(0);
     const [lines, setLines] = useState(0);
     const [integrity, setIntegrity] = useState(100);
-    const [gameState, setGameState] = useState(isAnswered ? 'won' : 'start');
+    const [gameState, setGameState] = useState(() => {
+        if (isAnswered) return 'won';
+        if (storedAnswer && (storedAnswer.success === false || storedAnswer === 'false')) return 'failed';
+        return 'start';
+    });
     const [isFullscreen, setIsFullscreen] = useState(false);
-    const [difficulty, setDifficulty] = useState('easy');
+    const [difficulty, setDifficulty] = useState(() => {
+        if (storedAnswer && typeof storedAnswer === 'object') {
+            return storedAnswer.difficulty || 'easy';
+        }
+        return 'easy';
+    });
     const containerRef = useRef(null);
 
     const ensureDataObject = (data) => {
@@ -709,6 +723,11 @@ function DataTetrisQuestion({ question, isAnswered, onWin, onRetry }) {
             });
             setGameState('won');
         } else {
+            onWin({
+                success: false,
+                score: finalScore,
+                difficulty: difficulty
+            });
             setGameState('failed');
         }
     };
@@ -944,13 +963,6 @@ function DataTetrisQuestion({ question, isAnswered, onWin, onRetry }) {
                                             <strong className="text-white">{score}</strong>
                                         </div>
                                     </div>
-
-                                    <button className="dt-primary-btn" onClick={() => {
-                                        if (onRetry) onRetry();
-                                        setGameState('start');
-                                    }}>
-                                        Reintentar Evaluación
-                                    </button>
                                 </div>
                             </div>
                         )}
@@ -1029,7 +1041,7 @@ export default function QuizTake({
                         </div>
                     </div>
 
-                    {currentQuestion.image_url && (
+                    {currentQuestion.image_url && currentQuestion.question_type !== 'video' && (
                         <div className="w-full max-h-96 rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-slate-950/40 flex justify-center">
                             <img
                                 src={currentQuestion.image_url}
@@ -1068,15 +1080,51 @@ export default function QuizTake({
                             key={`${currentQuestion.id}-${sessionSeed}`}
                             question={currentQuestion}
                             isAnswered={answers[currentQuestion.id]?.success === true || answers[currentQuestion.id] === 'true' || answers[currentQuestion.id] === true}
+                            storedAnswer={answers[currentQuestion.id]}
                             onWin={(data) => onOptionSelect(currentQuestion.id, data)}
                             onRetry={() => {
                                 if ((localAttempts + 1) >= quiz.max_attempts) {
-                                    toast.error("Has alcanzado el limite de intentos para esta evaluacion.");
+                                    toast.error("Has alcanzado el limite de intentos para esta evaluacion.", { id: `quiz-attempts-${quiz.id}` });
                                     return;
                                 }
                                 setLocalAttempts(prev => prev + 1);
                             }}
                         />
+                    </div>
+                ) : currentQuestion.question_type === 'video' ? (
+                    <div className="relative z-10 w-full max-w-5xl mx-auto aspect-video rounded-2xl overflow-hidden bg-black shadow-2xl border border-white/5 ring-1 ring-white/10 mt-4">
+                        {(() => {
+                            const isYT = !!currentQuestion.image_url?.includes('youtube.com') || !!currentQuestion.image_url?.includes('youtu.be');
+                            const ytId = isYT ? (currentQuestion.image_url.split('v=')[1]?.split('&')[0] || currentQuestion.image_url.split('/').pop()) : null;
+                            const videoSrc = currentQuestion.image_url;
+
+                            if (isYT) {
+                                return (
+                                    <iframe
+                                        src={`https://www.youtube.com/embed/${ytId}`}
+                                        className="w-full h-full border-0 animate-fade-in"
+                                        allowFullScreen
+                                        title="Video de Evaluación"
+                                    />
+                                );
+                            } else if (videoSrc) {
+                                return (
+                                    <video
+                                        src={videoSrc}
+                                        className="w-full h-full animate-fade-in"
+                                        controls
+                                        controlsList="nodownload"
+                                    />
+                                );
+                            } else {
+                                return (
+                                    <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-slate-900 animate-fade-in">
+                                        <PlayCircle className="w-20 h-20 text-gray-700" />
+                                        <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">Video no disponible</p>
+                                    </div>
+                                );
+                            }
+                        })()}
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2 relative z-10">

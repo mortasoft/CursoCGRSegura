@@ -145,13 +145,21 @@ class ForumService {
                                 [userId, points, points]
                             );
                             
-                            const { syncUserLevel } = require('../utils/gamification');
+                            const { syncUserLevel } = require('./gamificationService');
                             await syncUserLevel(userId);
                         }
                     }
                 }
             } catch (gamificationErr) {
                 logger.error('Error procesando gamificación de post de foro:', gamificationErr);
+            }
+
+            // Sincronizar insignias
+            try {
+                const { checkAllBadges } = require('./badgeService');
+                await checkAllBadges(userId);
+            } catch (badgeErr) {
+                logger.error('Error al verificar insignias tras post de foro:', badgeErr);
             }
 
             return { success: true, postId: result.insertId };
@@ -207,13 +215,21 @@ class ForumService {
                                 [userId, points, points]
                             );
                             
-                            const { syncUserLevel } = require('../utils/gamification');
+                            const { syncUserLevel } = require('./gamificationService');
                             await syncUserLevel(userId);
                         }
                     }
                 }
             } catch (gamificationErr) {
                 logger.error('Error procesando gamificación de reply de foro:', gamificationErr);
+            }
+
+            // Sincronizar insignias
+            try {
+                const { checkAllBadges } = require('./badgeService');
+                await checkAllBadges(userId);
+            } catch (badgeErr) {
+                logger.error('Error al verificar insignias tras respuesta de foro:', badgeErr);
             }
 
             return { success: true, postId: result.insertId };

@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/database');
 const { authMiddleware, adminMiddleware } = require('../middleware/auth');
-const { checkAllBadges } = require('../utils/badges');
+const { checkAllBadges } = require('../services/badgeService');
 const { clearCache } = require('../middleware/cache');
 const logger = require('../config/logger');
 const multer = require('multer');
@@ -183,6 +183,17 @@ router.post('/:id/track-download', authMiddleware, async (req, res) => {
              VALUES (?, 'resource_downloaded', ?, ?, ?)`,
             [userId, 0, resourceId, `Descargó recurso: ${resource.title}`]
         );
+
+        // 2b. Si el recurso es un contenido de lección (tipo file), registrar progreso en user_content_progress
+        const [isLessonContent] = await db.query('SELECT id FROM lesson_contents WHERE id = ?', [resourceId]);
+        if (isLessonContent) {
+            await db.query(
+                `INSERT INTO user_content_progress (user_id, content_id) 
+                 VALUES (?, ?) 
+                 ON DUPLICATE KEY UPDATE completed_at = NOW()`,
+                [userId, resourceId]
+            );
+        }
 
         // 3. Verificar insignias
         const badgeResult = await checkAllBadges(userId);

@@ -8,7 +8,7 @@ export default function MaintenanceInfo() {
                     ¡Mejorando la <span className="text-yellow-500 font-black">seguridad!</span>
                 </h1>
                 <p className="text-gray-400 text-lg md:text-xl font-medium max-w-md mx-auto leading-tight">
-                    Nuestra gata cibersegura está realizando ajustes técnicos en la infraestructura. Estaremos de vuelta en unos minutos.
+                    Nuestra gata cibersegura está realizando ajustes técnicos en la infraestructura. ¡Gracias por tu paciencia!
                 </p>
             </div>
 

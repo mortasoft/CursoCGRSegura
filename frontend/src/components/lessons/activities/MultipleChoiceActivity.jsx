@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CheckSquare, CheckCircle2, Zap, XCircle, AlertTriangle } from 'lucide-react';
+import { CheckSquare, CheckCircle2, Zap, XCircle, AlertTriangle, Clock, Eye } from 'lucide-react';
 import DOMPurify from 'dompurify';
 import toast from 'react-hot-toast';
 import { linkify } from '../../../utils/textUtils';
@@ -36,15 +36,15 @@ export default function MultipleChoiceActivity({ item, data, playSuccess, playEr
                 if (isCorrect) {
                     setStatus_mc('completed');
                     playSuccess();
-                    if (hasCorrectAnswer) toast.success('¡Correcto!');
+                    if (hasCorrectAnswer) toast.success('¡Correcto!', { id: `mc-activity-${item.id}` });
                 } else {
                     setStatus_mc('incorrect');
                     playError();
-                    toast.error('Respuesta incorrecta. Inténtalo de nuevo.');
+                    toast.error('Respuesta incorrecta. Inténtalo de nuevo.', { id: `mc-activity-${item.id}` });
                 }
             }
         } catch (error) {
-            toast.error('Error al procesar respuesta');
+            toast.error('Error al procesar respuesta', { id: `mc-activity-${item.id}` });
         } finally {
             setSubmitting_mc(false);
         }
@@ -116,7 +116,7 @@ export default function MultipleChoiceActivity({ item, data, playSuccess, playEr
                 </div>
 
                 <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-2">
-                    <div className="flex items-center gap-4">
+                    <div className="flex flex-wrap items-center gap-3">
                         {status_mc !== 'completed' && (
                             <button
                                 onClick={handleSubmit}
@@ -136,10 +136,27 @@ export default function MultipleChoiceActivity({ item, data, playSuccess, playEr
                                 <AlertTriangle className="w-4 h-4" /> Inténtalo de nuevo
                             </p>
                         )}
+
+                        {status_mc !== 'completed' ? (
+                            <>
+                                {!!item.is_required && (
+                                    <span className="px-3 py-1.5 rounded-lg bg-orange-500/10 text-orange-400 text-[10px] font-black uppercase tracking-widest border border-orange-500/20 flex items-center gap-1.5 shadow-lg">
+                                        <Clock className="w-3.5 h-3.5" /> Requerido
+                                    </span>
+                                )}
+                                <span className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all flex items-center gap-1.5 shadow-lg ${item.is_required ? 'bg-white/5 text-gray-500 border-white/5' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'}`}>
+                                    <Eye className="w-3.5 h-3.5" /> {item.is_required ? 'Pendiente' : 'Opcional'}
+                                </span>
+                            </>
+                        ) : (
+                            <span className="px-3 py-1.5 rounded-lg bg-green-500/20 text-green-400 text-[10px] font-black uppercase tracking-widest border border-green-500/30 flex items-center gap-1.5 shadow-lg shadow-green-500/5">
+                                <CheckCircle2 className="w-3.5 h-3.5" /> Completado
+                            </span>
+                        )}
                     </div>
 
                     {item.points > 0 && (
-                        <div className={`relative px-5 py-2.5 rounded-2xl font-black text-[11px] transition-all duration-500 transform ${status_mc === 'completed' ? 'bg-yellow-500 text-slate-950 scale-110 shadow-lg shadow-yellow-500/20' : 'bg-slate-950 border border-white/5 text-yellow-500'}`}>
+                        <div className={`relative px-5 py-2.5 rounded-2xl font-black text-[11px] transition-all duration-500 transform ${status_mc === 'completed' ? 'bg-yellow-500 text-slate-950 scale-105 shadow-lg shadow-yellow-500/20' : 'bg-slate-950 border border-white/5 text-yellow-500'}`}>
                             +{item.points} PTS {status_mc === 'completed' ? 'GANADOS' : ''}
                         </div>
                     )}

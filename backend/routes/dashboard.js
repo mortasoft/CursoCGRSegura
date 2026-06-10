@@ -118,7 +118,7 @@ router.get('/', authMiddleware, cacheMiddleware(300, true), async (req, res) => 
 
         // 3. Rankings using Standardized Logic
         const [userData] = await db.query(`SELECT email, department FROM users WHERE id = ?`, [userId]);
-        const { calculateLevel, getUserRank } = require('../utils/gamification');
+        const { calculateLevel, getUserRank } = require('../services/gamificationService');
         
         const rankData = await getUserRank(userId, userData?.email, userData?.department);
         

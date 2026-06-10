@@ -29,7 +29,16 @@ export default function ContentEditorModal({
     const renderSpecificEditor = () => {
         switch (formData.content_type) {
             case 'text':
-                return <TextEditor value={formData.data} onChange={(val) => setFormData({ ...formData, data: val })} />;
+                return (
+                    <TextEditor
+                        value={formData.data}
+                        onChange={(val) => {
+                            const cleanText = val.replace(/<\/?[^>]+(>|$)/g, "").trim();
+                            const truncated = cleanText.length > 50 ? cleanText.substring(0, 47) + '...' : (cleanText || 'Contenido de Texto');
+                            setFormData({ ...formData, data: val, title: truncated });
+                        }}
+                    />
+                );
             case 'link':
                 return <LinkEditor value={formData.data} onChange={(val) => setFormData({ ...formData, data: val })} />;
             case 'video':
@@ -52,19 +61,29 @@ export default function ContentEditorModal({
                         file={formData.file}
                         onSetFile={(f) => setFormData({ ...formData, file: f })}
                         editingItem={editingItem}
+                        altText={formData.alt_text}
+                        onSetAltText={(val) => setFormData({ ...formData, alt_text: val })}
                     />
                 );
             case 'quiz':
             case 'survey':
             case 'assignment':
             case 'note':
-            case 'heading':
             case 'terms_trap':
+            case 'drive_auditor':
                 return (
                     <TaskEditor
                         contentType={formData.content_type}
                         value={formData.data}
                         onChange={(v) => setFormData({ ...formData, data: v })}
+                    />
+                );
+            case 'heading':
+                return (
+                    <TaskEditor
+                        contentType={formData.content_type}
+                        value={formData.data}
+                        onChange={(v) => setFormData({ ...formData, data: v, title: v })}
                     />
                 );
             case 'bullets':
@@ -100,6 +119,8 @@ export default function ContentEditorModal({
                         onChangeCorrectAnswer={(val) => setFormData({ ...formData, correct_answer: val })}
                         regexPattern={formData.regex_pattern}
                         onChangeRegexPattern={(val) => setFormData({ ...formData, regex_pattern: val })}
+                        inputSize={formData.input_size}
+                        onChangeInputSize={(val) => setFormData({ ...formData, input_size: val })}
                     />
                 );
             case 'password_tester':
@@ -186,17 +207,19 @@ export default function ContentEditorModal({
                 </div>
 
                 <form onSubmit={onSave} className="p-8 space-y-6 overflow-y-auto custom-scrollbar flex-1">
-                    <div className="space-y-1.5">
-                        <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider ml-1">Título del Elemento</label>
-                        <input
-                            type="text"
-                            required
-                            className="w-full bg-[#0a0d18] border border-white/5 focus:border-primary-500/50 rounded-xl py-3 px-4 text-white text-sm font-semibold outline-none transition-all hover:border-white/10"
-                            placeholder="Ej: Análisis de Riesgos Estructurales"
-                            value={formData.title}
-                            onChange={e => setFormData({ ...formData, title: e.target.value })}
-                        />
-                    </div>
+                    {!['heading', 'text'].includes(formData.content_type) && (
+                        <div className="space-y-1.5">
+                            <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider ml-1">Título del Elemento</label>
+                            <input
+                                type="text"
+                                required
+                                className="w-full bg-[#0a0d18] border border-white/5 focus:border-primary-500/50 rounded-xl py-3 px-4 text-white text-sm font-semibold outline-none transition-all hover:border-white/10"
+                                placeholder="Ej: Análisis de Riesgos Estructurales"
+                                value={formData.title}
+                                onChange={e => setFormData({ ...formData, title: e.target.value })}
+                            />
+                        </div>
+                    )}
 
                     {/* Specific Editor Injection */}
                     <div className="space-y-6">
@@ -204,7 +227,7 @@ export default function ContentEditorModal({
                     </div>
 
                     {/* Rewards & Rules */}
-                    <div className="grid grid-cols-2 gap-6 bg-slate-950/30 p-6 rounded-2xl border border-white/5">
+                    <div className={`grid ${['heading', 'text'].includes(formData.content_type) ? 'grid-cols-1' : 'grid-cols-2'} gap-6 bg-slate-950/30 p-6 rounded-2xl border border-white/5`}>
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-bold text-yellow-500/80 uppercase tracking-widest flex items-center gap-2 mb-1">
                                 <Award className="w-4 h-4" /> Puntos
@@ -220,24 +243,26 @@ export default function ContentEditorModal({
                             </div>
                         </div>
 
-                        <div className="flex flex-col justify-end space-y-1.5">
-                            <label className="text-[10px] font-bold text-red-400 uppercase tracking-widest flex items-center gap-2 mb-1">
-                                <Shield className="w-4 h-4" /> Obligatoriedad
-                            </label>
-                            <div
-                                onClick={() => {
-                                    if (!['text', 'note', 'heading', 'bullets'].includes(formData.content_type)) {
-                                        setFormData({ ...formData, is_required: !formData.is_required });
-                                    }
-                                }}
-                                className={`flex items-center justify-between p-3.5 bg-[#0a0d18] rounded-xl border border-white/5 select-none group ${['text', 'note', 'heading', 'bullets'].includes(formData.content_type) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-slate-900 transition-all'}`}
-                            >
-                                <span className={`text-[10px] font-bold uppercase transition-colors ${formData.is_required ? 'text-red-400' : 'text-gray-500'}`}>Es obligatorio</span>
-                                <div className={`relative w-9 h-5 rounded-full transition-colors duration-200 outline-none ${formData.is_required ? 'bg-red-500' : 'bg-slate-800'}`}>
-                                    <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all duration-200 shadow-sm ${formData.is_required ? 'left-5' : 'left-1'}`}></div>
+                        {!['heading', 'text'].includes(formData.content_type) && (
+                            <div className="flex flex-col justify-end space-y-1.5">
+                                <label className="text-[10px] font-bold text-red-400 uppercase tracking-widest flex items-center gap-2 mb-1">
+                                    <Shield className="w-4 h-4" /> Obligatoriedad
+                                </label>
+                                <div
+                                    onClick={() => {
+                                        if (!['text', 'note', 'bullets'].includes(formData.content_type)) {
+                                            setFormData({ ...formData, is_required: !formData.is_required });
+                                        }
+                                    }}
+                                    className={`flex items-center justify-between p-3.5 bg-[#0a0d18] rounded-xl border border-white/5 select-none group ${['text', 'note', 'bullets'].includes(formData.content_type) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-slate-900 transition-all'}`}
+                                >
+                                    <span className={`text-[10px] font-bold uppercase transition-colors ${formData.is_required ? 'text-red-400' : 'text-gray-500'}`}>Es obligatorio</span>
+                                    <div className={`relative w-9 h-5 rounded-full transition-colors duration-200 outline-none ${formData.is_required ? 'bg-red-500' : 'bg-slate-800'}`}>
+                                        <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all duration-200 shadow-sm ${formData.is_required ? 'left-5' : 'left-1'}`}></div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        )}
                     </div>
 
                     {/* Actions */}

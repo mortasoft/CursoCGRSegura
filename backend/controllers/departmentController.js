@@ -1,87 +1,94 @@
 const departmentService = require('../services/departmentService');
-const logger = require('../config/logger');
+const catchAsync = require('../utils/catchAsync');
+const AppError = require('../utils/appError');
 
 class DepartmentController {
-    async getAllDepartments(req, res) {
-        try {
-            const departments = await departmentService.getAllDepartments();
-            res.json({ success: true, departments });
-        } catch (error) {
-            logger.error('Error al obtener departamentos:', error);
-            res.status(500).json({ error: 'Error al cargar los departamentos' });
+    /**
+     * Obtener todos los departamentos registrados en el sistema
+     */
+    getAllDepartments = catchAsync(async (req, res, next) => {
+        // Llama al servicio para obtener la lista completa de areas/departamentos
+        const departments = await departmentService.getAllDepartments();
+        res.json({ success: true, departments });
+    });
+
+    /**
+     * Crear un nuevo departamento de forma manual (Admin)
+     */
+    createDepartment = catchAsync(async (req, res, next) => {
+        const { name } = req.body;
+        // Validacion de campo requerido
+        if (!name) {
+            return next(new AppError('El nombre es requerido', 400));
         }
-    }
 
-    async createDepartment(req, res) {
         try {
-            const { name } = req.body;
-            if (!name) {
-                return res.status(400).json({ error: 'El nombre es requerido' });
-            }
-
+            // Registra el departamento en la BD
             const department = await departmentService.createDepartment(name);
             res.status(201).json({ success: true, ...department });
         } catch (error) {
+            // Controlar errores de duplicidad en la base de datos
             if (error.code === 'ER_DUP_ENTRY') {
-                return res.status(400).json({ error: 'El departamento ya existe' });
+                return next(new AppError('El departamento ya existe', 400));
             }
-            logger.error('Error al crear departamento:', error);
-            res.status(500).json({ error: 'Error al crear el departamento' });
+            throw error;
         }
-    }
+    });
 
-    async updateDepartment(req, res) {
+    /**
+     * Actualizar el nombre de un departamento (Admin)
+     */
+    updateDepartment = catchAsync(async (req, res, next) => {
+        const { name } = req.body;
+        const { id } = req.params;
+        // Validacion de campo requerido
+        if (!name) {
+            return next(new AppError('El nombre es requerido', 400));
+        }
+
         try {
-            const { name } = req.body;
-            const { id } = req.params;
-            if (!name) {
-                return res.status(400).json({ error: 'El nombre es requerido' });
-            }
-
+            // Actualiza el nombre del departamento
             await departmentService.updateDepartment(id, name);
             res.json({ success: true, message: 'Departamento actualizado correctamente' });
         } catch (error) {
+            // Controlar errores de duplicidad en caso de colisionar con otro nombre existente
             if (error.code === 'ER_DUP_ENTRY') {
-                return res.status(400).json({ error: 'Ya existe otro departamento con ese nombre' });
+                return next(new AppError('Ya existe otro departamento con ese nombre', 400));
             }
-            logger.error('Error al actualizar departamento:', error);
-            res.status(500).json({ error: 'Error al actualizar el departamento' });
+            throw error;
         }
-    }
+    });
 
-    async deleteDepartment(req, res) {
-        try {
-            const { id } = req.params;
-            await departmentService.deleteDepartment(id);
-            res.json({ success: true, message: 'Departamento eliminado correctamente' });
-        } catch (error) {
-            logger.error('Error al eliminar departamento:', error);
-            res.status(500).json({ error: 'Error al eliminar el departamento' });
-        }
-    }
+    /**
+     * Eliminar un departamento por su ID (Admin)
+     */
+    deleteDepartment = catchAsync(async (req, res, next) => {
+        const { id } = req.params;
+        // Elimina el departamento especifico
+        await departmentService.deleteDepartment(id);
+        res.json({ success: true, message: 'Departamento eliminado correctamente' });
+    });
 
-    async syncFromDirectory(req, res) {
-        try {
-            const insertedCount = await departmentService.syncFromDirectory();
-            res.json({ 
-                success: true, 
-                message: `Sincronización completada. ${insertedCount} nuevas áreas agregadas desde el directorio maestro.` 
-            });
-        } catch (error) {
-            logger.error('Error al sincronizar departamentos:', error);
-            res.status(500).json({ error: 'Error al sincronizar con el directorio maestro' });
-        }
-    }
+    /**
+     * Sincronizar departamentos desde el directorio maestro institucional (Admin)
+     */
+    syncFromDirectory = catchAsync(async (req, res, next) => {
+        // Llama al servicio para importar las areas del directorio principal a la base de datos
+        const insertedCount = await departmentService.syncFromDirectory();
+        res.json({ 
+            success: true, 
+            message: `Sincronización completada. ${insertedCount} nuevas áreas agregadas desde el directorio maestro.` 
+        });
+    });
 
-    async deleteAllDepartments(req, res) {
-        try {
-            await departmentService.deleteAllDepartments();
-            res.json({ success: true, message: 'Todas las áreas han sido eliminadas' });
-        } catch (error) {
-            logger.error('Error al eliminar todas las áreas:', error);
-            res.status(500).json({ error: 'Error al eliminar las áreas' });
-        }
-    }
+    /**
+     * Eliminar todos los departamentos de la base de datos (Admin)
+     */
+    deleteAllDepartments = catchAsync(async (req, res, next) => {
+        // Limpia por completo la tabla de departamentos
+        await departmentService.deleteAllDepartments();
+        res.json({ success: true, message: 'Todas las áreas han sido eliminadas' });
+    });
 }
 
 module.exports = new DepartmentController();

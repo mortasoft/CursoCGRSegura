@@ -47,7 +47,9 @@ export function useLessonEditor(lessonId) {
         postPoints: 0,
         replyPoints: 0,
         maxAwardedPosts: 0,
-        maxAwardedReplies: 0
+        maxAwardedReplies: 0,
+        alt_text: '',
+        input_size: 'single'
     });
 
     const fetchLessonAndContents = useCallback(async () => {
@@ -118,7 +120,7 @@ export function useLessonEditor(lessonId) {
                 bulletItems: item.content_type === 'bullets' ? (item.data?.items || [{ title: '', text: '' }]) : [{ title: '', text: '' }],
                 file: null,
                 video_source: item.data?.url ? 'url' : 'file',
-                is_required: !!item.is_required,
+                is_required: ['heading', 'text'].includes(item.content_type) ? false : !!item.is_required,
                 points: item.points || 0,
                 option1: item.content_type === 'confirmation' ? (item.data?.option1 || '') : '',
                 option2: item.content_type === 'confirmation' ? (item.data?.option2 || '') : '',
@@ -136,7 +138,9 @@ export function useLessonEditor(lessonId) {
                 replyPoints: item.content_type === 'forum' ? (item.data?.replyPoints || 0) : 0,
                 maxAwardedPosts: item.content_type === 'forum' ? (item.data?.maxAwardedPosts || 0) : 0,
                 maxAwardedReplies: item.content_type === 'forum' ? (item.data?.maxAwardedReplies || 0) : 0,
-                description: item.data?.description || item.data?.text || ''
+                description: item.data?.description || item.data?.text || '',
+                alt_text: item.content_type === 'image' ? (item.data?.alt_text || '') : '',
+                input_size: item.content_type === 'interactive_input' ? (item.data?.input_size || 'single') : 'single'
             });
         } else {
             setEditingItem(null);
@@ -164,7 +168,9 @@ export function useLessonEditor(lessonId) {
                 postPoints: type === 'forum' ? 10 : 0,
                 replyPoints: type === 'forum' ? 5 : 0,
                 maxAwardedPosts: type === 'forum' ? 3 : 0,
-                maxAwardedReplies: type === 'forum' ? 5 : 0
+                maxAwardedReplies: type === 'forum' ? 5 : 0,
+                alt_text: '',
+                input_size: 'single'
             });
         }
         setIsModalOpen(true);
@@ -176,9 +182,18 @@ export function useLessonEditor(lessonId) {
         try {
             const dataToSubmit = new FormData();
             dataToSubmit.append('lesson_id', lessonId);
-            dataToSubmit.append('title', formData.title);
+            const isHeading = formData.content_type === 'heading';
+            const isText = formData.content_type === 'text';
+            let titleVal = formData.title;
+            if (isHeading) {
+                titleVal = formData.data;
+            } else if (isText) {
+                const cleanText = (formData.data || '').replace(/<\/?[^>]+(>|$)/g, "").trim();
+                titleVal = cleanText.length > 50 ? cleanText.substring(0, 47) + '...' : (cleanText || 'Contenido de Texto');
+            }
+            dataToSubmit.append('title', titleVal);
             dataToSubmit.append('content_type', formData.content_type);
-            dataToSubmit.append('is_required', formData.is_required);
+            dataToSubmit.append('is_required', (isHeading || isText) ? false : formData.is_required);
             dataToSubmit.append('points', formData.points);
 
             let finalData = {};
@@ -207,7 +222,8 @@ export function useLessonEditor(lessonId) {
                     validation_type: formData.validation_type,
                     correct_answer: formData.correct_answer,
                     regex_pattern: formData.regex_pattern,
-                    placeholder: formData.placeholder
+                    placeholder: formData.placeholder,
+                    input_size: formData.input_size || 'single'
                 };
             } else if (formData.content_type === 'multiple_choice') {
                 finalData = {
@@ -237,6 +253,9 @@ export function useLessonEditor(lessonId) {
             } else {
                 const currentData = typeof editingItem?.data === 'string' ? JSON.parse(editingItem.data) : (editingItem?.data || {});
                 finalData = { ...currentData, description: formData.data };
+                if (formData.content_type === 'image') {
+                    finalData.alt_text = formData.alt_text;
+                }
             }
 
             dataToSubmit.append('data', JSON.stringify(finalData));
@@ -245,8 +264,6 @@ export function useLessonEditor(lessonId) {
             if (!editingItem) {
                 const maxOrder = contents.length > 0 ? Math.max(...contents.map(c => c.order_index)) : 0;
                 dataToSubmit.append('order_index', maxOrder + 1);
-            } else {
-                dataToSubmit.append('order_index', editingItem.order_index || 0);
             }
 
             let response;
@@ -280,7 +297,7 @@ export function useLessonEditor(lessonId) {
         }
     };
 
-    const handleLinkResource = async (resourceId, type) => {
+    const handleLinkResource = async (resourceId, type, shouldClose = true) => {
         const item = type === 'quiz' ? activeQuizItem : activeSurveyItem;
         if (!item) return;
 
@@ -295,23 +312,26 @@ export function useLessonEditor(lessonId) {
             dataToSubmit.append('is_required', item.is_required);
             dataToSubmit.append('points', item.points);
             dataToSubmit.append('data', JSON.stringify(newData));
-            dataToSubmit.append('order_index', item.order_index || 0);
 
             const res = await axios.put(`${API_URL}/content/${item.id}`, dataToSubmit);
 
             if (res.data.success) {
-                toast.success(`Contenido vinculado al ${type}`);
+                if (shouldClose) {
+                    toast.success(`Contenido vinculado al ${type}`);
+                }
                 fetchLessonAndContents();
             }
         } catch (error) {
             toast.error(`Error vinculando ${type} al contenido`);
         } finally {
-            if (type === 'quiz') {
-                setIsQuizEditorOpen(false);
-                setActiveQuizItem(null);
-            } else {
-                setIsSurveyEditorOpen(false);
-                setActiveSurveyItem(null);
+            if (shouldClose) {
+                if (type === 'quiz') {
+                    setIsQuizEditorOpen(false);
+                    setActiveQuizItem(null);
+                } else {
+                    setIsSurveyEditorOpen(false);
+                    setActiveSurveyItem(null);
+                }
             }
         }
     };
@@ -326,12 +346,17 @@ export function useLessonEditor(lessonId) {
         newContents[index] = newContents[targetIdx];
         newContents[targetIdx] = temp;
 
-        setContents(newContents);
+        const updatedContents = newContents.map((item, idx) => ({
+            ...item,
+            order_index: idx + 1
+        }));
+
+        setContents(updatedContents);
 
         try {
-            const reorderData = newContents.map((item, idx) => ({
+            const reorderData = updatedContents.map((item) => ({
                 id: item.id,
-                order_index: idx + 1
+                order_index: item.order_index
             }));
             await axios.post(`${API_URL}/content/reorder`, { items: reorderData });
         } catch (error) {

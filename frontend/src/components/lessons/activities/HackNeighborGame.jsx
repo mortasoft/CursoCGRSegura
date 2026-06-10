@@ -37,7 +37,7 @@ export default function HackNeighborGame({ item, data, playSuccess, playError, m
             if (response.data.isCorrect) {
                 setStatus('won');
                 playSuccess();
-                toast.success('¡Acceso concedido! Has vulnerado la cuenta.');
+                toast.success('¡Acceso concedido! Has vulnerado la cuenta.', { id: `hack-neighbor-${item.id}` });
                 const hintsUsedCount = Object.keys(revealedHints).length;
                 markLinkAsVisited(item.id, { success: true, hintsUsed: hintsUsedCount });
                 // Actualizamos el perfil local con la contraseña para que se muestre en el UI
@@ -53,7 +53,7 @@ export default function HackNeighborGame({ item, data, playSuccess, playError, m
             }
         } catch (error) {
             console.error('Error verificando contraseña:', error);
-            toast.error('Error al verificar la contraseña. Intente de nuevo.');
+            toast.error('Error al verificar la contraseña. Intente de nuevo.', { id: `hack-neighbor-${item.id}` });
         }
     };
 

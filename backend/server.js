@@ -35,6 +35,7 @@ const phishingRoutes = require('./routes/phishing');
 const dashboardRoutes = require('./routes/dashboard');
 const reportRoutes = require('./routes/reports');
 const directoryRoutes = require('./routes/directory');
+const systemRoutes = require('./routes/system');
 const departmentRoutes = require('./routes/departments');
 const badgeRoutes = require('./routes/badges');
 const contentRoutes = require('./routes/lesson_content');
@@ -45,7 +46,7 @@ const announcementRoutes = require('./routes/announcements');
 const forumRoutes = require('./routes/forumRoutes');
 const gameRoutes = require('./routes/gameRoutes');
 const notificationRoutes = require('./routes/notifications');
-
+const driveAuditorRoutes = require('./routes/driveAuditorRoutes');
 
 const { authMiddleware, adminMiddleware } = require('./middleware/auth');
 const maintenanceMiddleware = require('./middleware/maintenance');
@@ -187,66 +188,17 @@ app.use('/api/announcements', announcementRoutes);
 app.use('/api/forums', authMiddleware, maintenanceMiddleware, forumRoutes);
 app.use('/api/games', gameRoutes);
 app.use('/api/notifications', authMiddleware, maintenanceMiddleware, notificationRoutes);
+app.use('/api/drive-auditor', authMiddleware, maintenanceMiddleware, driveAuditorRoutes);
+app.use('/api/system', systemRoutes);
 
-
-
-// Ruta para obtener configuraciones globales del sistema (Admin)
-app.get('/api/system/settings', authMiddleware, adminMiddleware, async (req, res) => {
-    try {
-        const settingsRaw = await db.query('SELECT setting_key, setting_value FROM system_settings');
-        const settings = {};
-        settingsRaw.forEach(s => settings[s.setting_key] = s.setting_value);
-        res.json({ success: true, settings });
-    } catch (error) {
-        res.status(500).json({ error: 'Error al obtener configuraciones' });
-    }
-});
-
-// Ruta para actualizar configuraciones globales del sistema (Admin)
-app.put('/api/system/settings', authMiddleware, adminMiddleware, async (req, res) => {
-    try {
-        const { maintenance_mode, ranking_limit_global, ranking_limit_department } = req.body;
-        
-        if (maintenance_mode !== undefined) {
-            await db.query(
-                "UPDATE system_settings SET setting_value = ? WHERE setting_key = 'maintenance_mode'",
-                [String(maintenance_mode)]
-            );
-        }
-
-        if (ranking_limit_global !== undefined) {
-            await db.query(
-                "INSERT INTO system_settings (setting_key, setting_value) VALUES ('ranking_limit_global', ?) ON DUPLICATE KEY UPDATE setting_value = ?",
-                [String(ranking_limit_global), String(ranking_limit_global)]
-            );
-        }
-
-        if (ranking_limit_department !== undefined) {
-            await db.query(
-                "INSERT INTO system_settings (setting_key, setting_value) VALUES ('ranking_limit_department', ?) ON DUPLICATE KEY UPDATE setting_value = ?",
-                [String(ranking_limit_department), String(ranking_limit_department)]
-            );
-        }
-
-        if (req.body.allow_theme_change !== undefined) {
-            await db.query(
-                "INSERT INTO system_settings (setting_key, setting_value) VALUES ('allow_theme_change', ?) ON DUPLICATE KEY UPDATE setting_value = ?",
-                [String(req.body.allow_theme_change), String(req.body.allow_theme_change)]
-            );
-        }
-
-        // Invalidar caché y refrescar leaderboard con los nuevos límites
-        const { getSystemSettings, refreshLeaderboardCache } = require('./utils/gamification');
-        const { clearCache } = require('./middleware/cache');
-        
-        await getSystemSettings(true);
-        await clearCache('cache:/api/gamification/leaderboard*');
-        refreshLeaderboardCache().catch(err => logger.error('Error refreshing leaderboard after settings change:', err));
-
-        res.json({ success: true, message: 'Configuración actualizada' });
-    } catch (error) {
-        res.status(500).json({ error: 'Error al guardar configuración' });
-    }
+// Health Check Endpoint (Público para monitoreo y stress tests)
+app.get('/api/health', (req, res) => {
+    res.json({
+        status: 'OK',
+        timestamp: new Date(),
+        uptime: process.uptime(),
+        environment: process.env.NODE_ENV || 'development'
+    });
 });
 
 // Ruta raíz
@@ -265,35 +217,60 @@ app.use((req, res) => {
     });
 });
 
-// Inicializar esquemas de base de datos y arrancar servidor
-const startServer = async () => {
-    try {
-        // Inicializar esquemas de base de datos sync/async
-        await initializeDatabase();
+// Manejo global de errores
+app.use((err, req, res, next) => {
+    err.statusCode = err.statusCode || 500;
+    err.status = err.status || 'error';
 
-        const server = app.listen(PORT, () => {
-            logger.info(`🚀 Servidor CGR LMS corriendo en puerto ${PORT}`);
-            logger.info(`📚 Ambiente: ${process.env.NODE_ENV || 'development'}`);
-        });
+    logger.error('Error:', err);
+    
+    res.status(err.statusCode).json({
+        success: false,
+        error: err.message || 'Error interno del servidor',
+        ...(err.nextAvailableDate && { nextAvailableDate: err.nextAvailableDate }),
+        ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+    });
+});
 
-        // Manejo de cierre gracioso
-        process.on('SIGTERM', () => {
-            logger.info('SIGTERM recibido, cerrando servidor...');
-            server.close(() => {
-                logger.info('Servidor cerrado.');
-                process.exit(0);
-            });
-        });
+// Iniciar servidor asignando la instancia a una constante
+const server = app.listen(PORT, () => {
+    logger.info(`🚀 Servidor CGR LMS corriendo en puerto ${PORT}`);
+    logger.info(`📚 Ambiente: ${process.env.NODE_ENV || 'development'}`);
+});
 
-    } catch (error) {
-        logger.error('❌ Error crítico durante el arranque del servidor:', error);
-        process.exit(1);
-    }
+// Manejo de promesas rechazadas no capturadas
+process.on('unhandledRejection', (reason, promise) => {
+    logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+// Manejo de excepciones síncronas no capturadas
+process.on('uncaughtException', (error) => {
+    logger.error('Uncaught Exception:', error);
+    process.exit(1);
+});
+
+// Manejo de cierre graceful (SIGTERM y SIGINT)
+const gracefulShutdown = (signal) => {
+    logger.info(`${signal} recibido. Cerrando servidor HTTP...`);
+    
+    server.close(async () => {
+        logger.info('Servidor HTTP cerrado. Finalizando conexiones de base de datos y cache...');
+        try {
+            if (redisClient && redisClient.isOpen) {
+                await redisClient.quit();
+                logger.info('Cliente de Redis desconectado.');
+            }
+            await db.end();
+            logger.info('Pool de MariaDB cerrado.');
+            process.exit(0);
+        } catch (err) {
+            logger.error('Error al cerrar recursos durante graceful shutdown:', err);
+            process.exit(1);
+        }
+    });
 };
 
-startServer();
-
-// Middleware de errores global (Debe ir después de todas las rutas)
-app.use(errorMiddleware);
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 module.exports = app;

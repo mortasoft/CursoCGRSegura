@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useForum } from '../../../../hooks/useForum';
 import ForumPost from './ForumPost';
 import ForumInput from './ForumInput';
-import { MessageSquare, AlertCircle, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { MessageSquare, AlertCircle, Loader2, ChevronLeft, ChevronRight, Clock, Eye } from 'lucide-react';
 import { useSoundStore } from '../../../../store/soundStore';
 
 export default function ForumActivity({ item, user, onComplete }) {
@@ -38,15 +38,26 @@ export default function ForumActivity({ item, user, onComplete }) {
                 <div className="absolute top-0 right-0 w-64 h-64 bg-teal-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
 
                 <div className="relative z-10">
-                    <div className="flex items-center gap-3 mb-4">
-                        <div className="w-10 h-10 rounded-xl bg-teal-500/20 flex items-center justify-center border border-teal-500/30">
+                    <div className="flex flex-wrap items-center gap-3 mb-4">
+                        <div className="w-10 h-10 rounded-xl bg-teal-500/20 flex items-center justify-center border border-teal-500/30 flex-shrink-0">
                             <MessageSquare className="w-5 h-5 text-teal-400" />
                         </div>
-                        <h3 className="text-xl md:text-2xl font-black text-white">{title}</h3>
+                        <div className="flex items-center gap-3 flex-wrap">
+                            <h3 className="text-xl md:text-2xl font-black text-white">{title}</h3>
+                            {item.is_required ? (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-orange-500/10 text-orange-400 text-[10px] font-black uppercase tracking-widest border border-orange-500/20">
+                                    <Clock className="w-3.5 h-3.5" /> Requerido
+                                </span>
+                            ) : (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-400 text-[10px] font-black uppercase tracking-widest border border-blue-500/20">
+                                    <Eye className="w-3.5 h-3.5" /> Opcional
+                                </span>
+                            )}
+                        </div>
                     </div>
 
                     {description && (
-                        <div className="text-gray-300 text-sm md:text-base leading-relaxed bg-slate-800/50 p-4 rounded-xl border border-white/5">
+                        <div className="text-gray-300 text-sm md:text-base leading-relaxed bg-slate-800/50 p-4 rounded-xl border border-white/5 whitespace-pre-wrap">
                             {description}
                         </div>
                     )}

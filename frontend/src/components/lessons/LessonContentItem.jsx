@@ -22,7 +22,7 @@ import CategorizationActivity from './activities/CategorizationActivity';
 import DataTetrisActivity from './activities/DataTetrisActivity';
 import ForumActivity from './activities/ForumActivity/ForumActivity';
 import TermsTrapActivity from './activities/TermsTrapActivity';
-
+import DriveAuditorActivity from './activities/DriveAuditorActivity';
 const API_URL = import.meta.env.VITE_API_URL;
 
 export default function LessonContentItem({
@@ -47,8 +47,8 @@ export default function LessonContentItem({
         onEndedRef.current = onEnded;
     }, [onEnded]);
 
-    const playSuccess = useCallback(() => playSound('/sounds/success.mp3'), [playSound]);
-    const playError = useCallback(() => playSound('/sounds/error.mp3'), [playSound]);
+    const playSuccess = useCallback(() => playSound('/sounds/exito.mp3'), [playSound]);
+    const playError = useCallback(() => playSound('/sounds/gato-error.mp3'), [playSound]);
 
     let data = item.data || {};
 
@@ -92,7 +92,7 @@ export default function LessonContentItem({
             return <ImageActivity item={item} data={data} API_URL={API_URL} />;
 
         case 'file':
-            return <FileActivity item={item} data={data} API_URL={API_URL} handleResourceDownload={handleResourceDownload} />;
+            return <FileActivity item={item} data={data} API_URL={API_URL} handleResourceDownload={handleResourceDownload} visitedLinks={visitedLinks} />;
 
         case 'link':
             return <LinkActivity {...commonProps} />;
@@ -146,6 +146,9 @@ export default function LessonContentItem({
 
         case 'terms_trap':
             return <TermsTrapActivity {...commonProps} />;
+
+        case 'drive_auditor':
+            return <DriveAuditorActivity {...commonProps} />;
 
         case 'forum':
             return (

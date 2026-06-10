@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-export function useQuizEditor({ isOpen, quizId, moduleId, lessonId, initialTitle, token, onClose }) {
+export function useQuizEditor({ isOpen, quizId, moduleId, lessonId, initialTitle, token, onClose, onQuizCreated }) {
     const [loading, setLoading] = useState(false);
     const [quiz, setQuiz] = useState(null);
     const [questions, setQuestions] = useState([]);
@@ -161,6 +161,9 @@ export function useQuizEditor({ isOpen, quizId, moduleId, lessonId, initialTitle
         if (!qId) {
             qId = await handleCreateQuiz();
             if (!qId) return;
+            if (onQuizCreated) {
+                await onQuizCreated(qId);
+            }
         }
 
         try {
@@ -169,16 +172,36 @@ export function useQuizEditor({ isOpen, quizId, moduleId, lessonId, initialTitle
                 headers: { Authorization: `Bearer ${token}` }
             });
 
-            for (let q of questions) {
-                if (q.isNew) {
-                    await axios.post(`${API_URL}/quizzes/${qId}/questions`, q, {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
-                } else if (q.isDirty) {
-                    await axios.put(`${API_URL}/quizzes/questions/${q.id}`, q, {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
+            const updatedQuestions = [...questions];
+            try {
+                for (let i = 0; i < updatedQuestions.length; i++) {
+                    const q = updatedQuestions[i];
+                    if (q.isNew) {
+                        const res = await axios.post(`${API_URL}/quizzes/${qId}/questions`, q, {
+                            headers: { Authorization: `Bearer ${token}` }
+                        });
+                        if (res.data.success) {
+                            updatedQuestions[i] = {
+                                ...q,
+                                id: res.data.questionId,
+                                isNew: false,
+                                isDirty: false
+                            };
+                        }
+                    } else if (q.isDirty) {
+                        const res = await axios.put(`${API_URL}/quizzes/questions/${q.id}`, q, {
+                            headers: { Authorization: `Bearer ${token}` }
+                        });
+                        if (res.data.success) {
+                            updatedQuestions[i] = {
+                                ...q,
+                                isDirty: false
+                            };
+                        }
+                    }
                 }
+            } finally {
+                setQuestions(updatedQuestions);
             }
 
             toast.success('Quiz guardado correctamente', { id: 'admin-quiz-save' });

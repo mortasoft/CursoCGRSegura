@@ -134,6 +134,7 @@ export default function AdminLessonEditor() {
             <QuizEditorModal
                 isOpen={isQuizEditorOpen}
                 onClose={(quizId) => handleLinkResource(quizId, 'quiz')}
+                onQuizCreated={(quizId) => handleLinkResource(quizId, 'quiz', false)}
                 quizId={activeQuizItem?.data ? (typeof activeQuizItem.data === 'string' ? JSON.parse(activeQuizItem.data).quiz_id : activeQuizItem.data.quiz_id) : undefined}
                 moduleId={lesson?.module_id}
                 lessonId={lessonId}
@@ -143,6 +144,7 @@ export default function AdminLessonEditor() {
             <SurveyEditorModal
                 isOpen={isSurveyEditorOpen}
                 onClose={(surveyId) => handleLinkResource(surveyId, 'survey')}
+                onSurveyCreated={(surveyId) => handleLinkResource(surveyId, 'survey', false)}
                 surveyId={activeSurveyItem?.data ? (typeof activeSurveyItem.data === 'string' ? JSON.parse(activeSurveyItem.data).survey_id : activeSurveyItem.data.survey_id) : undefined}
                 moduleId={lesson?.module_id}
                 lessonId={lessonId}

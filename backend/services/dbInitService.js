@@ -30,7 +30,6 @@ const initializeDatabase = async () => {
                 user_id INT NOT NULL,
                 content_id INT NOT NULL,
                 completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                response_data JSON COMMENT 'Almacena respuestas de interactivos dentro de lecciones',
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
                 FOREIGN KEY (content_id) REFERENCES lesson_contents(id) ON DELETE CASCADE,
                 UNIQUE KEY unique_user_content (user_id, content_id),
@@ -38,14 +37,6 @@ const initializeDatabase = async () => {
                 INDEX idx_content_id (content_id)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         `);
-
-        // Migración: Añadir response_data si la tabla ya existía sin ella
-        const [columns] = await db.query("SHOW COLUMNS FROM user_content_progress LIKE 'response_data'");
-        if (columns.length === 0) {
-            logger.info('➕ Añadiendo columna missing response_data a user_content_progress...');
-            await db.query("ALTER TABLE user_content_progress ADD COLUMN response_data JSON AFTER completed_at");
-        }
-
 
         // Crear tablas de encuestas si no existen
         await db.query(`
@@ -122,8 +113,15 @@ const initializeDatabase = async () => {
             ALTER TABLE lesson_contents MODIFY COLUMN content_type ENUM(
                 'text','video','image','file','link','quiz','survey','assignment','note',
                 'heading','bullets','confirmation','interactive_input','password_tester',
-                'multiple_choice','mfa_defender','hack_neighbor','dork_search','categorization','data_tetris','forum','terms_trap'
+                'multiple_choice','mfa_defender','hack_neighbor','dork_search','categorization','data_tetris','forum','terms_trap','drive_auditor'
             ) NOT NULL;
+        `);
+
+        // Asegurar que 'data_tetris' y 'video' existan en el ENUM de question_type en quiz_questions
+        await db.query(`
+            ALTER TABLE quiz_questions MODIFY COLUMN question_type ENUM(
+                'multiple_choice', 'true_false', 'multiple_select', 'mfa_defender', 'hack_neighbor', 'data_tetris', 'video'
+            ) DEFAULT 'multiple_choice';
         `);
 
         // Columnas para racha de login
@@ -133,7 +131,7 @@ const initializeDatabase = async () => {
         await db.query(`
             ALTER TABLE users ADD COLUMN IF NOT EXISTS last_streak_date DATE DEFAULT NULL;
         `);
-
+        
         // Aumentar tamaño de columna activity_type para evitar truncado
         await db.query(`
             ALTER TABLE gamification_activities MODIFY COLUMN activity_type VARCHAR(50);
@@ -145,9 +143,14 @@ const initializeDatabase = async () => {
         `);
 
 
-        // Tabla de posts para foros
+        // Limpiar posibles tablas corruptas o a medias de foros de intentos previos
+        // (Al ser una característica nueva en desarrollo/despliegue, es seguro recrearlas para corregir estructuras incompatibles)
+        await db.query(`DROP TABLE IF EXISTS forum_post_upvotes`);
+        await db.query(`DROP TABLE IF EXISTS forum_posts`);
+
+        // Tabla de posts para foros (con nombres de restricciones explícitas)
         await db.query(`
-            CREATE TABLE IF NOT EXISTS forum_posts (
+            CREATE TABLE forum_posts (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 content_id INT NOT NULL,
                 user_id INT NOT NULL,
@@ -155,33 +158,136 @@ const initializeDatabase = async () => {
                 message TEXT NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                FOREIGN KEY (content_id) REFERENCES lesson_contents(id) ON DELETE CASCADE,
-                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-                FOREIGN KEY (parent_id) REFERENCES forum_posts(id) ON DELETE CASCADE,
+                CONSTRAINT fk_forum_posts_content FOREIGN KEY (content_id) REFERENCES lesson_contents(id) ON DELETE CASCADE,
+                CONSTRAINT fk_forum_posts_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                CONSTRAINT fk_forum_posts_parent FOREIGN KEY (parent_id) REFERENCES forum_posts(id) ON DELETE CASCADE,
                 INDEX idx_content_id (content_id),
                 INDEX idx_user_id (user_id),
                 INDEX idx_parent_id (parent_id)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         `);
 
-        // Tabla de upvotes para foros
+        // Tabla de upvotes para foros (con nombres de restricciones explícitas)
         await db.query(`
-            CREATE TABLE IF NOT EXISTS forum_post_upvotes (
+            CREATE TABLE forum_post_upvotes (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 post_id INT NOT NULL,
                 user_id INT NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (post_id) REFERENCES forum_posts(id) ON DELETE CASCADE,
-                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                INDEX idx_post_id (post_id),
+                INDEX idx_user_id (user_id),
+                CONSTRAINT fk_forum_upvotes_post FOREIGN KEY (post_id) REFERENCES forum_posts(id) ON DELETE CASCADE,
+                CONSTRAINT fk_forum_upvotes_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
                 UNIQUE KEY unique_user_post_upvote (user_id, post_id)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         `);
 
+        // Tablas de Auditoría de Drive (con nombres de restricciones explícitas)
+        await db.query(`
+            CREATE TABLE IF NOT EXISTS drive_audit_reports (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                uuid VARCHAR(36) NOT NULL UNIQUE,
+                user_id INT NOT NULL,
+                status ENUM('running', 'completed', 'failed') DEFAULT 'running',
+                started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                completed_at TIMESTAMP NULL,
+                total_scanned INT DEFAULT 0,
+                risk_count INT DEFAULT 0,
+                sharing_map_json JSON COMMENT 'Mapa de compartición',
+                external_domains_json JSON COMMENT 'Lista y conteo de dominios externos',
+                error_message TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                CONSTRAINT fk_drive_audit_reports_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                INDEX idx_user_id (user_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `);
+
+        await db.query(`
+            CREATE TABLE IF NOT EXISTS drive_audit_files (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                report_id INT NOT NULL,
+                file_id VARCHAR(255) NOT NULL,
+                file_name VARCHAR(500) NOT NULL,
+                mime_type VARCHAR(100),
+                size_kb INT DEFAULT 0,
+                owner_name VARCHAR(255),
+                owner_email VARCHAR(255),
+                sharing_level ENUM('Privado', 'Restringido', 'Dominio con Enlace', 'Dominio Publico', 'Con Enlace', 'Publico', 'Desconocido') DEFAULT 'Desconocido',
+                shared_with_emails TEXT,
+                file_link TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                CONSTRAINT fk_drive_audit_files_report FOREIGN KEY (report_id) REFERENCES drive_audit_reports(id) ON DELETE CASCADE,
+                INDEX idx_report_id (report_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `);
+
+        // Migración para añadir columna UUID en drive_audit_reports si no existe
+        const columns = await db.query(`SHOW COLUMNS FROM drive_audit_reports LIKE 'uuid'`);
+        if (columns && columns.length === 0) {
+            logger.info('Añadiendo columna uuid a drive_audit_reports...');
+            await db.query(`ALTER TABLE drive_audit_reports ADD COLUMN uuid VARCHAR(36) NULL AFTER id`);
+            
+            // Generar UUIDs para los registros existentes
+            const existing = await db.query(`SELECT id FROM drive_audit_reports`);
+            const crypto = require('crypto');
+            for (const row of existing) {
+                const u = crypto.randomUUID();
+                await db.query(`UPDATE drive_audit_reports SET uuid = ? WHERE id = ?`, [u, row.id]);
+            }
+            
+            // Hacer la columna NOT NULL y agregar la restricción UNIQUE
+            await db.query(`ALTER TABLE drive_audit_reports MODIFY COLUMN uuid VARCHAR(36) NOT NULL`);
+            await db.query(`ALTER TABLE drive_audit_reports ADD UNIQUE KEY idx_drive_audit_reports_uuid (uuid)`);
+            logger.info('Columna UUID añadida e inicializada con éxito.');
+        }
+
+        // Asegurar que todas las filas tengan un UUID generado (por si la columna ya existía vacía)
+        const nullUuids = await db.query(`SELECT id FROM drive_audit_reports WHERE uuid IS NULL OR uuid = ''`);
+        if (nullUuids && nullUuids.length > 0) {
+            logger.info(`Generando UUIDs para ${nullUuids.length} reportes con UUID nulo...`);
+            const crypto = require('crypto');
+            for (const row of nullUuids) {
+                const u = crypto.randomUUID();
+                await db.query(`UPDATE drive_audit_reports SET uuid = ? WHERE id = ?`, [u, row.id]);
+            }
+            logger.info('UUIDs generados con éxito para los reportes existentes.');
+        }
+
+        // Limpiar auditorías "zombies" que hayan quedado corriendo antes de reiniciar el servidor
+        const updateResult = await db.query(`
+            UPDATE drive_audit_reports 
+            SET status = 'failed', error_message = 'El servidor se reinició inesperadamente, por lo que el proceso fue interrumpido.' 
+            WHERE status = 'running'
+        `);
+        
+        if (updateResult && updateResult.affectedRows > 0) {
+            logger.warn(`Se limpiaron ${updateResult.affectedRows} auditorías de Drive que quedaron "zombies" por un reinicio del servidor.`);
+        }
+
         logger.info('✅ Estructura de base de datos verificada y actualizada.');
     } catch (error) {
         logger.error('❌ Error inicializando base de datos:', error);
-        // No salimos del proceso para permitir que la app intente funcionar, 
-        // pero el error queda registrado.
+        
+        // Log detailed InnoDB foreign key errors if available
+        if (error.message && (error.message.includes('errno: 150') || error.message.toLowerCase().includes('foreign key'))) {
+            try {
+                const statusRows = await db.query("SHOW ENGINE INNODB STATUS");
+                if (statusRows && statusRows.length > 0) {
+                    const statusText = statusRows[0].Status || statusRows[0].status || '';
+                    const errorIndex = statusText.indexOf('LATEST FOREIGN KEY ERROR');
+                    if (errorIndex !== -1) {
+                        const errorDetails = statusText.substring(errorIndex, errorIndex + 1200);
+                        logger.error('🔍 DETALLES DE ERROR DE LLAVE FORÁNEA (InnoDB):');
+                        logger.error(errorDetails);
+                    } else {
+                        logger.warn('No se encontró la sección LATEST FOREIGN KEY ERROR en el estado de InnoDB.');
+                    }
+                }
+            } catch (errStatus) {
+                logger.error('No se pudo obtener el estado de InnoDB para diagnosticar el error de llave foránea:', errStatus);
+            }
+        }
     }
 };
 

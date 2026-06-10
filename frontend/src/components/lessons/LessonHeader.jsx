@@ -64,7 +64,7 @@ export default function LessonHeader({ lesson, contentsCount }) {
                                         <h5 className="text-xs font-bold text-white uppercase tracking-wider">Información de Recompensa</h5>
                                     </div>
                                     <p className="text-xs text-gray-300 font-medium leading-relaxed">
-                                        Representa los puntos máximos que puedes ganar en esta lección. El puntaje obtenido dependerá de las acciones y el desempeño que realices durante su desarrollo.
+                                        Representa los puntos máximos que puedes ganar en esta lección. El puntaje obtenido dependerá de las acciones y el desempeño que realices durante su desarrollo. Tome en cuenta que tambien pueden existir condiciones que hagan ganar puntos adicionales a lo indicado acá
                                     </p>
                                     <div className="absolute bottom-full right-4 border-8 border-transparent border-b-slate-900/95"></div>
                                 </div>

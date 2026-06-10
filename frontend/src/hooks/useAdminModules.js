@@ -393,6 +393,57 @@ export function useAdminModules() {
         return false;
     };
 
+    const handleExportLesson = async (lessonId, lessonTitle) => {
+        try {
+            const response = await axios.get(`${API_URL}/lessons/${lessonId}/export`, {
+                responseType: 'blob'
+            });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            const safeTitle = lessonTitle.toLowerCase().replace(/[^a-z0-9]/gi, '_');
+            link.setAttribute('download', `lesson_${safeTitle}_export.zip`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+            toast.success('Lección exportada con éxito');
+        } catch (error) {
+            console.error('Error exporting lesson:', error);
+            toast.error('Error al exportar lección');
+        }
+    };
+
+    const handleImportLesson = async (moduleId, file) => {
+        if (!file) return false;
+        const formData = new FormData();
+        formData.append('module_id', moduleId);
+        formData.append('file', file);
+
+        const toastId = toast.loading('Importando lección...');
+        try {
+            const response = await axios.post(`${API_URL}/lessons/import`, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+
+            if (response.data.success) {
+                toast.success('Lección importada con éxito', { id: toastId });
+                fetchModuleDetails(moduleId);
+                fetchAdminModules();
+                return true;
+            } else {
+                toast.error(response.data.error || 'Error al importar lección', { id: toastId });
+            }
+        } catch (error) {
+            console.error('Error importing lesson:', error);
+            const errorMsg = error.response?.data?.error || 'Error de conexión al importar';
+            toast.error(errorMsg, { id: toastId });
+        }
+        return false;
+    };
+
     const filteredModules = modules.filter(m =>
         m.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         m.description.toLowerCase().includes(searchTerm.toLowerCase())
@@ -451,6 +502,10 @@ export function useAdminModules() {
         confirmDeleteResource,
 
         // Reorder
-        handleReorderLessons
+        handleReorderLessons,
+
+        // Import/Export
+        handleExportLesson,
+        handleImportLesson
     };
 }

@@ -1,90 +1,66 @@
 const announcementService = require('../services/announcementService');
-const logger = require('../config/logger');
+const catchAsync = require('../utils/catchAsync');
 
 class AnnouncementController {
     /**
      * @route   GET /api/announcements/admin
      * @desc    Obtener todos los anuncios (Admin)
      */
-    async getAllAdmin(req, res) {
-        try {
-            const announcements = await announcementService.getAllAnnouncements();
-            res.json({ success: true, announcements });
-        } catch (error) {
-            logger.error('Error obteniendo anuncios:', error);
-            res.status(500).json({ error: 'Error al obtener anuncios' });
-        }
-    }
+    getAllAdmin = catchAsync(async (req, res, next) => {
+        // Llama al servicio para recuperar todos los anuncios creados sin filtrar por vigencia
+        const announcements = await announcementService.getAllAnnouncements();
+        res.json({ success: true, announcements });
+    });
 
     /**
      * @route   POST /api/announcements
      * @desc    Crear un anuncio (Admin)
      */
-    async createAnnouncement(req, res) {
-        try {
-            const id = await announcementService.createAnnouncement(req.body);
-            res.status(201).json({ success: true, message: 'Anuncio creado correctamente', id });
-        } catch (error) {
-            logger.error('Error creando anuncio:', error);
-            res.status(500).json({ error: 'Error al crear anuncio' });
-        }
-    }
+    createAnnouncement = catchAsync(async (req, res, next) => {
+        // Llama al servicio para registrar un nuevo anuncio con los datos provistos en el cuerpo
+        const id = await announcementService.createAnnouncement(req.body);
+        res.status(201).json({ success: true, message: 'Anuncio creado correctamente', id });
+    });
 
     /**
      * @route   PUT /api/announcements/:id
      * @desc    Actualizar un anuncio (Admin)
      */
-    async updateAnnouncement(req, res) {
-        try {
-            await announcementService.updateAnnouncement(req.params.id, req.body);
-            res.json({ success: true, message: 'Anuncio actualizado correctamente' });
-        } catch (error) {
-            logger.error('Error actualizando anuncio:', error);
-            res.status(500).json({ error: 'Error al actualizar anuncio' });
-        }
-    }
+    updateAnnouncement = catchAsync(async (req, res, next) => {
+        // Actualiza los campos del anuncio especificado por su ID en los parametros
+        await announcementService.updateAnnouncement(req.params.id, req.body);
+        res.json({ success: true, message: 'Anuncio actualizado correctamente' });
+    });
 
     /**
      * @route   DELETE /api/announcements/:id
      * @desc    Eliminar un anuncio (Admin)
      */
-    async deleteAnnouncement(req, res) {
-        try {
-            await announcementService.deleteAnnouncement(req.params.id);
-            res.json({ success: true, message: 'Anuncio eliminado correctamente' });
-        } catch (error) {
-            logger.error('Error eliminando anuncio:', error);
-            res.status(500).json({ error: 'Error al eliminar anuncio' });
-        }
-    }
+    deleteAnnouncement = catchAsync(async (req, res, next) => {
+        // Elimina permanentemente el anuncio especificado de la base de datos
+        await announcementService.deleteAnnouncement(req.params.id);
+        res.json({ success: true, message: 'Anuncio eliminado correctamente' });
+    });
 
     /**
      * @route   GET /api/announcements/active
      * @desc    Obtener anuncio activo para el usuario actual
      */
-    async getActive(req, res) {
-        try {
-            const announcement = await announcementService.getActiveForUser(req.user.id);
-            res.json({ success: true, announcement });
-        } catch (error) {
-            logger.error('Error obteniendo anuncio activo:', error);
-            res.status(500).json({ error: 'Error al obtener anuncio' });
-        }
-    }
+    getActive = catchAsync(async (req, res, next) => {
+        // Obtiene el anuncio vigente que el usuario actual todavia no ha descartado
+        const announcement = await announcementService.getActiveForUser(req.user.id);
+        res.json({ success: true, announcement });
+    });
 
     /**
      * @route   POST /api/announcements/:id/dismiss
      * @desc    Marcar anuncio como visto/descartado
      */
-    async dismiss(req, res) {
-        try {
-            await announcementService.dismissForUser(req.user.id, req.params.id);
-            res.json({ success: true, message: 'Anuncio descartado' });
-        } catch (error) {
-            logger.error('Error descartando anuncio:', error);
-            res.status(500).json({ error: 'Error al descartar anuncio' });
-        }
-    }
+    dismiss = catchAsync(async (req, res, next) => {
+        // Registra la lectura del anuncio por el usuario actual para evitar mostrarselo de nuevo
+        await announcementService.dismissForUser(req.user.id, req.params.id);
+        res.json({ success: true, message: 'Anuncio descartado' });
+    });
 }
 
 module.exports = new AnnouncementController();

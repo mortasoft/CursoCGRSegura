@@ -181,27 +181,16 @@ export function useLessonView() {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
-            if (response.data.success && response.data.badgeAwarded) {
-                const badges = Array.isArray(response.data.badgeAwarded) ? response.data.badgeAwarded : [response.data.badgeAwarded];
-                
-                badges.forEach((badge, idx) => {
-                    setTimeout(() => {
-                        toast.success(
-                            <div className="flex flex-col gap-1">
-                                <p className="font-black text-secondary-500 uppercase tracking-widest text-[10px]">¡Nueva Insignia Ganada!</p>
-                                <p className="font-bold text-white tracking-tight">{badge.name}</p>
-                            </div>,
-                            {
-                                duration: 6000,
-                                icon: '🏆',
-                                style: {
-                                    border: '1px solid rgba(229, 123, 60, 0.4)',
-                                    background: '#161b33'
-                                }
-                            }
-                        );
-                    }, idx * 500);
+            if (response.data.success) {
+                if (response.data.badgeAwarded) {
+                    useNotificationStore.getState().setPendingBadge(response.data.badgeAwarded);
+                }
+                setVisitedLinks(prev => {
+                    const next = new Set(prev);
+                    next.add(resourceId);
+                    return next;
                 });
+                await fetchLessonData(true);
             }
         } catch (error) {
             console.error('Error tracking download:', error);

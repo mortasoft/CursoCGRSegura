@@ -54,7 +54,9 @@ export default function AdminModules() {
         handleOpenResourceModal,
         handleSaveResource,
         confirmDeleteResource,
-        handleReorderLessons
+        handleReorderLessons,
+        handleExportLesson,
+        handleImportLesson
     } = useAdminModules();
 
     const [deleteType, setDeleteType] = useState(null); // 'module', 'lesson', 'resource'
@@ -121,6 +123,8 @@ export default function AdminModules() {
                             onNewResource={handleOpenResourceModal}
                             onEditResource={(mid, r) => handleOpenResourceModal(mid, r)}
                             onDeleteResource={(r) => handleDeleteClick(r, 'resource')}
+                            onExportLesson={handleExportLesson}
+                            onImportLesson={handleImportLesson}
                         />
                     ))}
                 </div>

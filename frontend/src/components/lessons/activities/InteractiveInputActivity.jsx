@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Type, Zap, CheckCircle, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Type, Zap, CheckCircle, CheckCircle2, AlertTriangle, Clock, Eye } from 'lucide-react';
 import DOMPurify from 'dompurify';
 import { linkify } from '../../../utils/textUtils';
 
@@ -64,43 +64,92 @@ export default function InteractiveInputActivity({ item, data, visitedLinks, mar
                     </div>
                 </div>
 
-                <div className="relative group max-w-2xl">
-                    <input
-                        type="text"
-                        value={isInputCompleted ? (item.interactionData?.answer || inputValue) : inputValue}
-                        onChange={(e) => setInputValue(e.target.value)}
-                        disabled={isInputCompleted || revealing}
-                        placeholder={data.placeholder || 'Escribe aquí tu respuesta...'}
-                        className={`w-full bg-black/40 border-2 rounded-2xl py-4 px-6 pr-32 text-white transition-all outline-none font-medium placeholder:text-gray-600 ${isInputCompleted
-                            ? 'border-indigo-500/50 text-indigo-200 bg-indigo-500/5'
-                            : localFeedback === 'incorrect'
-                                ? 'border-red-500/50 bg-red-500/5 animate-shake'
-                                : localFeedback === 'correct'
-                                    ? 'border-emerald-500/50 bg-emerald-500/5'
-                                    : 'border-white/5 focus:border-indigo-500/40 hover:border-white/10'
-                            }`}
-                        onKeyDown={(e) => e.key === 'Enter' && validateAnswer()}
-                    />
-
-                    {!isInputCompleted && (
-                        <button
-                            onClick={validateAnswer}
-                            disabled={revealing || !inputValue.trim()}
-                            className="absolute right-2 top-2 bottom-2 px-6 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:bg-slate-800 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg active:scale-95 flex items-center gap-2"
-                        >
-                            Enviar <Zap className="w-3 h-3" />
-                        </button>
-                    )}
-
-                    {isInputCompleted && (
-                        <div className="absolute right-6 top-1/2 -translate-y-1/2 text-indigo-400">
-                            <CheckCircle className="w-6 h-6 animate-fade-in" />
+                <div className={`relative group ${data.input_size === 'multi' ? 'w-full' : 'max-w-2xl'}`}>
+                    {data.input_size === 'multi' ? (
+                        <div className="relative w-full">
+                            <textarea
+                                value={isInputCompleted ? (item.interactionData?.answer || inputValue) : inputValue}
+                                onChange={(e) => setInputValue(e.target.value)}
+                                disabled={isInputCompleted || revealing}
+                                placeholder={data.placeholder || 'Escribe aquí tu respuesta...'}
+                                rows="4"
+                                className={`w-full bg-black/40 border-2 rounded-2xl py-4 px-6 text-white transition-all outline-none font-medium placeholder:text-gray-600 resize-y custom-scrollbar ${isInputCompleted
+                                    ? 'border-indigo-500/50 text-indigo-200 bg-indigo-500/5 pr-16'
+                                    : localFeedback === 'incorrect'
+                                        ? 'border-red-500/50 bg-red-500/5 animate-shake'
+                                        : localFeedback === 'correct'
+                                            ? 'border-emerald-500/50 bg-emerald-500/5'
+                                            : 'border-white/5 focus:border-indigo-500/40 hover:border-white/10'
+                                    }`}
+                            />
+                            {isInputCompleted && (
+                                <div className="absolute right-6 top-6 text-indigo-400">
+                                    <CheckCircle className="w-6 h-6 animate-fade-in" />
+                                </div>
+                            )}
+                            {!isInputCompleted && (
+                                <div className="flex justify-end mt-3">
+                                    <button
+                                        onClick={validateAnswer}
+                                        disabled={revealing || !inputValue.trim()}
+                                        className="px-6 py-3.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:bg-slate-800 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg active:scale-95 flex items-center gap-2"
+                                    >
+                                        Enviar <Zap className="w-3 h-3" />
+                                    </button>
+                                </div>
+                            )}
                         </div>
+                    ) : (
+                        <>
+                            <input
+                                type="text"
+                                value={isInputCompleted ? (item.interactionData?.answer || inputValue) : inputValue}
+                                onChange={(e) => setInputValue(e.target.value)}
+                                disabled={isInputCompleted || revealing}
+                                placeholder={data.placeholder || 'Escribe aquí tu respuesta...'}
+                                className={`w-full bg-black/40 border-2 rounded-2xl py-4 px-6 pr-32 text-white transition-all outline-none font-medium placeholder:text-gray-600 ${isInputCompleted
+                                    ? 'border-indigo-500/50 text-indigo-200 bg-indigo-500/5'
+                                    : localFeedback === 'incorrect'
+                                        ? 'border-red-500/50 bg-red-500/5 animate-shake'
+                                        : localFeedback === 'correct'
+                                            ? 'border-emerald-500/50 bg-emerald-500/5'
+                                            : 'border-white/5 focus:border-indigo-500/40 hover:border-white/10'
+                                    }`}
+                                onKeyDown={(e) => e.key === 'Enter' && validateAnswer()}
+                            />
+                            {!isInputCompleted && (
+                                <button
+                                    onClick={validateAnswer}
+                                    disabled={revealing || !inputValue.trim()}
+                                    className="absolute right-2 top-2 bottom-2 px-6 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:bg-slate-800 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg active:scale-95 flex items-center gap-2"
+                                >
+                                    Enviar <Zap className="w-3 h-3" />
+                                </button>
+                            )}
+                            {isInputCompleted && (
+                                <div className="absolute right-6 top-1/2 -translate-y-1/2 text-indigo-400">
+                                    <CheckCircle className="w-6 h-6 animate-fade-in" />
+                                </div>
+                            )}
+                        </>
                     )}
                 </div>
 
                 <div className="flex items-center justify-between gap-4">
                     <div className="flex flex-wrap gap-3">
+                        {/* Required/Optional status indicator */}
+                        {!isInputCompleted && (
+                            <>
+                                {!!item.is_required && (
+                                    <span className="text-[10px] font-black text-orange-400 uppercase tracking-widest flex items-center gap-1.5 bg-orange-500/10 px-3 py-1.5 rounded-lg border border-orange-500/20 shadow-lg">
+                                        <Clock className="w-3.5 h-3.5" /> Requerido
+                                    </span>
+                                )}
+                                <span className={`text-[10px] font-black uppercase tracking-widest border px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${item.is_required ? 'bg-white/5 text-gray-500 border-white/5' : 'bg-blue-500/10 text-blue-400 border-blue-500/20'}`}>
+                                    <Eye className="w-3.5 h-3.5" /> {item.is_required ? 'Pendiente' : 'Opcional'}
+                                </span>
+                            </>
+                        )}
                         {localFeedback === 'incorrect' && (
                             <span className="text-[10px] font-black text-red-500 uppercase tracking-widest animate-fade-in flex items-center gap-2 bg-red-500/10 px-3 py-1.5 rounded-lg border border-red-500/10 shadow-lg shadow-red-500/5">
                                 <AlertTriangle className="w-4 h-4" /> Respuesta Incorrecta

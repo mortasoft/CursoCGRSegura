@@ -130,7 +130,7 @@ class AuthService {
 
             // Gestionar racha de login
             try {
-                const { checkComboX5Badge } = require('../utils/badges');
+                const { checkComboX5Badge } = require('./badgeService');
                 await checkComboX5Badge(user.id);
             } catch (streakError) {
                 logger.error('Error procesando racha de login:', streakError);

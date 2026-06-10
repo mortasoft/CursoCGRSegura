@@ -1,6 +1,7 @@
 const TRACEABLE_CONTENT_TYPES = [
     'video', 
     'link', 
+    'file',
     'confirmation', 
     'interactive_input', 
     'multiple_choice', 
@@ -11,7 +12,8 @@ const TRACEABLE_CONTENT_TYPES = [
     'dork_search',
     'data_tetris',
     'terms_trap',
-    'forum'
+    'forum',
+    'drive_auditor'
 ];
 
 module.exports = {

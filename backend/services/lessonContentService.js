@@ -38,6 +38,28 @@ class LessonContentService {
         const completedSurveys = await db.query('SELECT survey_id FROM survey_responses WHERE user_id = ?', [userId]);
         const completedSurveyIds = completedSurveys.map(s => s.survey_id);
 
+        // Puntos ganados por el usuario en quizzes (reference_id = quiz_id)
+        const quizPointsEarned = await db.query(
+            `SELECT reference_id as quiz_id, COALESCE(SUM(points_earned), 0) as total
+             FROM gamification_activities
+             WHERE user_id = ? AND activity_type = 'quiz_passed'
+             GROUP BY reference_id`,
+            [userId]
+        );
+        const quizPointsMap = {};
+        quizPointsEarned.forEach(r => { quizPointsMap[r.quiz_id] = parseInt(r.total) || 0; });
+
+        // Puntos ganados en surveys y tareas aprobadas (reference_id = content_id)
+        const otherPointsEarned = await db.query(
+            `SELECT reference_id as content_id, COALESCE(SUM(points_earned), 0) as total
+             FROM gamification_activities
+             WHERE user_id = ? AND activity_type IN ('survey_completed', 'task_approved')
+             GROUP BY reference_id`,
+            [userId]
+        );
+        const otherPointsMap = {};
+        otherPointsEarned.forEach(r => { otherPointsMap[r.content_id] = parseInt(r.total) || 0; });
+
         return contents.map(item => {
             let userSubmission = null;
             if (item.asub_id) {
@@ -70,6 +92,14 @@ class LessonContentService {
                 isCompleted = !!item.completed_at;
             }
 
+            // Calcular puntos ganados por el usuario en esta actividad
+            let pointsEarned = 0;
+            if (item.content_type === 'quiz' && itemData.quiz_id) {
+                pointsEarned = quizPointsMap[parseInt(itemData.quiz_id)] || 0;
+            } else if (item.content_type === 'survey' || item.content_type === 'assignment') {
+                pointsEarned = otherPointsMap[item.id] || 0;
+            }
+
             return {
                 id: item.id,
                 lesson_id: item.lesson_id,
@@ -78,6 +108,7 @@ class LessonContentService {
                 data: itemData,
                 order_index: item.order_index,
                 points: item.points,
+                pointsEarned,
                 is_required: item.is_required,
                 submission: userSubmission,
                 interactionData: item.interaction_data ? (typeof item.interaction_data === 'string' ? JSON.parse(item.interaction_data) : item.interaction_data) : null,
@@ -87,6 +118,7 @@ class LessonContentService {
             };
         });
     }
+
 
     async trackContentProgress(contentId, userId, responseData = null) {
         const data = responseData && Object.keys(responseData).length > 0 ? JSON.stringify(responseData) : null;
@@ -233,7 +265,7 @@ class LessonContentService {
                             [submission.user_id, points, points]
                         );
                         // Sincronizar nivel después de sumar puntos
-                        const { syncUserLevel } = require('../utils/gamification');
+                        const { syncUserLevel } = require('./gamificationService');
                         await syncUserLevel(submission.user_id);
                     }
 
@@ -339,7 +371,7 @@ class LessonContentService {
         }
 
         // Ensure numeric fields are correctly handled (especially when coming from FormData as strings)
-        const cleanOrderIndex = (order_index === 'undefined' || order_index === 'null' || order_index === '') ? null : order_index;
+        const cleanOrderIndex = (order_index === 'undefined' || order_index === 'null' || order_index === '' || order_index === undefined) ? null : order_index;
         const cleanPoints = (points === 'undefined' || points === 'null' || points === '') ? null : points;
 
         await db.query(
@@ -356,6 +388,34 @@ class LessonContentService {
     }
 
     async deleteContent(id) {
+        const [content] = await db.query('SELECT content_type, data FROM lesson_contents WHERE id = ?', [id]);
+        if (content) {
+            let data = {};
+            try {
+                data = typeof content.data === 'string' ? JSON.parse(content.data) : (content.data || {});
+            } catch (e) {
+                logger.error('Error parsing content data on deletion:', e);
+            }
+            if (content.content_type === 'quiz' && data.quiz_id) {
+                const quizId = data.quiz_id;
+                const [otherReferences] = await db.query(
+                    `SELECT COUNT(*) as count FROM lesson_contents WHERE id != ? AND JSON_VALUE(data, '$.quiz_id') = ?`,
+                    [id, quizId]
+                );
+                if (otherReferences && otherReferences.count === 0) {
+                    await db.query('DELETE FROM quizzes WHERE id = ?', [quizId]);
+                }
+            } else if (content.content_type === 'survey' && data.survey_id) {
+                const surveyId = data.survey_id;
+                const [otherReferences] = await db.query(
+                    `SELECT COUNT(*) as count FROM lesson_contents WHERE id != ? AND JSON_VALUE(data, '$.survey_id') = ?`,
+                    [id, surveyId]
+                );
+                if (otherReferences && otherReferences.count === 0) {
+                    await db.query('DELETE FROM surveys WHERE id = ?', [surveyId]);
+                }
+            }
+        }
         return await db.query('DELETE FROM lesson_contents WHERE id = ?', [id]);
     }
 

@@ -31,9 +31,9 @@ export default function BulletsEditor({ bulletItems, onChange }) {
                             onChange={e => handleUpdate(idx, 'title', e.target.value)}
                         />
                         <textarea
-                            rows="2"
+                            rows="5"
                             placeholder="Descripción ejecutiva..."
-                            className="w-full bg-transparent border-0 p-0 text-gray-500 font-medium outline-none text-xs leading-relaxed resize-none custom-scrollbar"
+                            className="w-full bg-transparent border-0 p-0 text-gray-400 font-medium outline-none text-sm leading-relaxed resize-y custom-scrollbar"
                             value={bullet.text}
                             onChange={e => handleUpdate(idx, 'text', e.target.value)}
                         />

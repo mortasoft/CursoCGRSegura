@@ -91,7 +91,7 @@ export default function LessonCompletion({
                                 <Clock className="w-5 h-5 text-orange-400" />
                             </div>
                             <p className="text-orange-400 text-xs font-bold text-left">
-                                Debes revisar todo el contenido obligatorio (videos y enlaces) antes de poder finalizar esta lección.
+                                Debes revisar todo el contenido obligatorio (videos, enlaces y archivos) antes de poder finalizar esta lección.
                             </p>
                         </div>
                     ) : (

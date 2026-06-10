@@ -116,7 +116,7 @@ CREATE TABLE IF NOT EXISTS quiz_questions (
     id INT AUTO_INCREMENT PRIMARY KEY,
     quiz_id INT NOT NULL,
     question_text TEXT NOT NULL,
-    question_type ENUM('multiple_choice', 'true_false', 'multiple_select', 'mfa_defender', 'hack_neighbor', 'data_tetris') DEFAULT 'multiple_choice',
+    question_type ENUM('multiple_choice', 'true_false', 'multiple_select', 'mfa_defender', 'hack_neighbor', 'data_tetris', 'video') DEFAULT 'multiple_choice',
     image_url TEXT,
     points INT DEFAULT 1,
     order_index INT NOT NULL,
@@ -144,7 +144,7 @@ CREATE TABLE IF NOT EXISTS lesson_contents (
     id INT AUTO_INCREMENT PRIMARY KEY,
     lesson_id INT NOT NULL,
     title VARCHAR(255),
-    content_type ENUM('text', 'video', 'image', 'file', 'link', 'quiz', 'survey', 'assignment', 'note', 'heading', 'bullets', 'confirmation', 'interactive_input', 'password_tester', 'multiple_choice', 'mfa_defender', 'hack_neighbor', 'dork_search', 'categorization', 'data_tetris', 'forum', 'terms_trap') NOT NULL,
+    content_type ENUM('text', 'video', 'image', 'file', 'link', 'quiz', 'survey', 'assignment', 'note', 'heading', 'bullets', 'confirmation', 'interactive_input', 'password_tester', 'multiple_choice', 'mfa_defender', 'hack_neighbor', 'dork_search', 'categorization', 'data_tetris', 'forum', 'terms_trap', 'drive_auditor') NOT NULL,
     data JSON COMMENT 'Almacena contenido HTML, URLs, ID de quiz, config de archivo, etc.',
     order_index INT NOT NULL,
     points INT DEFAULT 0,
@@ -408,6 +408,34 @@ CREATE TABLE IF NOT EXISTS activity_logs (
     INDEX idx_created_at (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Tabla de posts para foros
+CREATE TABLE IF NOT EXISTS forum_posts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    content_id INT NOT NULL,
+    user_id INT NOT NULL,
+    parent_id INT DEFAULT NULL,
+    message TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (content_id) REFERENCES lesson_contents(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (parent_id) REFERENCES forum_posts(id) ON DELETE CASCADE,
+    INDEX idx_content_id (content_id),
+    INDEX idx_user_id (user_id),
+    INDEX idx_parent_id (parent_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tabla de upvotes para foros
+CREATE TABLE IF NOT EXISTS forum_post_upvotes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    post_id INT NOT NULL,
+    user_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (post_id) REFERENCES forum_posts(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_user_post_upvote (user_id, post_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Insertar módulos iniciales del curso CGR Segur@
 INSERT INTO modules (module_number, title, description, month, duration_minutes, is_published, order_index) VALUES
 (1, 'Fundamentos de Seguridad de la Información', 'Conceptos básicos de seguridad, marco normativo ISO 27001:2022, roles y responsabilidades, gestión de contraseñas y autenticación 2FA', 'Febrero', 120, TRUE, 1),
@@ -529,4 +557,41 @@ CREATE TABLE IF NOT EXISTS forum_post_upvotes (
     UNIQUE KEY unique_user_post_upvote (user_id, post_id),
     INDEX idx_post_id (post_id),
     INDEX idx_user_id (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tabla de reportes de auditoría de Drive
+CREATE TABLE IF NOT EXISTS drive_audit_reports (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    uuid VARCHAR(36) NOT NULL UNIQUE,
+    user_id INT NOT NULL,
+    status ENUM('running', 'completed', 'failed') DEFAULT 'running',
+    started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    completed_at TIMESTAMP NULL,
+    total_scanned INT DEFAULT 0,
+    risk_count INT DEFAULT 0,
+    sharing_map_json JSON COMMENT 'Mapa de compartición (private, restricted, domain, link, public)',
+    external_domains_json JSON COMMENT 'Lista y conteo de dominios externos',
+    error_message TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_user_id (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tabla de archivos de auditoría de Drive
+CREATE TABLE IF NOT EXISTS drive_audit_files (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    report_id INT NOT NULL,
+    file_id VARCHAR(255) NOT NULL,
+    file_name VARCHAR(500) NOT NULL,
+    mime_type VARCHAR(100),
+    size_kb INT DEFAULT 0,
+    owner_name VARCHAR(255),
+    owner_email VARCHAR(255),
+    sharing_level ENUM('Privado', 'Restringido', 'Dominio con Enlace', 'Dominio Publico', 'Con Enlace', 'Publico', 'Desconocido') DEFAULT 'Desconocido',
+    shared_with_emails TEXT,
+    file_link TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (report_id) REFERENCES drive_audit_reports(id) ON DELETE CASCADE,
+    INDEX idx_report_id (report_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
