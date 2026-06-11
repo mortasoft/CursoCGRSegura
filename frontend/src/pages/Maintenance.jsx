@@ -8,7 +8,7 @@ export default function Maintenance() {
     const { goHome } = useMaintenance();
 
     return (
-        <div className="h-screen w-full bg-[#0d1127] flex items-center justify-center p-4 relative overflow-hidden font-sans select-none">
+        <div className="h-screen w-full bg-[#161b33] flex items-center justify-center p-4 relative overflow-hidden font-sans select-none">
             <MaintenanceBackground />
 
             <div className="max-w-xl w-full text-center space-y-8 relative z-10">

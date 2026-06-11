@@ -65,7 +65,6 @@ export default function CertificateView() {
 
     return (
         <div className="min-h-screen bg-[#0d1127] p-4 md:p-12 flex flex-col items-center overflow-auto animate-fade-in relative">
-
             {/* Action Bar - Pure UI Layer */}
             <div className="w-full max-w-6xl flex flex-col md:flex-row justify-between items-center mb-12 print:hidden gap-6 bg-slate-900/40 p-6 rounded-[2.5rem] border border-white/5 backdrop-blur-xl shadow-2xl">
                 <button

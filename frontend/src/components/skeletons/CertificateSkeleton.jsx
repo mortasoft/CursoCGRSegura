@@ -3,7 +3,7 @@ import Skeleton from '../Skeleton';
 
 export const CertificateSkeleton = () => {
     return (
-        <div className="min-h-screen bg-[#0d1127] p-8 flex flex-col items-center animate-fade-in">
+        <div className="min-h-screen bg-[#161b33] p-8 flex flex-col items-center animate-fade-in">
             <div className="w-full max-w-5xl flex justify-between items-center mb-8">
                 <Skeleton className="h-10 w-32 rounded-xl" />
                 <Skeleton className="h-10 w-48 rounded-xl" />

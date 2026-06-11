@@ -41,7 +41,7 @@ class AuthService {
         }
 
         const payload = googleResponse.data;
-        const email = payload.email;
+        const email = payload.email.toLowerCase();
         const googleId = payload.sub;
         const given_name = payload.given_name || '';
         const family_name = payload.family_name || '';
@@ -52,22 +52,38 @@ class AuthService {
         const finalPicture = localPicture || picture;
 
         // Buscar o crear usuario
-        let userResults = await db.query(
-            'SELECT * FROM users WHERE email = ? OR google_id = ?',
-            [email, googleId]
-        );
+        let userResults;
+        try {
+            userResults = await db.query(
+                'SELECT * FROM users WHERE email = ? OR google_id = ?',
+                [email, googleId]
+            );
+        } catch (dbError) {
+            logger.error('Error de base de datos en login:', dbError.message);
+            throw new AppError('Error de conexión con la base de datos de seguridad.', 500);
+        }
 
         let user;
+        const defaultAdminEmail = process.env.DEFAULT_ADMIN_EMAIL ? process.env.DEFAULT_ADMIN_EMAIL.toLowerCase() : null;
+        const isDefaultAdmin = defaultAdminEmail && email === defaultAdminEmail;
+
         if (userResults.length === 0) {
+            logger.info(`Buscando usuario en directorio oficial: ${email}`);
             // Buscar información en el directorio maestro de funcionarios
-            const [directoryInfo] = await db.query(
+            const directoryResults = await db.query(
                 'SELECT department, full_name, position FROM staff_directory WHERE email = ?',
                 [email]
             );
+            const directoryInfo = directoryResults.length > 0 ? directoryResults[0] : null;
 
-            // Determinar rol inicial
-            const defaultAdminEmail = process.env.DEFAULT_ADMIN_EMAIL;
-            const role = (defaultAdminEmail && email.toLowerCase() === defaultAdminEmail.toLowerCase()) ? 'admin' : 'student';
+            // Si no está en el directorio Y no es el admin por defecto, rechazar
+            if (!directoryInfo && !isDefaultAdmin) {
+                logger.warn(`Usuario no encontrado en directorio oficial: ${email}`);
+                throw new AppError('Su correo no está registrado en el directorio oficial de la institución.', 403);
+            }
+
+            // Determinar rol (Si es admin por defecto o si el directorio dice algo, aunque prioridad al .env)
+            const role = isDefaultAdmin ? 'admin' : 'student';
 
             // Crear nuevo usuario
             const result = await db.query(
@@ -83,8 +99,8 @@ class AuthService {
                     family_name,
                     finalPicture,
                     role,
-                    directoryInfo?.department || null,
-                    directoryInfo?.position || null
+                    directoryInfo?.department || (isDefaultAdmin ? 'Administración' : null),
+                    directoryInfo?.position || (isDefaultAdmin ? 'Súper Administrador' : null)
                 ]
             );
 
@@ -97,26 +113,16 @@ class AuthService {
                 [user.id]
             );
 
-            logger.info(`Nuevo usuario registrado: ${email}`);
+            logger.info(`Nuevo usuario registrado mediante Google (Admin Bypass: ${isDefaultAdmin}): ${email}`);
         } else {
             user = userResults[0];
 
-            // Si el usuario existe pero no tiene departamento o puesto, y el directorio sí lo tiene, actualizarlo
-            const [directoryInfo] = await db.query(
-                'SELECT department, position FROM staff_directory WHERE email = ?',
-                [email]
-            );
-
-            if (directoryInfo) {
-                if (!user.department || !user.position) {
-                    await db.query(
-                        'UPDATE users SET department = ?, position = ? WHERE id = ?',
-                        [directoryInfo.department || user.department, directoryInfo.position || user.position, user.id]
-                    );
-                }
+            if (!user.is_active) {
+                logger.warn(`Intento de acceso a cuenta desactivada: ${email}`);
+                throw new AppError('Su cuenta ha sido desactivada por el administrador.', 403);
             }
 
-            // Actualizar última conexión y foto de perfil
+            // Actualizar datos existentes
             await db.query(
                 'UPDATE users SET last_login = NOW(), profile_picture = ? WHERE id = ?',
                 [finalPicture || user.profile_picture, user.id]
@@ -133,10 +139,6 @@ class AuthService {
             // Recargar datos actualizados
             const updatedUserResults = await db.query('SELECT * FROM users WHERE id = ?', [user.id]);
             user = updatedUserResults[0];
-        }
-
-        if (!user.is_active) {
-            throw new AppError('Su cuenta ha sido desactivada. Contacte al administrador.', 403);
         }
 
         return user;

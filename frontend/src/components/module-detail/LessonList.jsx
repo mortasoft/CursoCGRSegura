@@ -15,8 +15,8 @@ import {
 export default function LessonList({ lessons, isAdmin, onLessonClick }) {
     return (
         <div className="space-y-6">
-            <h2 className="text-2xl font-black text-white tracking-tight uppercase flex items-center gap-3">
-                <div className="w-2 h-8 bg-primary-500 rounded-full"></div>
+            <h2 className="text-2xl font-black text-[#582c19] tracking-tight uppercase flex items-center gap-3">
+                <div className="w-2 h-8 bg-[#8f032a] rounded-full"></div>
                 Contenido del Módulo
             </h2>
 

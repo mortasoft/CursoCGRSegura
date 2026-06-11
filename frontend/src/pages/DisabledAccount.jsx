@@ -13,7 +13,7 @@ export default function DisabledAccount() {
     };
 
     return (
-        <div className="h-screen w-full bg-[#0d1127] flex items-center justify-center p-4 relative overflow-hidden font-sans select-none">
+        <div className="h-screen w-full bg-[#161b33] flex items-center justify-center p-4 relative overflow-hidden font-sans select-none">
             {/* Infrastructure Layer (Background) */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 {/* Strategic Gloom */}

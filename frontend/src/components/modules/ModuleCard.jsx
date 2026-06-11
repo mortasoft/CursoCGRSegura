@@ -23,7 +23,16 @@ export default function ModuleCard({ module, user, viewAsStudent }) {
         ? releaseDate.toLocaleDateString('es-CR', { day: 'numeric', month: 'long' })
         : module.month;
 
-    const cardSrc = new URL(`../../assets/card-banner/Tar-Sec-${(module.module_number ?? 0).toString().padStart(2, '0')}.svg`, import.meta.url).href;
+    const moduleNumber = module.module_number ?? 1;
+    const publicJpg = `/images/modules/Banner-moodulo-${moduleNumber - 1}.jpg`;
+    const fallbackX = '/images/modules/Banner-moodulo-X.jpg';
+    const svgFallback = new URL(`../../assets/card-banner/Tar-Sec-${(moduleNumber).toString().padStart(2, '0')}.svg`, import.meta.url).href;
+
+    const [imgSrc, setImgSrc] = React.useState(publicJpg);
+
+    React.useEffect(() => {
+        setImgSrc(publicJpg);
+    }, [publicJpg]);
 
     return (
         <div className="relative h-full">
@@ -35,41 +44,56 @@ export default function ModuleCard({ module, user, viewAsStudent }) {
                         toast.error(module.lock_reason || 'Módulo Bloqueado', { id: 'module-locked-warning' });
                     }
                 }}
-                className={`group relative flex flex-col h-full bg-[#151B2E]/40 border rounded-[2rem] overflow-hidden transition-all duration-500 ${isLocked
-                    ? 'grayscale-[0.5] opacity-80 cursor-not-allowed border-white/5'
+                className={`group relative flex flex-col h-full border rounded-[2rem] overflow-hidden transition-all duration-500 ${isLocked
+                    ? 'bg-[var(--card-bg)]/25 border-[var(--card-border)] opacity-50 grayscale-[0.6] cursor-not-allowed shadow-[inset_4px_4px_10px_rgba(168,145,116,0.15)] pointer-events-none'
                     : module.completionPercentage === 100
-                        ? 'bg-emerald-500/[0.03] border-emerald-500/20 shadow-[0_0_30px_rgba(16,185,129,0.08)] hover:border-emerald-500/40'
-                        : 'bg-[#151B2E] border-white/5 hover:border-white/10 hover:shadow-[0_20px_50px_rgba(0,0,0,0.3)] hover:-translate-y-2 cursor-pointer'
+                        ? 'bg-[var(--success-card-bg)] border-[var(--success-card-border)] hover:border-[var(--success)]/60 shadow-[6px_6px_16px_rgba(168,145,116,0.25),-2px_-2px_8px_rgba(255,255,255,0.4)] hover:shadow-[8px_8px_20px_rgba(168,145,116,0.3),-4px_-4px_12px_rgba(255,255,255,0.5)] hover:-translate-y-2'
+                        : 'bg-[var(--card-bg)] border-t-[rgba(255,255,255,0.3)] border-l-[rgba(255,255,255,0.3)] border-b-[rgba(0,0,0,0.03)] border-r-[rgba(0,0,0,0.03)] shadow-[6px_6px_16px_rgba(168,145,116,0.25),-2px_-2px_8px_rgba(255,255,255,0.4)] hover:shadow-[8px_8px_20px_rgba(168,145,116,0.3),-4px_-4px_12px_rgba(255,255,255,0.5)] hover:-translate-y-2 cursor-pointer'
                     }`}
             >
                 {/* Banner Image */}
                 <div className="h-36 w-full relative overflow-hidden">
                     <img
-                        src={cardSrc}
+                        src={imgSrc}
                         alt={module.title}
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        className={`w-full h-full object-cover transition-transform duration-700 ${
+                            isLocked ? 'grayscale opacity-40' : 'group-hover:scale-110'
+                        } ${
+                            imgSrc === publicJpg || imgSrc === fallbackX ? 'object-left' : 'object-center'
+                        }`}
                         onError={(e) => {
-                            if (module.image_url) e.target.src = module.image_url;
-                            else e.target.style.display = 'none';
+                            if (imgSrc === publicJpg) {
+                                setImgSrc(fallbackX);
+                            } else if (imgSrc === fallbackX) {
+                                setImgSrc(svgFallback);
+                            } else if (imgSrc === svgFallback && module.image_url) {
+                                setImgSrc(module.image_url);
+                            } else {
+                                e.target.style.display = 'none';
+                            }
                         }}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/40 to-transparent"></div>
+
                 </div>
 
-                {/* Accent line top */}
-                <div className={`absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r ${isLocked ? 'from-gray-600 to-gray-400' : module.completionPercentage === 100 ? 'from-emerald-600 to-teal-500' : 'from-primary-500 to-secondary-500'} opacity-60 z-20`}></div>
+
 
                 <div className="flex-1 flex flex-col p-5 md:p-6">
                     {/* Badge and Number */}
                     <div className="flex justify-between items-center mb-5">
                         <div className="flex items-center gap-4">
-                            <div className={`w-14 h-14 bg-[#0B0F1C] rounded-2xl border flex items-center justify-center text-2xl font-black transition-all shadow-2xl shrink-0 ${module.completionPercentage === 100
-                                ? 'border-emerald-500/30 text-emerald-500 shadow-emerald-500/10'
-                                : 'border-white/10 text-white group-hover:text-primary-400'
+                            <div className={`w-14 h-14 rounded-2xl border flex items-center justify-center text-2xl font-black transition-all shadow-[inset_2px_2px_5px_rgba(0,0,0,0.05),2px_2px_8px_rgba(168,145,116,0.15)] shrink-0 ${
+                                module.completionPercentage === 100
+                                    ? 'border-[var(--success-card-border)] bg-[var(--success-card-bg)] text-[var(--success)]'
+                                    : 'bg-[#582c19]/10 border-[#582c19]/30 text-[#582c19] group-hover:bg-primary-500 group-hover:text-white group-hover:border-transparent'
                                 }`}>
                                 {(module.module_number ?? 0) < 10 ? `0${module.module_number}` : module.module_number}
                             </div>
-                            <span className={`${isLocked ? 'bg-slate-700/50 text-gray-400 border border-gray-600' : 'bg-primary-500/10 border border-primary-500/20 text-primary-400'} py-1.5 px-4 rounded-xl text-[10px] uppercase font-black tracking-widest flex items-center gap-1.5 min-w-[120px] justify-center shadow-sm`}>
+                            <span className={`${
+                                isLocked 
+                                    ? 'bg-slate-700/50 text-gray-400 border border-gray-600' 
+                                    : 'bg-[var(--text-color)]/5 border border-[#582c19]/30 text-[var(--text-color)]/70 group-hover:bg-primary-500/10 group-hover:border-primary-500/20 group-hover:text-primary-500'
+                            } py-1.5 px-4 rounded-xl text-[10px] uppercase font-black tracking-widest flex items-center gap-1.5 min-w-[120px] justify-center shadow-sm transition-all duration-300`}>
                                 {isLocked ? <Lock className="w-3.5 h-3.5" /> : <Calendar className="w-3.5 h-3.5" />}
                                 {formattedDate}
                             </span>
@@ -80,7 +104,7 @@ export default function ModuleCard({ module, user, viewAsStudent }) {
                     <div className="mb-6">
                         <div className="flex justify-between items-start gap-4 mb-2">
                             <h3 className={`text-xl font-bold transition-colors leading-tight min-h-[3rem] ${
-                                module.completionPercentage === 100 ? 'text-emerald-400' : 'text-white group-hover:text-primary-400'
+                                module.completionPercentage === 100 ? 'text-[var(--success)]' : 'text-[var(--text-color)] group-hover:text-primary-500'
                             }`}>
                                 {module.title}
                             </h3>
@@ -88,19 +112,19 @@ export default function ModuleCard({ module, user, viewAsStudent }) {
                                 <CheckCircle className="w-6 h-6 text-emerald-500 flex-shrink-0 mt-1 drop-shadow-[0_0_8px_rgba(16,185,129,0.4)]" />
                             )}
                         </div>
-                        <p className="text-gray-400 text-sm line-clamp-3 leading-relaxed font-medium opacity-80">
+                        <p className="text-[#582c19] text-sm line-clamp-3 leading-relaxed font-medium">
                             {module.description}
                         </p>
                     </div>
 
                     {/* Stats Footer */}
-                    <div className="pt-5 mt-auto border-t border-white/5 space-y-4">
+                    <div className="pt-5 mt-auto border-t border-gray-200 dark:border-white/5 space-y-4">
                         <div className="flex items-center gap-6">
-                            <div className="flex items-center gap-2 text-gray-500">
+                            <div className="flex items-center gap-2 text-[#582c19]">
                                 <BookOpen className="w-4 h-4" />
                                 <span className="text-[11px] font-bold uppercase tracking-widest">{module.total_lessons || 0} Lecciones</span>
                             </div>
-                            <div className="flex items-center gap-2 text-gray-500">
+                            <div className="flex items-center gap-2 text-[#582c19]">
                                 <Clock className="w-4 h-4" />
                                 <span className="text-[11px] font-bold uppercase tracking-widest">{module.total_duration || 0} min</span>
                             </div>
@@ -128,11 +152,11 @@ export default function ModuleCard({ module, user, viewAsStudent }) {
                             ) : (
                                 <>
                                     <div className="space-y-2">
-                                        <div className="flex justify-between items-end text-[9px] font-bold uppercase tracking-widest">
-                                            <span className={module.completionPercentage === 100 ? 'text-emerald-500/50' : 'text-gray-500'}>PROGRESO</span>
-                                            <span className={module.completionPercentage === 100 ? 'text-emerald-400' : 'text-white'}>{module.completionPercentage || 0}%</span>
+                                        <div className="flex justify-between items-end text-[9px] font-bold uppercase tracking-widest text-[#582c19]">
+                                            <span>PROGRESO</span>
+                                            <span>{module.completionPercentage || 0}%</span>
                                         </div>
-                                        <div className={`h-1.5 rounded-full overflow-hidden ${module.completionPercentage === 100 ? 'bg-emerald-950/30' : 'bg-slate-950'}`}>
+                                        <div className={`h-1.5 rounded-full overflow-hidden ${module.completionPercentage === 100 ? 'bg-emerald-500/10' : 'bg-gray-200 dark:bg-black/20'}`}>
                                             <div
                                                 className={`h-full transition-all duration-1000 shadow-sm ${
                                                     module.completionPercentage === 100 
@@ -147,7 +171,7 @@ export default function ModuleCard({ module, user, viewAsStudent }) {
                                     <div className={`w-full py-3 rounded-xl text-[9px] font-bold uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 border ${
                                         module.completionPercentage === 100
                                         ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 group-hover:bg-emerald-500 group-hover:text-white'
-                                        : 'bg-primary-500/10 text-primary-400 border-primary-500/20 group-hover:bg-primary-500 group-hover:text-white'
+                                        : 'bg-[var(--text-color)]/5 text-[var(--text-color)] border-[#582c19]/30 group-hover:bg-primary-500 group-hover:text-white group-hover:border-transparent'
                                     }`}>
                                         {module.completionPercentage === 100 ? (
                                             <>FINALIZADO <CheckCircle className="w-4 h-4" /></>

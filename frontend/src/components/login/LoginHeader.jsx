@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 
 export default function LoginHeader() {
     return (
-        <div className="flex flex-col items-center text-center gap-6">
+        <div className="flex flex-col items-center text-center gap-2">
             <motion.div
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
@@ -12,29 +12,39 @@ export default function LoginHeader() {
             >
                 <div className="absolute inset-0 bg-white/5 rounded-full blur-2xl animate-pulse"></div>
                 <img
-                    src="/images/logo-cgr-blanco.webp"
+                    src="/images/Logotipo-CGR-transp.png"
                     alt="CGR Logo"
                     className="w-full h-full object-contain filter drop-shadow-[0_20px_50px_rgba(255,255,255,0.15)] relative z-10"
                 />
             </motion.div>
 
-            <div className="space-y-2">
-                <motion.h1
-                    initial={{ opacity: 0 }}
+            <div className="space-y-2 relative w-full flex justify-center">
+                <motion.div
+                    initial={{ scale: 1.1, opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.4 }}
-                    className="text-5xl md:text-6xl font-black text-white tracking-tighter leading-none"
+                    className="flex justify-center"
                 >
-                    CGR <span className="text-secondary-500">SEGUR@</span>
-                </motion.h1>
-                <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.5 }}
-                    className="text-gray-500 font-bold uppercase tracking-[0.3em] text-[10px] md:text-xs"
+                    <img
+                        src="/images/logo-mia.png"
+                        alt="MIA - Modelo Integrado de Aprendizaje"
+                        className="w-full max-w-md object-contain relative z-10"
+                    />
+                </motion.div>
+
+                {/* Colibrí (Hummingbird) */}
+                <motion.div
+                    initial={{ opacity: 0, x: 50, y: -20, rotate: 5 }}
+                    animate={{ opacity: 1, x: 0, y: 0, rotate: 0 }}
+                    transition={{ delay: 0.6, duration: 1.2, type: "spring", stiffness: 60 }}
+                    className="absolute -right-72 md:-right-86 top-[-200px] md:top-[-230px] w-64 h-64 md:w-96 md:h-96 pointer-events-none z-20"
                 >
-                    Programa de Concientización en Ciberseguridad
-                </motion.p>
+                    <img
+                        src="/images/colibri.svg"
+                        alt="Colibrí"
+                        className="w-full h-full object-contain"
+                    />
+                </motion.div>
             </div>
         </div>
     );

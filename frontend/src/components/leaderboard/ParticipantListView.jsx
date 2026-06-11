@@ -38,7 +38,7 @@ export default function ParticipantListView({
     return (
         <div className="space-y-6">
             <div className="space-y-2">
-                <div className="grid grid-cols-12 px-8 py-2 text-[10px] font-black text-[var(--text-muted)] uppercase tracking-widest">
+                <div className="grid grid-cols-12 px-8 py-2 text-[10px] font-black text-[#582c19] uppercase tracking-widest">
                     <div className="col-span-2 md:col-span-1 text-center">Posición</div>
                     <div className="col-span-4 md:col-span-5 px-6">Funcionario</div>
                     <div className="hidden md:block col-span-3 text-center">Área / Unidad</div>
@@ -97,7 +97,7 @@ export default function ParticipantListView({
                 })}
 
                 {participants.length === 0 && (
-                    <div className="py-12 text-center text-[var(--text-muted)] text-sm font-bold uppercase tracking-widest">
+                    <div className="py-12 text-center text-[#582c19] text-sm font-bold uppercase tracking-widest">
                         No se encontraron funcionarios
                     </div>
                 )}

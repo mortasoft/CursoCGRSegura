@@ -6,7 +6,8 @@ export default function ModuleHero({ module, onBack, onStart, onCelebrate }) {
         .filter(l => !l.is_optional)
         .reduce((acc, l) => acc + (l.duration_minutes || 0), 0);
 
-    const bannerSrc = new URL(`../../assets/section-banner/Ban-Sec-${(module.module_number ?? 0).toString().padStart(2, '0')}.svg`, import.meta.url).href;
+    const sectionNumber = module.module_number ?? 0;
+    const bannerSrc = `/images/modules/sections/Banner-seccion-modulo-${sectionNumber}.jpg`;
 
     return (
         <div className="relative rounded-[2.5rem] overflow-hidden bg-slate-800/40 border border-white/5 shadow-2xl">
@@ -15,12 +16,12 @@ export default function ModuleHero({ module, onBack, onStart, onCelebrate }) {
                 <img
                     src={bannerSrc}
                     alt=""
-                    className="w-full h-full object-cover opacity-20"
+                    className="w-full h-full object-cover opacity-80"
                     onError={(e) => {
                         if (module.image_url) e.target.src = module.image_url;
                     }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-r from-[#0d1127] via-[#0d1127]/60 to-transparent"></div>
+
             </div>
 
             <div className="relative z-10 p-8 md:p-10 flex flex-col md:flex-row gap-8 items-center">
@@ -43,27 +44,27 @@ export default function ModuleHero({ module, onBack, onStart, onCelebrate }) {
                             <Clock className="w-3.5 h-3.5" />
                             {totalDuration} min
                         </div>
-                        <p className="text-gray-400 text-base leading-relaxed max-w-2xl font-medium">
+                        <p className="text-white text-base leading-relaxed max-w-2xl font-medium">
                             {module.description}
                         </p>
                     </div>
 
                     <div className="flex flex-wrap gap-8 pt-4">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-primary-400 border border-white/5">
+                            <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-primary-500 border border-black/5 shadow-sm">
                                 <FileText className="w-5 h-5" />
                             </div>
                             <div>
-                                <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">Contenido</p>
+                                <p className="text-[10px] text-white font-black uppercase tracking-widest">Contenido</p>
                                 <p className="text-white font-bold">{module.lessons.length} Lecciones</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-secondary-500 border border-white/5">
+                            <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-secondary-500 border border-black/5 shadow-sm">
                                 <Trophy className="w-5 h-5" />
                             </div>
                             <div>
-                                <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">Recompensa</p>
+                                <p className="text-[10px] text-white font-black uppercase tracking-widest">Recompensa</p>
                                 <p className="text-white font-bold">{module.points_to_earn || 0} Puntos</p>
                             </div>
                         </div>
@@ -80,7 +81,7 @@ export default function ModuleHero({ module, onBack, onStart, onCelebrate }) {
                                 stroke="currentColor"
                                 strokeWidth="12"
                                 fill="transparent"
-                                className="text-slate-900"
+                                className="text-white/50"
                             />
                             <circle
                                 cx="96"
@@ -96,7 +97,7 @@ export default function ModuleHero({ module, onBack, onStart, onCelebrate }) {
                         </svg>
                         <div className="absolute inset-0 flex flex-col items-center justify-center">
                             <span className="text-4xl font-black text-white">{module.completionPercentage || 0}%</span>
-                            <span className="text-[10px] text-gray-500 font-black uppercase tracking-widest">Progreso</span>
+                            <span className="text-[10px] text-white font-black uppercase tracking-widest">Progreso</span>
                         </div>
                     </div>
                     <button

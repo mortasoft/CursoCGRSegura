@@ -147,6 +147,30 @@ Si se agregan nuevas insignias en SVG, se deben procesar para generar sus versio
 docker exec cgrsegura-backend python3 /app/convert_high_quality.py
 ```
 
+### 🔄 Sincronización con Repositorio Padre
+
+Para mantener este repositorio (`mia`) actualizado con las mejoras del repositorio original sin enviar tus cambios locales al padre, sigue estos pasos:
+
+#### **Comandos de Sincronización**
+```powershell
+# 1. Asegurarte de estar en la rama principal
+git checkout main
+
+# 2. Descargar actualizaciones del repositorio original
+git fetch upstream
+
+# 3. Fusionar los cambios en tu código local
+git merge upstream/main
+
+# 4. (Opcional) Subir los cambios a TU repositorio en GitHub (mia)
+git push origin main
+```
+
+#### **Conceptos Clave**
+- **`origin`**: Tu repositorio personal (`mia`). Es donde debes subir tus cambios.
+- **`upstream`**: El repositorio original de la CGR. Solo se usa para descargar actualizaciones.
+- **Conflictos**: Si al hacer el `merge` aparecen conflictos, deberás resolverlos manualmente en el editor antes de hacer el commit final.
+
 ### 💾 Backup y Recuperación
 
 #### **Respaldo de Base de Datos**

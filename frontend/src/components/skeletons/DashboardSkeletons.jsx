@@ -1,7 +1,7 @@
 import Skeleton from '../Skeleton';
 
 export const ModuleCardSkeleton = () => (
-  <div className="flex flex-col p-6 rounded-2xl border border-white/5 bg-slate-900/50 space-y-4">
+  <div className="flex flex-col p-6 rounded-2xl border border-[var(--card-border)] bg-[var(--bg-color)]/90 space-y-4">
     <div className="flex justify-between items-start">
       <Skeleton className="h-6 w-3/4" />
       <Skeleton className="h-8 w-8 rounded-full" />
@@ -20,7 +20,7 @@ export const ModuleCardSkeleton = () => (
 );
 
 export const DashboardHeroSkeleton = () => (
-  <div className="relative rounded-[1.5rem] overflow-hidden bg-slate-800/20 border border-white/5 h-32 md:h-48">
+  <div className="relative rounded-[1.5rem] overflow-hidden bg-[var(--bg-color)]/90 border border-[var(--card-border)] h-32 md:h-48">
     <Skeleton className="h-full w-full rounded-none" />
   </div>
 );

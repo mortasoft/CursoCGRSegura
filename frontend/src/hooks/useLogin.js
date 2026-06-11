@@ -28,8 +28,9 @@ export function useLogin() {
                 }
             }
         },
-        onError: () => {
-            toast.error('Error al iniciar sesión con Google');
+        onError: (errorResponse) => {
+            console.error('Google Sign-In Error:', errorResponse);
+            toast.error('No se pudo establecer conexión con Google. Verifique su cuenta.');
         },
     });
 

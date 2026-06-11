@@ -8,13 +8,16 @@ export default function ModuleGrid({ modules }) {
     const navigate = useNavigate();
 
     return (
-        <div className="bg-[var(--card-bg)] px-8 py-5 rounded-3xl border border-[var(--card-border)] transition-colors duration-300">
+        <div 
+            className="px-8 py-5 rounded-3xl border border-[rgba(0,0,0,0.04)] shadow-[4px_4px_10px_rgba(168,145,116,0.3),-4px_-4px_10px_rgba(255,255,255,0.4)] bg-cover bg-center bg-no-repeat transition-all duration-300"
+            style={{ backgroundImage: "url('/images/Inicio-opcion-1.jpg')" }}
+        >
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6 text-left">
                 <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-[#6D71F9]/10 rounded-xl flex items-center justify-center border border-[#6D71F9]/20 text-[#6D71F9]">
+                    <div className="w-10 h-10 bg-[#8f032a]/10 rounded-xl flex items-center justify-center border border-[#8f032a]/20 text-[#8f032a]">
                         <BookOpen className="w-5 h-5" />
                     </div>
-                    <h2 className="text-2xl font-black text-[var(--text-color)] tracking-wider uppercase">
+                    <h2 className="text-2xl font-black text-[#582c19] tracking-wider uppercase">
                         MI RUTA DE APRENDIZAJE
                     </h2>
                 </div>
@@ -26,9 +29,9 @@ export default function ModuleGrid({ modules }) {
                         <ModuleCard key={module.id} module={module} navigate={navigate} />
                     ))
                 ) : (
-                    <div className="col-span-full py-24 text-center bg-[var(--bg-color)] rounded-[2rem] border border-dashed border-[var(--card-border)]">
+                    <div className="col-span-full py-24 text-center bg-white/40 backdrop-blur-sm rounded-[2rem] border border-dashed border-[var(--card-border)]">
                         <p className="text-gray-500 font-bold uppercase tracking-widest text-xs opacity-60">
-                            No se detectan módulos en esta región de datos.
+                            No hay módulos disponibles en este momento.
                         </p>
                     </div>
                 )}
@@ -58,12 +61,13 @@ function ModuleCard({ module, navigate }) {
     return (
         <div
             onClick={handleCardClick}
-            className={`group relative flex flex-col p-6 rounded-[2rem] border transition-all cursor-pointer overflow-hidden shadow-2xl ${isCompleted
-                    ? 'bg-[var(--success-card-bg)] border-[var(--success-card-border)] hover:border-[var(--success)]/60 shadow-emerald-500/10'
+            className={`group relative flex flex-col p-6 rounded-[2rem] border border-transparent transition-all cursor-pointer overflow-hidden ${
+                isCompleted
+                    ? 'bg-[var(--success-card-bg)] hover:border-emerald-500/40 shadow-[6px_6px_16px_rgba(168,145,116,0.25),-2px_-2px_8px_rgba(255,255,255,0.4)]'
                     : isUpcoming
-                        ? 'bg-[var(--bg-color)]/40 border-[var(--card-border)] opacity-80 hover:opacity-100'
-                        : 'bg-[var(--card-bg)] border-[var(--card-border)] hover:border-primary-500/40 hover:bg-[var(--bg-color)]/30'
-                }`}
+                        ? 'bg-[var(--card-bg)]/40 opacity-80 hover:opacity-100 shadow-[inset_4px_4px_10px_rgba(168,145,116,0.2)]'
+                        : 'bg-[var(--card-bg)] shadow-[6px_6px_16px_rgba(168,145,116,0.25),-2px_-2px_8px_rgba(255,255,255,0.4)] hover:shadow-[8px_8px_20px_rgba(168,145,116,0.3),-4px_-4px_12px_rgba(255,255,255,0.5)] hover:-translate-y-1'
+            }`}
         >
             {/* Completion Badge Overlay */}
             {isCompleted && (
@@ -71,11 +75,12 @@ function ModuleCard({ module, navigate }) {
             )}
 
             <div className="flex justify-between items-start mb-6 relative z-10 min-h-[48px] text-left">
-                <h3 className={`text-base font-bold leading-tight line-clamp-3 transition-colors ${isCompleted ? 'text-[var(--success)]' : isUpcoming ? 'text-gray-400' : 'text-[var(--text-color)]'
-                    }`}>
+                <h3 className={`text-base font-bold leading-tight line-clamp-3 transition-colors ${
+                    isUpcoming ? 'text-gray-400' : 'text-[#582c19]'
+                }`}>
                     {module.title}
                 </h3>
-                {isCompleted && <CheckCircle2 className="w-5 h-5 text-[var(--success)] shrink-0 mt-1 drop-shadow-[0_0_8px_rgba(16,185,129,0.2)]" />}
+                {isCompleted && <CheckCircle2 className="w-5 h-5 text-[#47754e] shrink-0 mt-1 drop-shadow-[0_0_8px_rgba(71,117,78,0.2)]" />}
             </div>
 
             <div className="mt-auto space-y-5 relative z-10">
@@ -85,8 +90,9 @@ function ModuleCard({ module, navigate }) {
                             initial={{ opacity: 0.8 }}
                             animate={{ opacity: [0.8, 1, 0.8] }}
                             transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                            className={`w-full py-5 flex flex-col items-center justify-center gap-2 rounded-2xl border px-4 ${isUpcoming ? 'bg-[var(--bg-color)]/60 border-[var(--card-border)] text-gray-600' : 'bg-orange-500/5 border-orange-500/10 text-orange-400/60'
-                                }`}
+                            className={`w-full py-5 flex flex-col items-center justify-center gap-2 rounded-2xl border px-4 ${
+                                isUpcoming ? 'bg-[var(--bg-color)]/60 border-[var(--card-border)] text-gray-600' : 'bg-orange-500/5 border-orange-500/10 text-orange-400/60'
+                            }`}
                         >
                             <div className="flex items-center gap-2.5 text-[10px] font-bold uppercase tracking-[0.2em]">
                                 {isUpcoming ? <CyberCat className="w-6 h-6 opacity-30" variant="static" color="#64748B" /> : <Lock className="w-3.5 h-3.5" />}
@@ -108,13 +114,13 @@ function ModuleCard({ module, navigate }) {
                 ) : (
                     <>
                         <div className="space-y-2.5">
-                            <div className="flex justify-between items-end text-[9px] font-bold uppercase tracking-widest">
-                                <span className={isCompleted ? 'text-[var(--success)]' : 'text-gray-500'}>PROGRESO</span>
-                                <span className={isCompleted ? 'text-[var(--success)]' : 'text-[var(--text-color)]'}>{module.progress || 0}%</span>
+                            <div className="flex justify-between items-end text-[9px] font-bold uppercase tracking-widest text-[#582c19]">
+                                <span>PROGRESO</span>
+                                <span>{module.progress || 0}%</span>
                             </div>
-                            <div className={`h-1.5 rounded-full overflow-hidden ${isCompleted ? 'bg-[var(--success)]/10' : 'bg-gray-200 dark:bg-black/20'}`}>
+                            <div className={`h-1.5 rounded-full overflow-hidden ${isCompleted ? 'bg-[#47754e]/10' : 'bg-gray-200 dark:bg-black/20'}`}>
                                 <div
-                                    className={`h-full transition-all duration-1000 shadow-sm bg-[var(--success)]`}
+                                    className={`h-full transition-all duration-1000 shadow-sm ${isCompleted ? 'bg-[#47754e]' : 'bg-[#8f032a]'}`}
                                     style={{ width: `${module.progress || 0}%` }}
                                 ></div>
                             </div>
@@ -125,10 +131,11 @@ function ModuleCard({ module, navigate }) {
                                 e.stopPropagation();
                                 handleNavigation();
                             }}
-                            className={`w-full py-3 rounded-xl text-[9px] font-bold uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 group/btn shadow-xl border ${isCompleted
-                                    ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/50 hover:bg-emerald-500 hover:text-white'
-                                    : 'bg-[#E56B24] hover:bg-[#d45d1d] text-white border-transparent shadow-orange-500/10'
-                                }`}
+                            className={`w-full py-3 rounded-xl text-[9px] font-bold uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 group/btn shadow-xl border ${
+                                isCompleted
+                                    ? 'bg-[#47754e]/10 text-[#47754e] border-[#47754e]/30 hover:bg-[#47754e] hover:text-white'
+                                    : 'bg-[#47754e] hover:bg-[#3e6744] text-white border-transparent shadow-[#47754e]/20'
+                            }`}
                         >
                             {isCompleted ? (
                                 <>FINALIZADO <CheckCircle2 className="w-4 h-4 group-hover/btn:scale-110 transition-transform" /></>

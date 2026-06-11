@@ -50,20 +50,18 @@ const driveAuditorRoutes = require('./routes/driveAuditorRoutes');
 
 const { authMiddleware, adminMiddleware } = require('./middleware/auth');
 const maintenanceMiddleware = require('./middleware/maintenance');
+const errorMiddleware = require('./middleware/errorMiddleware');
 const { initializeDatabase } = require('./services/dbInitService');
 
-// Inicializar esquemas de base de datos sync/async
-initializeDatabase();
-
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT;
 
 const redisClient = require('./config/redis');
 
-// Middleware de emergencia: Forzar HTTPS para que las cookies funcionen tras el proxy de la CGR
+// Middleware de emergencia: Forzar HTTPS para que las cookies funcionen tras el proxy
 app.use((req, res, next) => {
-    if (process.env.NODE_ENV === 'production') {
-        req.headers['x-forwarded-proto'] = 'https';
+    if (req.headers['x-forwarded-proto'] === 'https' || process.env.NODE_ENV === 'production') {
+        req.connection.proxySecure = true;
     }
     next();
 });
@@ -76,13 +74,17 @@ if (process.env.FRONTEND_URL) {
 
 app.use(cors({
     origin: (origin, callback) => {
-        // En desarrollo permitimos peticiones sin origin (como herramientas locales/server-side)
-        // o si el origin especificado está en nuestra whitelist
-        if (!origin || allowedOrigins.includes(origin) || origin.includes('localhost') || origin.includes('lvh.me')) {
+        if (!origin) return callback(null, true);
+        const cleanOrigin = origin.trim().replace(/\/$/, '');
+        const isAllowed = allowedOrigins.some(o => o.trim().replace(/\/$/, '') === cleanOrigin) ||
+            cleanOrigin.includes('localhost') ||
+            cleanOrigin.includes('lvh.me');
+
+        if (isAllowed) {
             callback(null, true);
         } else {
-            logger.warn(`CORS Reject: ${origin}`);
-            callback(new Error('Bloqueado por política de CORS de CGR Seguridad'));
+            logger.warn(`CORS Reject: [${origin}] - No en lista permitida`);
+            callback(null, false);
         }
     },
     credentials: true,
@@ -92,37 +94,27 @@ app.use(cors({
 
 // Middlewares de seguridad
 app.use(helmet({
-    contentSecurityPolicy: {
-        directives: {
-            defaultSrc: ["'self'"],
-            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-            fontSrc: ["'self'", "https://fonts.gstatic.com"],
-            scriptSrc: ["'self'", "https://accounts.google.com", "https://www.youtube.com", "https://s.ytimg.com"],
-            imgSrc: ["'self'", "data:", "https://lh3.googleusercontent.com", "https://ui-avatars.com", "https://*.googleusercontent.com", "https://i.ytimg.com", "https://www.transparenttextures.com"],
-            connectSrc: ["'self'", "https://accounts.google.com"],
-            frameSrc: ["'self'", "https://accounts.google.com", "https://www.youtube.com", "https://youtube.com"],
-        },
-    },
-    crossOriginResourcePolicy: false,
+    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
     crossOriginEmbedderPolicy: false,
+    contentSecurityPolicy: false,
 }));
 
-// Enable trust proxy before setting up rate limiters
-app.set('trust proxy', 1);
+// Confiar en el proxy
+app.set('trust proxy', 3);
 
 // Rate limiting
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutos
-    max: parseInt(process.env.RATE_LIMIT_MAX) || 1000, // configurable mediante .env
+    windowMs: 15 * 60 * 1000,
+    max: parseInt(process.env.RATE_LIMIT_MAX) || 1000,
     message: 'Demasiadas solicitudes desde esta IP, por favor intente más tarde.',
     standardHeaders: true,
     legacyHeaders: false,
+    validate: { trustProxy: false },
 });
 
 app.use('/api/', limiter);
 
 // Middlewares generales
-
 app.use(compression());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -144,12 +136,12 @@ app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    proxy: process.env.NODE_ENV === 'production', // Confía en el encabezado X-Forwarded-Proto en producción
+    proxy: true,
     cookie: {
         secure: process.env.NODE_ENV === 'production',
         httpOnly: true,
-        sameSite: process.env.NODE_ENV === 'production' ? 'lax' : 'lax', // Lax es seguro y compatible
-        maxAge: 24 * 60 * 60 * 1000 // 24 horas
+        sameSite: 'lax',
+        maxAge: 24 * 60 * 60 * 1000
     }
 }));
 
@@ -213,8 +205,7 @@ app.get('/api/health', (req, res) => {
 app.get('/', (req, res) => {
     res.json({
         message: 'CGR LMS API',
-        version: '1.0.0',
-        documentation: '/api/docs'
+        version: '1.0.0'
     });
 });
 

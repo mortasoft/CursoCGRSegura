@@ -1,7 +1,9 @@
 import React from 'react';
 import { Toaster, resolveValue } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
-import CyberCat from './CyberCat';
+import ganaIcon from '../assets/Gana.svg';
+import pierdeIcon from '../assets/Pierde.svg';
+import infoColibri from '../assets/InfoColibri.svg';
 
 /**
  * Componente Presentacional: ToastBubble (Pattern Section 1)
@@ -28,13 +30,29 @@ const ToastBubble = ({ t, message, icon }) => {
       }}
       className={`${t.className} flex items-center gap-2`}
     >
-      {/* Icono (CyberCat) */}
+      {/* Icono (CyberCat o Gana) */}
       <div className="relative z-10 drop-shadow-xl pointer-events-auto">
         {icon || (
           isLoading ? (
-            <CyberCat className="w-20 h-20" variant="searching" />
+            <motion.div
+              initial={{ x: -20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+            >
+              <img src={infoColibri} alt="Loading" className="w-36 h-36 object-contain" style={{ transform: 'scaleX(-1)' }} />
+            </motion.div>
+          ) : isSuccess ? (
+            <img src={ganaIcon} alt="Success" className="w-36 h-36 object-contain drop-shadow-[0_0_15px_rgba(34,197,94,0.3)] animate-comic-pop" />
+          ) : isError ? (
+            <img src={pierdeIcon} alt="Error" className="w-36 h-36 object-contain drop-shadow-[0_0_15px_rgba(239,68,68,0.3)] animate-comic-pop" />
           ) : (
-            <CyberCat className="w-20 h-20" variant={isError ? 'panic' : 'success'} />
+            <motion.div
+              initial={{ x: -20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+            >
+              <img src={infoColibri} alt="Info" className="w-36 h-36 object-contain" style={{ transform: 'scaleX(-1)' }} />
+            </motion.div>
           )
         )}
       </div>

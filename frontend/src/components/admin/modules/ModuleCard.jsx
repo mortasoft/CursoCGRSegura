@@ -47,8 +47,7 @@ export default function ModuleCard({
                         <div className="relative w-20 h-20 bg-black rounded-2xl flex items-center justify-center text-2xl font-black border border-white/10 overflow-hidden shadow-2xl flex-shrink-0 group-hover:scale-105 transition-transform duration-500">
                             {(() => {
                                 const num = module.module_number ?? 0;
-                                const paddedNum = num.toString().padStart(2, '0');
-                                const cardSrc = new URL(`../../../assets/card-banner/Tar-Sec-${paddedNum}.svg`, import.meta.url).href;
+                                const cardSrc = `/images/modules/Banner-moodulo-${num}.jpg`;
                                 return (
                                     <>
                                         <img

@@ -124,7 +124,7 @@ const ModuleCompletionModal = ({ isOpen, onClose, data }) => {
             />
 
             {/* Modal Container */}
-            <div className={`relative w-full max-w-md bg-[#0d1127] border border-white/10 rounded-[2.5rem] overflow-hidden shadow-[0_0_50px_rgba(56,74,153,0.3)] transition-all duration-700 transform ${isVisible ? 'scale-100 translate-y-0' : 'scale-90 translate-y-12'}`}>
+            <div className={`relative w-full max-w-md bg-[#161b33] border border-white/10 rounded-[2.5rem] overflow-hidden shadow-[0_0_50px_rgba(56,74,153,0.3)] transition-all duration-700 transform ${isVisible ? 'scale-100 translate-y-0' : 'scale-90 translate-y-12'}`}>
 
                 {/* Background Rays */}
                 <div className="absolute inset-0 overflow-hidden pointer-events-none">

@@ -14,7 +14,7 @@ COPY . .
 # El volumen en docker-compose sobreescribirá esto, 
 # pero es bueno tenerlo para que funcione solo también.
 
-EXPOSE 5000
+EXPOSE 5001
 
 # Comando para desarrollo con hot reload
 CMD ["npm", "run", "dev"]

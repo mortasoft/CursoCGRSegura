@@ -9,7 +9,7 @@ const crypto = require('crypto');
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const uploadPath = 'uploads/course_content/';
+        const uploadPath = path.join(process.cwd(), 'uploads', 'course_content');
         if (!fs.existsSync(uploadPath)) fs.mkdirSync(uploadPath, { recursive: true });
         cb(null, uploadPath);
     },

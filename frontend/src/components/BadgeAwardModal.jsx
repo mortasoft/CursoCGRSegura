@@ -90,7 +90,7 @@ const BadgeAwardModal = ({ isOpen, onClose, badge }) => {
                         animate={{ scale: 1, opacity: 1, y: 0, rotateX: 0 }}
                         exit={{ scale: 0.8, opacity: 0, y: 50, transition: { duration: 0.2 } }}
                         transition={{ type: "spring", damping: 20, stiffness: 300 }}
-                        className="relative w-full max-w-sm bg-gradient-to-b from-[#161c3a] to-[#0d1127] border border-white/10 rounded-[3rem] overflow-hidden shadow-[0_30px_100px_-20px_rgba(229,123,60,0.5)]"
+                        className="relative w-full max-w-sm bg-gradient-to-b from-[#1d244a] to-[#161b33] border border-white/10 rounded-[3rem] overflow-hidden shadow-[0_30px_100px_-20px_rgba(229,123,60,0.5)]"
                     >
                         {/* Interactive Shine */}
                         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-secondary-500/10 rounded-full blur-[80px] pointer-events-none" />

@@ -16,10 +16,10 @@ export default function ProtectedRoute() {
 
     if (isVerifying) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-                <div className="text-center">
-                    <div className="w-16 h-16 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                    <p className="text-gray-400">Verificando sesión...</p>
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50 text-slate-900">
+                <div className="text-center p-10 rounded-[2rem] bg-white/80 shadow-xl border border-slate-200">
+                    <div className="w-16 h-16 border-4 border-slate-300 border-t-primary-500 rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-slate-800 font-medium">Verificando sesión...</p>
                 </div>
             </div>
         );

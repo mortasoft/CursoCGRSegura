@@ -7,7 +7,7 @@ export default function ServerError() {
     const navigate = useNavigate();
 
     return (
-        <div className="h-screen w-full bg-[#0d1127] flex items-center justify-center p-4 relative overflow-hidden font-sans select-none">
+        <div className="h-screen w-full bg-[#161b33] flex items-center justify-center p-4 relative overflow-hidden font-sans select-none">
             {/* Background elements - Reuse GlitchBackground with a reddish tint if possible, 
                 or just keep it as is since it provides the texture and blobs */}
             <GlitchBackground code="500" />

@@ -113,7 +113,7 @@ export default function Layout() {
             )}
 
             {/* Navbar */}
-            <nav className="bg-[#0d1127]/95 backdrop-blur-md border-b border-primary-500/10 sticky top-0 z-50 transition-colors duration-300">
+            <nav className="bg-[#582c19]/95 backdrop-blur-md border-b border-primary-500/10 sticky top-0 z-50 transition-colors duration-300">
                 <div className="w-full px-4 sm:px-6 xl:px-8">
                     <div className="flex justify-between items-center h-20">
                         {/* Logo */}
@@ -127,20 +127,20 @@ export default function Layout() {
                             </div>
                             <div className="hidden lg:block">
                                 <h1 className="text-[13px] xl:text-[15px] font-black bg-gradient-to-r from-white via-white to-gray-400 bg-clip-text text-transparent tracking-tighter leading-none">
-                                    CGR <span className="text-secondary-500 font-black">SEGUR@</span>
+                                    M <span className="text-secondary-500 font-black">IA</span>
                                 </h1>
                             </div>
                         </div>
 
                         {/* Desktop Navigation */}
-                        <div className="hidden md:flex items-center lg:gap-1 bg-[#0d1127] p-1 rounded-xl border border-white/5 shadow-2xl">
+                        <div className="hidden md:flex items-center lg:gap-1 bg-[#582c19] p-1 rounded-xl border border-white/5 shadow-2xl">
                             {NAV_ITEMS.map((item) => (
                                 <NavLink
                                     key={item.to}
                                     to={item.to}
                                     className={({ isActive }) =>
                                         `flex items-center gap-1.5 xl:gap-2 px-2 xl:px-3 py-2 rounded-lg transition-all duration-200 group ${isActive
-                                            ? 'bg-[#1a2347] !text-white border border-primary-500 shadow-[0_0_15px_rgba(56,74,153,0.2)]'
+                                            ? 'bg-[#e8dbbe] !text-[#582c19] font-bold shadow-[0_0_15px_rgba(232,219,190,0.3)]'
                                             : '!text-white/70 hover:!text-white hover:bg-white/5 border border-transparent'
                                         }`
                                     }
@@ -174,7 +174,7 @@ export default function Layout() {
                                         <img
                                             src={getProfilePictureUrl(user?.profilePicture, `${user?.firstName} ${user?.lastName}`)}
                                             alt={user?.firstName}
-                                            className="w-7 h-7 xl:w-8 xl:h-8 rounded-full border-2 border-[#0d1127] object-cover"
+                                            className="w-7 h-7 xl:w-8 xl:h-8 rounded-full border-2 border-[#161b33] object-cover"
                                             referrerPolicy="no-referrer"
                                         />
                                     </div>
@@ -215,7 +215,7 @@ export default function Layout() {
                             {/* Mobile Menu Button */}
                             <button
                                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                                className="md:hidden p-2 text-gray-400 hover:text-white hover:bg-slate-800 rounded-lg"
+                                className="md:hidden p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg"
                             >
                                 {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
                             </button>
@@ -225,7 +225,7 @@ export default function Layout() {
 
                 {/* Mobile Menu */}
                 {isMobileMenuOpen && (
-                    <div className="md:hidden border-t border-white/5 bg-[#0d1127]/95 backdrop-blur-md">
+                    <div className="md:hidden border-t border-white/5 bg-[#582c19]/95 backdrop-blur-md">
                         <div className="px-4 py-4 space-y-2">
                             {NAV_ITEMS.map((item) => (
                                 <NavLink
@@ -233,8 +233,8 @@ export default function Layout() {
                                     to={item.to}
                                     className={({ isActive }) =>
                                         `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${isActive
-                                            ? 'bg-primary-500/20 text-primary-400 border border-primary-500/30'
-                                            : 'text-gray-400 hover:text-white hover:bg-slate-800'
+                                            ? 'bg-[#e8dbbe] text-[#582c19] font-bold'
+                                            : 'text-white/70 hover:text-white hover:bg-white/10'
                                         }`
                                     }
                                 >
@@ -248,7 +248,7 @@ export default function Layout() {
                                     className={({ isActive }) =>
                                         `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${isActive
                                             ? 'bg-secondary-500/20 text-secondary-500 border border-secondary-500/30'
-                                            : 'text-gray-400 hover:text-secondary-500 hover:bg-slate-800'
+                                            : 'text-white/70 hover:text-secondary-500 hover:bg-white/10'
                                         }`
                                     }
                                 >
@@ -275,23 +275,23 @@ export default function Layout() {
 
             {/* Footer - Hidden in Quiz/Survey views to avoid overlap */}
             {!location.pathname.includes('/quiz/') && !location.pathname.includes('/survey/') && (
-                <footer className="mt-auto border-t border-primary-500/10 bg-[var(--bg-color)]/50 backdrop-blur-sm relative z-0">
+                <footer className="mt-auto border-t border-[#d6997a]/20 bg-[var(--bg-color)]/50 backdrop-blur-sm relative z-0">
                     <div className="w-full px-4 sm:px-6 lg:px-12 py-6">
                         <div className="flex flex-col sm:flex-row justify-between items-center gap-6">
-                            <div className="flex items-center gap-4 opacity-70">
+                            <div className="flex items-center gap-4 opacity-95">
                                 <img src="/images/logo-cgr-blanco.webp" alt="CGR Logo" className="h-8 object-contain" />
                                 <div className="h-8 w-[1px] bg-white/10 hidden sm:block"></div>
-                                <p className="text-[10px] font-bold text-gray-400 leading-tight uppercase tracking-wider">
+                                <p className="text-[10px] font-bold text-[#d6997a] leading-tight uppercase tracking-wider">
                                     Contraloría General de la República | Costa Rica
                                 </p>
                             </div>
                             <div className="text-right flex flex-col items-end gap-1">
-                                <p className="text-[10px] text-white/70 font-bold uppercase tracking-widest">
+                                <p className="text-[10px] text-[#d6997a] font-bold uppercase tracking-widest">
                                     Version {import.meta.env.VITE_APP_VERSION}
                                 </p>
                                 {hasAdminPanelAccess(user) && (
-                                    <div className="flex items-center gap-2 px-3 py-1 bg-slate-900/50 rounded-full border border-white/5 shadow-lg mt-1">
-                                        <span className={`text-[8px] font-black uppercase tracking-[0.2em] ${!viewAsStudent ? 'text-secondary-500' : 'text-gray-500'}`}>
+                                    <div className="flex items-center gap-2 px-3 py-1 bg-[#582c19] rounded-full border border-white/5 shadow-lg mt-1">
+                                        <span className="text-[8px] font-black uppercase tracking-[0.2em] text-white">
                                             {!viewAsStudent ? 'Panel Administrador' : 'Vista Estudiante'}
                                         </span>
                                         <button

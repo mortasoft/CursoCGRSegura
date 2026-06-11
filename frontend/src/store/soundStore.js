@@ -7,7 +7,7 @@ const activeSounds = new Set();
 export const useSoundStore = create(
     persist(
         (set, get) => ({
-            isMuted: false,
+            isMuted: true,
             volume: 0.5,
             
             toggleMute: () => {

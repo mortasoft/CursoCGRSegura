@@ -2,13 +2,13 @@ services:
   # MariaDB Database
   mariadb:
     image: mariadb:11.2
-    container_name: cgrsegura-mariadb
+    container_name: mia-lms-mariadb
     restart: unless-stopped
     environment:
       TZ: ${TZ:-America/Costa_Rica}
     env_file: .env
     ports:
-      - "3306:3306"
+      - "3308:3306"
     volumes:
       - mariadb_data:/var/lib/mysql
       - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -23,7 +23,7 @@ services:
   # Redis Cache
   redis:
     image: redis:7.2-alpine
-    container_name: cgrsegura-redis
+    container_name: mia-lms-redis
     restart: unless-stopped
     # Redis requiere el password como comando si no se usa archivo de config
     command: >
@@ -32,7 +32,7 @@ services:
       TZ: ${TZ:-America/Costa_Rica}
     env_file: .env
     ports:
-      - "6379:6379"
+      - "6390:6379"
     volumes:
       - redis_data:/data
     networks:
@@ -48,10 +48,11 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile.dev
-    container_name: cgrsegura-backend
+    container_name: mia-lms-backend
     restart: unless-stopped
     environment:
-      TZ: ${TZ:-America/Costa_Rica}
+      - TZ=${TZ:-America/Costa_Rica}
+      - NODE_ENV=development
     env_file: .env
     # ports:
     #   - "5000:5000"
@@ -68,7 +69,7 @@ services:
     networks:
       - cgr-network
     healthcheck:
-      test: [ "CMD", "node", "-e", "fetch('http://localhost:5000/health').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))" ]
+      test: [ "CMD", "node", "-e", "fetch('http://localhost:5001/health').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -82,12 +83,15 @@ services:
       args:
         VITE_API_URL: ${VITE_API_URL}
         VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID}
-    container_name: cgrsegura-frontend
+    container_name: mia-lms-frontend
     restart: unless-stopped
+    environment:
+      - NODE_ENV=development
     env_file: .env
     ports:
       - "80:3000"
       - "443:3000"
+      - "3000:3000"
     depends_on:
       backend:
         condition: service_healthy

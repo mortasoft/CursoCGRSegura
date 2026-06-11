@@ -12,7 +12,7 @@ const fs = require('fs');
 // Configuración de Multer para recursos
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const uploadPath = 'uploads/resources/';
+        const uploadPath = path.join(process.cwd(), 'uploads', 'resources');
         if (!fs.existsSync(uploadPath)) {
             fs.mkdirSync(uploadPath, { recursive: true });
         }

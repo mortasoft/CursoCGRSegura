@@ -8,22 +8,24 @@ COPY package*.json ./
 # Instalar dependencias
 RUN npm install --only=production
 
+# Instalar dependencias del sistema y su-exec para cambio de usuario seguro
+RUN apk add --no-cache su-exec
+
 # Copiar código fuente
 COPY . .
 
-# Crear directorio de logs
-RUN mkdir -p logs
+# Copiar script de entrada
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
 
 # Exponer puerto
-EXPOSE 5000
+EXPOSE 5001
 
-# Usuario no-root para seguridad
+# Usuario no-root para seguridad (creado pero el cambio se hace en entrypoint.sh)
 RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
 
-# Crear directorio de logs y asignar permisos
-RUN mkdir -p logs && mkdir -p uploads/course_content && chown -R nodejs:nodejs /app
+# Definir punto de entrada
+ENTRYPOINT ["/app/entrypoint.sh"]
 
-USER nodejs
-
-# Comando de inicio
+# Comando de inicio por defecto
 CMD ["node", "server.js"]

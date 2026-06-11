@@ -37,12 +37,20 @@ export const useAuthStore = create(
 
                     return { success: true, user };
                 } catch (error) {
-                    const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message || 'Error al iniciar sesion';
-                    console.error('[AuthStore] Login failed:', {
-                        message: error.message,
-                        response: error.response?.data,
+                    // Extraer el mensaje más específico posible
+                    const errorMessage = error.response?.data?.error || 
+                        error.response?.data?.message || 
+                        error.response?.data?.error || 
+                        (typeof error.response?.data === 'string' ? error.response.data : null) ||
+                        error.message || 
+                        'Error al iniciar sesion';
+
+                    console.error('[AuthStore] Login failed details:', {
+                        serverMessage: error.response?.data?.message,
+                        axiosMessage: error.message,
                         status: error.response?.status
                     });
+
                     set({
                         error: errorMessage,
                         isLoading: false,

@@ -4,17 +4,17 @@
 
 @layer base {
   :root {
-    /* Fondo basado en el Primario institucional pero oscurecido para modo oscuro */
-    --background: 229 46% 7%;
-    --bg-color: #0d1127;
-    --foreground: 0 0% 100%;
-    --text-color: #ffffff;
-    --text-muted: #94a3b8;
+    /* Fondo tostado galleta */
+    --background: 37 45% 81%;
+    --bg-color: #e4d3b8;
+    --foreground: 222 47% 11%;
+    --text-color: #3b2818;
+    --text-muted: #4A5568;
 
     /* Color Primario: PANTONE REFLEX BLUE U #384A99 */
     --primary: 229 46% 41%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: rgba(56, 74, 153, 0.15);
+    --primary-glow: rgba(56, 74, 153, 0.08);
 
     /* Color Secundario: PANTONE 152 U #E57B3C */
     --secondary: 22 75% 57%;
@@ -22,38 +22,38 @@
     --secondary-glow: rgba(229, 123, 60, 0.05);
 
     /* Surfaces */
-    --card-bg: #111627;
-    --card-border: rgba(255, 255, 255, 0.05);
-    --input-bg: rgba(0, 0, 0, 0.2);
-    --input-border: rgba(255, 255, 255, 0.1);
+    --card-bg: #e8dbbe;
+    --card-border: rgba(255, 255, 255, 0.25);
+    --input-bg: #e8dbbe;
+    --input-border: rgba(255, 255, 255, 0.25);
     
     /* Scrollbar */
-    --scrollbar-track: #1b2341;
-    --scrollbar-thumb: #384A99;
-    --scrollbar-thumb-hover: #4d5eb0;
+    --scrollbar-track: #e8dbbe;
+    --scrollbar-thumb: #A0AEC0;
+    --scrollbar-thumb-hover: #718096;
 
     --logo-filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.3));
     --nav-bg: #0d1127;
     --nav-text: #ffffff;
 
     /* Semantic States */
-    --success: #10b981;
-    --success-bg: rgba(16, 185, 129, 0.03);
-    --success-border: rgba(16, 185, 129, 0.15);
-    --success-card-bg: rgba(16, 185, 129, 0.08);
-    --success-card-border: rgba(16, 185, 129, 0.3);
-    --warning: #f59e0b;
-    --warning-bg: rgba(245, 158, 11, 0.1);
+    --success: #047857;
+    --success-bg: #ECFDF5;
+    --success-border: rgba(4, 120, 87, 0.18);
+    --success-card-bg: #ECFDF5;
+    --success-card-border: rgba(4, 120, 87, 0.22);
+    --warning: #B45309;
+    --warning-bg: #FFFBEB;
 
-    --border: 0 0% 15%;
+    --border: 0 0% 89%;
   }
 
   .light-theme {
     /* Canvas — warm off-white, not paper-white */
-    --background: 216 33% 97%;
-    --bg-color: #F0F4F8;
+    --background: 37 45% 81%;
+    --bg-color: #e4d3b8;
     --foreground: 222 47% 11%;
-    --text-color: #1A202C;
+    --text-color: #3b2818;
     --text-muted: #4A5568;
 
     /* Institutional Blue — slightly desaturated for legibility on white */
@@ -62,10 +62,10 @@
     --secondary-glow: rgba(229, 123, 60, 0.05);
 
     /* Surfaces — pure white cards float above the canvas */
-    --card-bg: #FFFFFF;
-    --card-border: rgba(56, 74, 153, 0.08);
-    --input-bg: #FFFFFF;
-    --input-border: rgba(56, 74, 153, 0.18);
+    --card-bg: #e8dbbe;
+    --card-border: rgba(255, 255, 255, 0.25);
+    --input-bg: #e8dbbe;
+    --input-border: rgba(255, 255, 255, 0.25);
 
     /* Scrollbar */
     --scrollbar-track: #E2E8F0;
@@ -294,21 +294,33 @@
   /* Tarjetas con estilo "Glassmorphism" azulado */
   .card {
     @apply bg-[var(--card-bg)] backdrop-blur-md border border-[var(--card-border)] rounded-xl p-6 relative overflow-hidden;
-    box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.3);
+    border-bottom-color: rgba(0, 0, 0, 0.05);
+    border-right-color: rgba(0, 0, 0, 0.05);
+    box-shadow: 
+      6px 6px 16px rgba(168, 145, 116, 0.25),
+      -2px -2px 8px rgba(255, 255, 255, 0.4);
   }
 
   .light-theme .card {
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px -4px rgba(56, 74, 153, 0.08);
-    border: 1px solid rgba(56, 74, 153, 0.08);
+    border-bottom-color: rgba(0, 0, 0, 0.03);
+    border-right-color: rgba(0, 0, 0, 0.03);
+    box-shadow: 
+      6px 6px 16px rgba(168, 145, 116, 0.25),
+      -2px -2px 8px rgba(255, 255, 255, 0.4);
   }
 
   .card-hover {
-    @apply hover:bg-white/10 hover:border-primary-400/30 hover:transform hover:-translate-y-1 transition-all duration-300;
+    @apply hover:bg-[#e8dbbe] hover:border-[var(--card-border)] hover:transform hover:-translate-y-1 transition-all duration-300;
+    box-shadow: 
+      8px 8px 20px rgba(168, 145, 116, 0.3),
+      -4px -4px 12px rgba(255, 255, 255, 0.5);
   }
 
   .light-theme .card-hover:hover {
-    @apply hover:bg-white;
-    box-shadow: 0 8px 30px -6px rgba(56, 74, 153, 0.14);
+    @apply hover:bg-[#e8dbbe];
+    box-shadow: 
+      8px 8px 20px rgba(168, 145, 116, 0.3),
+      -4px -4px 12px rgba(255, 255, 255, 0.5);
   }
 
   /* Campos de entrada mejorados */
@@ -394,16 +406,20 @@
 
 /* La burbuja real */
 .comic-bubble-content {
-  background: #0d1127 !important;
-  color: white !important;
-  border: 4px solid white !important;
+  background: rgba(245, 237, 228, 0.7) !important;
+  backdrop-filter: blur(16px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+  color: var(--text-color) !important;
+  border: 1px solid rgba(255, 255, 255, 0.6) !important;
   border-radius: 2.5rem !important;
   padding: 25px 45px !important;
   font-weight: 900 !important;
   text-transform: uppercase !important;
   font-size: 1.35rem !important;
   position: relative !important;
-  box-shadow: none !important;
+  box-shadow: 
+    0 12px 40px 0 rgba(168, 145, 116, 0.35),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.4) !important;
   z-index: 10;
   min-width: 200px;
   max-width: 600px;
@@ -415,35 +431,35 @@
 .comic-bubble-content::before {
   content: "";
   position: absolute;
-  left: -28px;
+  left: -25px;
   top: 50%;
   transform: translateY(-50%);
   width: 0;
   height: 0;
   border-style: solid;
-  border-width: 15px 30px 15px 0;
-  border-color: transparent white transparent transparent;
+  border-width: 15px 25px 15px 0;
+  border-color: transparent rgba(255, 255, 255, 0.6) transparent transparent;
 }
 
 .comic-bubble-content::after {
   content: "";
   position: absolute;
-  left: -22px;
+  left: -24px;
   top: 50%;
   transform: translateY(-50%);
   width: 0;
   height: 0;
   border-style: solid;
-  border-width: 15px 30px 15px 0;
-  border-color: transparent #0d1127 transparent transparent;
+  border-width: 15px 25px 15px 0;
+  border-color: transparent rgba(245, 237, 228, 0.95) transparent transparent;
 }
 
 /* Variantes de color para la burbuja */
-.comic-bubble-success { border-color: #22c55e !important; }
-.comic-bubble-success::before { border-color: transparent #22c55e transparent transparent !important; }
+.comic-bubble-success { border-color: rgba(34, 197, 94, 0.5) !important; }
+.comic-bubble-success::before { border-color: transparent rgba(34, 197, 94, 0.5) transparent transparent !important; }
 
-.comic-bubble-error { border-color: #ef4444 !important; }
-.comic-bubble-error::before { border-color: transparent #ef4444 transparent transparent !important; }
+.comic-bubble-error { border-color: rgba(239, 68, 68, 0.5) !important; }
+.comic-bubble-error::before { border-color: transparent rgba(239, 68, 68, 0.5) transparent transparent !important; }
 
 /* Responsive Adjustments */
 @media (max-width: 768px) {

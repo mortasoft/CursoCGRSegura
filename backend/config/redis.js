@@ -6,10 +6,18 @@ const redisClient = createClient({
     socket: {
         // Host y puerto obtenidos de las variables de entorno para facil configuracion en Docker
         host: process.env.REDIS_HOST || 'localhost',
-        port: process.env.REDIS_PORT || 6379
+        port: process.env.REDIS_PORT || 6379,
+        reconnectStrategy: (retries) => {
+            if (retries > 10) {
+                logger.error('Redis: Máximo de reintentos alcanzado. Fallo crítico.');
+                return new Error('Redis connection failed');
+            }
+            const delay = Math.min(retries * 500, 5000);
+            logger.warn(`Redis: Error de conexión. Reintentando en ${delay}ms... (Intento ${retries})`);
+            return delay;
+        }
     },
-    // Contrasena del cliente Redis para entornos de produccion seguros
-    password: process.env.REDIS_PASSWORD
+    ...(process.env.REDIS_PASSWORD && { password: process.env.REDIS_PASSWORD })
 });
 
 // Manejadores de eventos de la conexion para monitoreo

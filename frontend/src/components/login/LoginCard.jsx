@@ -8,14 +8,14 @@ export default function LoginCard({ onLogin, isLoading }) {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.6, duration: 0.5 }}
-            className="w-full glass-card overflow-hidden rounded-[2.5rem] border border-white/5 shadow-[0_40px_100px_rgba(0,0,0,0.6)] relative group"
+            className="w-full glass-card overflow-hidden rounded-[2.5rem] bg-[#582c19] backdrop-blur-2xl border border-[#6b3a24] shadow-[0_40px_100px_rgba(0,0,0,0.3)] relative group"
         >
             {/* Interactive hover gradient */}
             <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 via-transparent to-secondary-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
 
             <div className="p-8 md:p-12 space-y-8 relative z-10">
                 <div className="space-y-2 flex justify-center">
-                    <h2 className="text-2xl md:text-3xl font-black text-white tracking-tight">Bienvenido al Portal</h2>
+                    <h2 className="text-2xl md:text-3xl font-black text-[#e8dbbe] tracking-tight">Bienvenido al Portal</h2>
                 </div>
 
                 <div className="space-y-6">
@@ -25,7 +25,7 @@ export default function LoginCard({ onLogin, isLoading }) {
                         disabled={isLoading}
                         whileHover={{ scale: 1.02, translateY: -2 }}
                         whileTap={{ scale: 0.98 }}
-                        className="w-full group relative flex items-center justify-center gap-4 bg-gradient-to-b from-white to-gray-50 text-[#0d1127] px-8 py-5 rounded-2xl font-black text-lg transition-all duration-300 shadow-[0_10px_40px_rgba(0,0,0,0.3)] hover:shadow-[0_20px_60px_rgba(56,74,153,0.3)] disabled:opacity-70 disabled:pointer-events-none overflow-hidden border border-white"
+                        className="w-full group relative flex items-center justify-center gap-4 bg-gradient-to-b from-white to-gray-50 text-[#161b33] px-8 py-5 rounded-2xl font-black text-lg transition-all duration-300 shadow-[0_10px_40px_rgba(0,0,0,0.3)] hover:shadow-[0_20px_60px_rgba(56,74,153,0.3)] disabled:opacity-70 disabled:pointer-events-none overflow-hidden border border-white"
                     >
                         {/* Animated Shimmer Overlay */}
                         <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/60 to-transparent -translate-x-full group-hover:animate-[shimmer_2s_infinite] pointer-events-none z-20"></div>
@@ -35,7 +35,7 @@ export default function LoginCard({ onLogin, isLoading }) {
 
                         {isLoading ? (
                             <div className="flex items-center gap-3 relative z-30">
-                                <div className="w-6 h-6 border-[3px] border-[#0d1127]/10 border-t-[#384A99] rounded-full animate-spin"></div>
+                                <div className="w-6 h-6 border-[3px] border-[#161b33]/10 border-t-[#384A99] rounded-full animate-spin"></div>
                                 <span className="animate-pulse">Sincronizando...</span>
                             </div>
                         ) : (
@@ -69,13 +69,13 @@ export default function LoginCard({ onLogin, isLoading }) {
                     </motion.button>
 
                     {/* System Info Box */}
-                    <div className="p-5 rounded-2xl bg-primary-500/5 border border-primary-500/10 flex gap-4 items-start">
-                        <div className="p-2 bg-primary-500/10 rounded-lg text-primary-400">
+                    <div className="p-5 rounded-2xl bg-[#4a2414] border border-[#6b3a24] flex gap-4 items-start">
+                        <div className="p-2 bg-[#6b3a24] rounded-lg text-[#e8dbbe]">
                             <Shield className="w-5 h-5 font-black" />
                         </div>
                         <div className="space-y-1">
-                            <h4 className="text-[10px] font-black text-primary-400 uppercase tracking-widest">Acceso Restringido</h4>
-                            <p className="text-xs text-gray-500 leading-relaxed font-medium">
+                            <h4 className="text-[14px] font-black text-[#e8dbbe] uppercase tracking-widest">Acceso Restringido</h4>
+                            <p className="text-[12px] text-[#e8dbbe]/80 leading-relaxed font-medium">
                                 Sistema exclusivo para funcionarios de la Contraloría General de la República. Debe iniciar sesión con su cuenta de Google institucional.
                             </p>
                         </div>
